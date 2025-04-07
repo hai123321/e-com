@@ -5,320 +5,432 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Miu Shop - Tài khoản trực tuyến chính hãng</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #FF5C8D;
-            --secondary-color: #7209B7;
-            --accent-color: #4CC9F0;
-            --background-color: #F8F9FA;
-            --text-dark: #343A40;
-            --text-light: #F8F9FA;
+            --primary-color: #8e44ad;
+            --secondary-color: #9b59b6;
+            --accent-color: #d35400;
+            --text-color: #2c3e50;
+            --light-bg: #f9f9f9;
         }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-dark);
+            color: var(--text-color);
+            background-color: var(--light-bg);
         }
         
-        .gradient-bg {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        }
-        
-        .card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        .navbar {
+            background-color: var(--primary-color);
+            background-image: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         }
         
         .btn-primary {
-            background-color: var(--primary-color);
+            background-color: var(--accent-color);
             transition: all 0.3s ease;
         }
         
         .btn-primary:hover {
-            background-color: var(--secondary-color);
-            transform: scale(1.05);
-        }
-        
-        .product-image {
-            height: 180px;
-            object-fit: cover;
-        }
-        
-        .stock-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 10;
+            background-color: #e67e22;
+            transform: translateY(-2px);
         }
         
         .product-card {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
-        .product-info {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
         }
         
-        .product-description {
-            flex-grow: 1;
-        }
-
-        #loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .product-img {
             height: 200px;
+            object-fit: cover;
+            width: 100%;
         }
-
-        .spin {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .price {
-            color: var(--primary-color);
+        
+        .badge-stock {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: bold;
         }
-
-        footer a {
-            transition: color 0.3s;
+        
+        footer {
+            background-color: var(--primary-color);
+            background-image: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         }
-
-        footer a:hover {
+        
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: white;
             color: var(--primary-color);
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            transform: scale(1.1);
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .price-tag {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .section-title {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 30px;
+        }
+        
+        .section-title::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: var(--accent-color);
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="gradient-bg text-white shadow-lg">
-        <div class="container mx-auto py-6 px-4">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="flex items-center mb-4 md:mb-0">
-                    <i class="fas fa-cat text-4xl mr-3"></i>
-                    <h1 class="text-3xl font-bold">Miu Shop</h1>
-                </div>
-                <div>
-                    <p class="text-xl font-light">Tài khoản trực tuyến chính hãng</p>
-                </div>
+    <!-- Navbar -->
+    <nav class="navbar text-white py-4 px-6 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold">Miu Shop</a>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#" class="hover:text-yellow-300 transition">Trang chủ</a>
+                <a href="#products" class="hover:text-yellow-300 transition">Sản phẩm</a>
+                <a href="#contact" class="hover:text-yellow-300 transition">Liên hệ</a>
             </div>
+            <button class="md:hidden focus:outline-none">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
         </div>
-    </header>
+    </nav>
 
     <!-- Hero Section -->
-    <section class="bg-gray-100 py-12">
-        <div class="container mx-auto px-4">
-            <div class="text-center">
-                <h2 class="text-4xl font-bold mb-4">Nâng tầm trải nghiệm giải trí của bạn</h2>
-                <p class="text-xl text-gray-600 mb-8">Cung cấp các tài khoản Netflix, YouTube Premium, Capcut và nhiều dịch vụ khác với giá cả hợp lý</p>
+    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-16">
+        <div class="container mx-auto px-6 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Tài khoản trực tuyến chính hãng</h1>
+            <p class="text-xl md:text-2xl mb-8">Cung cấp tài khoản Netflix, YouTube, Capcut và nhiều dịch vụ khác với giá tốt nhất</p>
+            <a href="#products" class="btn-primary text-white font-bold py-3 px-8 rounded-full text-lg">Xem sản phẩm</a>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <div class="py-12 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="bg-purple-100 mx-auto rounded-full w-16 h-16 flex items-center justify-center mb-4">
+                        <i class="fas fa-check-circle text-purple-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Chính hãng 100%</h3>
+                    <p class="text-gray-600">Tất cả tài khoản đều được đảm bảo chính hãng và hoạt động ổn định</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-purple-100 mx-auto rounded-full w-16 h-16 flex items-center justify-center mb-4">
+                        <i class="fas fa-bolt text-purple-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Giao hàng nhanh</h3>
+                    <p class="text-gray-600">Thông tin tài khoản sẽ được gửi ngay sau khi thanh toán</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-purple-100 mx-auto rounded-full w-16 h-16 flex items-center justify-center mb-4">
+                        <i class="fas fa-headset text-purple-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Hỗ trợ 24/7</h3>
+                    <p class="text-gray-600">Đội ngũ hỗ trợ khách hàng luôn sẵn sàng giúp đỡ bạn</p>
+                </div>
             </div>
         </div>
-    </section>
+    </div>
 
     <!-- Products Section -->
-    <section class="py-12 bg-white">
-        <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold mb-8 text-center">Sản phẩm của chúng tôi</h2>
+    <div id="products" class="py-12 bg-gray-100">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center mb-8 section-title">Sản phẩm của chúng tôi</h2>
             
-            <div id="product-filter" class="mb-8 flex flex-wrap justify-center gap-2">
-                <button class="filter-btn btn-primary px-4 py-2 rounded-full text-white" data-filter="all">Tất cả</button>
-                <button class="filter-btn bg-gray-200 px-4 py-2 rounded-full" data-filter="Netflix">Netflix</button>
-                <button class="filter-btn bg-gray-200 px-4 py-2 rounded-full" data-filter="YouTube">YouTube</button>
-                <button class="filter-btn bg-gray-200 px-4 py-2 rounded-full" data-filter="Capcut">Capcut</button>
-                <button class="filter-btn bg-gray-200 px-4 py-2 rounded-full" data-filter="Other">Khác</button>
-            </div>
+            <div id="productLoader" class="loader"></div>
             
-            <div id="loading">
-                <i class="fas fa-spinner spin text-4xl text-gray-500"></i>
-            </div>
-            
-            <div id="products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <!-- Products will be loaded here -->
+            <div id="productGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Products will be loaded here from CSV -->
             </div>
         </div>
-    </section>
+    </div>
 
     <!-- Contact Section -->
-    <section class="gradient-bg text-white py-16">
-        <div class="container mx-auto px-4">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold mb-4">Liên hệ với chúng tôi</h2>
-                <p class="text-xl">Hãy liên hệ với chúng tôi nếu bạn có bất kỳ câu hỏi nào</p>
-            </div>
+    <div id="contact" class="py-12 bg-white">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center mb-8 section-title">Liên hệ với chúng tôi</h2>
             
-            <div class="flex flex-wrap justify-center gap-8">
-                <div class="w-full md:w-80 bg-white text-gray-800 rounded-lg shadow-lg p-6 transition-transform hover:transform hover:scale-105">
-                    <div class="text-center">
-                        <i class="fas fa-phone-alt text-4xl text-pink-500 mb-4"></i>
-                        <h3 class="text-xl font-bold mb-2">Điện thoại</h3>
-                        <p>(+84) 987 654 321</p>
-                    </div>
-                </div>
-                
-                <div class="w-full md:w-80 bg-white text-gray-800 rounded-lg shadow-lg p-6 transition-transform hover:transform hover:scale-105">
-                    <div class="text-center">
-                        <i class="fas fa-envelope text-4xl text-purple-500 mb-4"></i>
-                        <h3 class="text-xl font-bold mb-2">Email</h3>
-                        <p>info@miushop.vn</p>
-                    </div>
-                </div>
-                
-                <div class="w-full md:w-80 bg-white text-gray-800 rounded-lg shadow-lg p-6 transition-transform hover:transform hover:scale-105">
-                    <div class="text-center">
-                        <i class="fab fa-facebook-messenger text-4xl text-blue-500 mb-4"></i>
-                        <h3 class="text-xl font-bold mb-2">Messenger</h3>
-                        <p>m.me/miushop</p>
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-gray-50 rounded-lg shadow-lg p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4">Thông tin liên hệ</h3>
+                            <p class="mb-3"><i class="fas fa-map-marker-alt mr-2 text-purple-600"></i> 123 Đường ABC, Quận XYZ, TP. Hồ Chí Minh</p>
+                            <p class="mb-3"><i class="fas fa-phone-alt mr-2 text-purple-600"></i> 0123 456 789</p>
+                            <p class="mb-3"><i class="fas fa-envelope mr-2 text-purple-600"></i> info@miushop.com</p>
+                            <p class="mb-3"><i class="fab fa-telegram mr-2 text-purple-600"></i> @miushop</p>
+                            
+                            <div class="flex mt-6">
+                                <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                                <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                                <a href="#" class="social-icon"><i class="fab fa-telegram"></i></a>
+                                <a href="#" class="social-icon"><i class="fab fa-tiktok"></i></a>
+                                <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4">Gửi tin nhắn cho chúng tôi</h3>
+                            <form>
+                                <div class="mb-4">
+                                    <input type="text" placeholder="Họ và tên" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                                </div>
+                                <div class="mb-4">
+                                    <input type="email" placeholder="Email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                                </div>
+                                <div class="mb-4">
+                                    <textarea rows="4" placeholder="Nội dung" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"></textarea>
+                                </div>
+                                <button type="button" class="btn-primary text-white font-bold py-2 px-6 rounded-lg w-full">Gửi tin nhắn</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-8">
-        <div class="container mx-auto px-4">
+    <footer class="text-white py-8">
+        <div class="container mx-auto px-6">
             <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-4 md:mb-0">
-                    <h2 class="text-2xl font-bold mb-2">Miu Shop</h2>
-                    <p>© 2023 Miu Shop. All rights reserved.</p>
+                <div class="mb-6 md:mb-0">
+                    <h2 class="text-2xl font-bold">Miu Shop</h2>
+                    <p class="mt-2">Cung cấp tài khoản trực tuyến chính hãng</p>
                 </div>
                 <div class="flex space-x-4">
-                    <a href="#" class="text-2xl"><i class="fab fa-facebook"></i></a>
-                    <a href="#" class="text-2xl"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="text-2xl"><i class="fab fa-tiktok"></i></a>
-                    <a href="#" class="text-2xl"><i class="fab fa-youtube"></i></a>
+                    <a href="#" class="hover:text-yellow-300 transition">Trang chủ</a>
+                    <a href="#products" class="hover:text-yellow-300 transition">Sản phẩm</a>
+                    <a href="#contact" class="hover:text-yellow-300 transition">Liên hệ</a>
                 </div>
+            </div>
+            <hr class="border-purple-400 my-6">
+            <div class="text-center">
+                <p>&copy; 2024 Miu Shop. Tất cả quyền được bảo lưu.</p>
             </div>
         </div>
     </footer>
 
     <script>
-        // Sample CSV data - replace this URL with your actual CSV file
-        const csvUrl = 'https://drive.google.com/file/d/1IQLkmPyHcLeqsFpKNVE8uLjn7FR8hyqH/view?usp=sharing&output=csv';
-        
-        // Product images mapping
-        const productImages = {
-            'Netflix': 'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/netflix.png',
-            'YouTube': 'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/youtube.png',
-            'Capcut': 'https://play-lh.googleusercontent.com/qmYWZiaVxkGv9tCR1UFJ8KS26l4rH9dtGs1mEJbpuDFvxT5wPGbl5ccBqWrZlXuIzUY=w240-h480-rw',
-            'Spotify': 'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/spotify.png',
-            'Disney+': 'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/disneyplus.png',
-            'HBO Max': 'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/hbo-max.png',
-            'Amazon Prime': 'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/amazon-prime-video.png',
-            'Other': 'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/account.png'
-        };
-
         // Function to parse CSV data
-        function parseCSV(text) {
-            const lines = text.split('\n');
-            const headers = lines[0].split(',').map(header => header.trim());
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const headers = lines[0].split(',');
+            const result = [];
             
-            return lines.slice(1).filter(line => line.trim() !== '').map(line => {
-                const values = line.split(',').map(value => value.trim());
-                const product = {};
-                headers.forEach((header, index) => {
-                    product[header] = values[index];
-                });
-                return product;
-            });
+            for(let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue;
+                
+                const obj = {};
+                const currentLine = lines[i].split(',');
+                
+                for(let j = 0; j < headers.length; j++) {
+                    obj[headers[j].trim()] = currentLine[j].trim();
+                }
+                
+                result.push(obj);
+            }
+            
+            return result;
         }
-
-        // Function to display products
-        function displayProducts(products, filter = 'all') {
-            const productsContainer = document.getElementById('products');
-            productsContainer.innerHTML = '';
+        
+        // Function to format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+        
+        // Function to create product cards
+        function createProductCards(products) {
+            const productGrid = document.getElementById('productGrid');
+            productGrid.innerHTML = '';
             
             products.forEach(product => {
-                if (filter !== 'all' && product.type !== filter) return;
+                // Create stock badge class based on quantity
+                let stockBadgeClass = 'bg-green-500';
+                let stockStatus = 'Còn hàng';
                 
-                const productType = product.type || 'Other';
-                const imageUrl = productImages[productType] || productImages['Other'];
-                const stockClass = parseInt(product.quantity) > 0 ? 'bg-green-500' : 'bg-red-500';
-                const stockText = parseInt(product.quantity) > 0 ? 'Còn hàng' : 'Hết hàng';
+                if (parseInt(product.stock) <= 5) {
+                    stockBadgeClass = 'bg-red-500';
+                    stockStatus = 'Sắp hết hàng';
+                } else if (parseInt(product.stock) <= 10) {
+                    stockBadgeClass = 'bg-yellow-500';
+                    stockStatus = 'Còn ít hàng';
+                }
                 
                 const productCard = document.createElement('div');
-                productCard.className = 'card product-card bg-white rounded-lg shadow-md overflow-hidden relative';
+                productCard.className = 'product-card bg-white overflow-hidden relative';
+                
                 productCard.innerHTML = `
-                    <div class="stock-badge ${stockClass} text-white px-2 py-1 rounded-full text-xs font-bold">
-                        ${stockText}
-                    </div>
-                    <img src="${imageUrl}" alt="${product.name}" class="w-full product-image">
-                    <div class="p-4 product-info">
+                    <div class="badge-stock ${stockBadgeClass} text-white">${stockStatus}</div>
+                    <img src="${product.image}" alt="${product.name}" class="product-img">
+                    <div class="p-6">
                         <h3 class="text-xl font-bold mb-2">${product.name}</h3>
-                        <p class="product-description text-gray-600 mb-4">${product.description || 'Không có mô tả'}</p>
-                        <div class="mt-auto">
-                            <p class="price text-2xl mb-2">${parseInt(product.price).toLocaleString('vi-VN')}đ</p>
-                            <p class="text-sm text-gray-500">Số lượng còn lại: ${product.quantity}</p>
-                            <button class="btn-primary text-white py-2 px-4 rounded-lg w-full mt-4">
-                                <i class="fas fa-shopping-cart mr-2"></i>Mua ngay
+                        <div class="mb-4 price-tag">${formatCurrency(product.price)}</div>
+                        <p class="text-gray-600 mb-4">${product.description}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Còn lại: ${product.stock}</span>
+                            <button class="btn-primary text-white font-bold py-2 px-4 rounded">
+                                <i class="fas fa-shopping-cart mr-2"></i> Mua ngay
                             </button>
                         </div>
                     </div>
                 `;
-                productsContainer.appendChild(productCard);
+                
+                productGrid.appendChild(productCard);
             });
         }
-
-        // Filter functionality
-        function setupFilters(products) {
-            const filterButtons = document.querySelectorAll('.filter-btn');
-            filterButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    // Update active button
-                    filterButtons.forEach(btn => {
-                        btn.classList.remove('btn-primary', 'text-white');
-                        btn.classList.add('bg-gray-200');
-                    });
-                    button.classList.remove('bg-gray-200');
-                    button.classList.add('btn-primary', 'text-white');
+        
+        
+        // Function to load CSV file
+        function loadCSV() {
+            const loader = document.getElementById('productLoader');
+            
+            // First try to fetch the local CSV file
+            fetch('products.csv')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('No CSV file found');
+                    }
+                    return response.text();
+                })
+                .then(csvData => {
+                    const products = parseCSV(csvData);
+                    createProductCards(products);
+                    loader.style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error loading CSV:', error);
                     
-                    // Filter products
-                    const filter = button.getAttribute('data-filter');
-                    displayProducts(products, filter);
+                    // If local CSV fails, use sample data
+                    const sampleProducts = [
+                        {
+                            id: 1,
+                            name: 'Netflix Premium',
+                            description: 'Tài khoản Netflix Premium 4K không giới hạn nội dung, xem được trên nhiều thiết bị cùng lúc.',
+                            price: '250000',
+                            image: 'https://cdn.jsdelivr.net/gh/stephanj/coffee-shop@main/frontend/public/images/netflix.jpg',
+                            stock: '15'
+                        },
+                        {
+                            id: 2,
+                            name: 'YouTube Premium',
+                            description: 'Xem YouTube không quảng cáo, nghe nhạc nền và tải video để xem offline.',
+                            price: '150000',
+                            image: 'https://cdn.jsdelivr.net/gh/stephanj/coffee-shop@main/frontend/public/images/youtube.jpg',
+                            stock: '20'
+                        },
+                        {
+                            id: 3,
+                            name: 'Capcut Pro',
+                            description: 'Ứng dụng chỉnh sửa video chuyên nghiệp với đầy đủ công cụ và hiệu ứng cao cấp.',
+                            price: '120000',
+                            image: 'https://cdn.jsdelivr.net/gh/stephanj/coffee-shop@main/frontend/public/images/edit.jpg',
+                            stock: '30'
+                        },
+                        {
+                            id: 4,
+                            name: 'Spotify Premium',
+                            description: 'Nghe nhạc không quảng cáo, chất lượng cao và tải nhạc để nghe offline.',
+                            price: '110000',
+                            image: 'https://cdn.jsdelivr.net/gh/stephanj/coffee-shop@main/frontend/public/images/spotify.jpg',
+                            stock: '25'
+                        },
+                        {
+                            id: 5,
+                            name: 'Adobe Creative Cloud',
+                            description: 'Trọn bộ ứng dụng sáng tạo của Adobe bao gồm Photoshop, Illustrator, Premiere Pro...',
+                            price: '350000',
+                            image: 'https://cdn.jsdelivr.net/gh/stephanj/coffee-shop@main/frontend/public/images/adobe.jpg',
+                            stock: '10'
+                        },
+                        {
+                            id: 6,
+                            name: 'Office 365',
+                            description: 'Bộ ứng dụng văn phòng đầy đủ tính năng với Word, Excel, PowerPoint và nhiều hơn nữa.',
+                            price: '200000',
+                            image: 'https://cdn.jsdelivr.net/gh/stephanj/coffee-shop@main/frontend/public/images/office.jpg',
+                            stock: '18'
+                        }
+                    ];
+                    
+                    createProductCards(sampleProducts);
+                    loader.style.display = 'none';
+                    
+                    // Show a message about using sample data
+                    const productSection = document.getElementById('products');
+                    const alertMessage = document.createElement('div');
+                    alertMessage.className = 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 max-w-4xl mx-auto';
+                    alertMessage.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="py-1"><i class="fas fa-exclamation-circle text-yellow-500 mr-2"></i></div>
+                            <div>
+                                <p class="font-bold">Chú ý</p>
+                                <p>Không tìm thấy file <code>products.csv</code>. Đang hiển thị dữ liệu mẫu.</p>
+                                <p class="mt-2">Để sử dụng dữ liệu thực, vui lòng tạo file <code>products.csv</code> trong cùng thư mục với file HTML này.</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    productSection.insertBefore(alertMessage, productSection.children[1]);
                 });
-            });
         }
-
-        // Fetch CSV data and display products
-        fetch(csvUrl)
-            .then(response => response.text())
-            .then(data => {
-                const products = parseCSV(data);
-                document.getElementById('loading').style.display = 'none';
-                displayProducts(products);
-                setupFilters(products);
-            })
-            .catch(error => {
-                console.error('Error fetching CSV data:', error);
-                document.getElementById('loading').innerHTML = 'Không thể tải dữ liệu sản phẩm';
-                
-                // Display demo products if CSV fetch fails
-                const demoProducts = [
-                    { name: 'Netflix Premium', type: 'Netflix', price: '120000', quantity: '10', description: 'Tài khoản Netflix Premium 4K - Xem trên 4 thiết bị cùng lúc, thời hạn 30 ngày' },
-                    { name: 'YouTube Premium', type: 'YouTube', price: '89000', quantity: '15', description: 'Tài khoản YouTube Premium - Xem video không quảng cáo, phát trong nền, thời hạn 30 ngày' },
-                    { name: 'Capcut Pro', type: 'Capcut', price: '69000', quantity: '8', description: 'Tài khoản Capcut Pro - Trình chỉnh sửa video chuyên nghiệp, thời hạn 30 ngày' },
-                    { name: 'Netflix Basic', type: 'Netflix', price: '79000', quantity: '20', description: 'Tài khoản Netflix Basic - Xem trên 1 thiết bị, thời hạn 30 ngày' },
-                    { name: 'Spotify Premium', type: 'Other', price: '59000', quantity: '12', description: 'Tài khoản Spotify Premium - Nghe nhạc không quảng cáo, thời hạn 30 ngày' },
-                    { name: 'Disney+ Premium', type: 'Other', price: '99000', quantity: '0', description: 'Tài khoản Disney+ Premium - Xem không giới hạn, thời hạn 30 ngày' }
-                ];
-                
-                displayProducts(demoProducts);
-                setupFilters(demoProducts);
-            });
+        
+        // Load products when page is loaded
+        document.addEventListener('DOMContentLoaded', loadCSV);
     </script>
 </body>
 </html>
