@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(GIT_DIR=\"D:/work/haitn/aiAgent/e-com/.git\" GIT_WORK_TREE=\"D:/work/haitn/aiAgent/e-com\" git -C \"D:/work/haitn/aiAgent/e-com\" merge claude/tender-almeida --no-ff -m \"merge: refactor UI và state management từ claude/tender-almeida\")",
+      "Bash(git --git-dir=\"D:/work/haitn/aiAgent/e-com/.git\" --work-tree=\"D:/work/haitn/aiAgent/e-com\" merge claude/tender-almeida --no-ff -m \"merge: refactor UI và state management từ claude/tender-almeida\")",
+      "Bash(git --git-dir=\"D:/work/haitn/aiAgent/e-com/.git\" log --oneline -5)",
+      "Bash(git --git-dir=\"D:/work/haitn/aiAgent/e-com/.git\" --work-tree=\"D:/work/haitn/aiAgent/e-com\" status)",
+      "Bash(where gh:*)",
+      "Bash(winget list:*)"
+    ]
+  }
+}
