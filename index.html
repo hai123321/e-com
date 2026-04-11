@@ -8,429 +8,1451 @@
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #8e44ad;
-            --secondary-color: #9b59b6;
-            --accent-color: #d35400;
-            --text-color: #2c3e50;
-            --light-bg: #f9f9f9;
+            --primary: #7c3aed;
+            --primary-dark: #5b21b6;
+            --primary-light: #ede9fe;
+            --accent: #f59e0b;
+            --accent-dark: #d97706;
+            --text: #1e1b4b;
+            --muted: #6b7280;
+            --bg: #f5f3ff;
+            --surface: #ffffff;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
         }
-        
+
+        * { box-sizing: border-box; }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--text-color);
-            background-color: var(--light-bg);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            margin: 0;
         }
-        
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+
+        /* ── Navbar ── */
         .navbar {
-            background-color: var(--primary-color);
-            background-image: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(91, 33, 182, 0.3);
         }
-        
-        .btn-primary {
-            background-color: var(--accent-color);
-            transition: all 0.3s ease;
+
+        .nav-link {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+            padding: 6px 0;
+            position: relative;
         }
-        
-        .btn-primary:hover {
-            background-color: #e67e22;
-            transform: translateY(-2px);
-        }
-        
-        .product-card {
-            transition: all 0.3s ease;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-        }
-        
-        .product-img {
-            height: 200px;
-            object-fit: cover;
-            width: 100%;
-        }
-        
-        .badge-stock {
+
+        .nav-link::after {
+            content: '';
             position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
+            bottom: 0; left: 0;
+            width: 0; height: 2px;
+            background: var(--accent);
+            transition: width 0.2s;
         }
-        
-        footer {
-            background-color: var(--primary-color);
-            background-image: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+
+        .nav-link:hover { color: #fff; }
+        .nav-link:hover::after { width: 100%; }
+
+        .cart-btn {
+            position: relative;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            border-radius: 10px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        
-        .social-icon {
-            width: 40px;
-            height: 40px;
+
+        .cart-btn:hover { background: rgba(255,255,255,0.25); }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px; right: -8px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 50%;
+            width: 20px; height: 20px;
+            font-size: 11px;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
-            background-color: white;
-            color: var(--primary-color);
-            margin-right: 10px;
-            transition: all 0.3s ease;
+            display: none;
         }
-        
-        .social-icon:hover {
-            transform: scale(1.1);
-            background-color: var(--accent-color);
-            color: white;
+
+        .cart-badge.show { display: flex; }
+
+        /* Mobile menu */
+        .mobile-menu {
+            background: var(--primary-dark);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
         }
-        
-        .loader {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid var(--primary-color);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .price-tag {
-            background-color: var(--accent-color);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-weight: bold;
-            display: inline-block;
-        }
-        
-        .section-title {
+
+        .mobile-menu.open { max-height: 300px; }
+
+        /* ── Hero ── */
+        .hero {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, #818cf8 100%);
             position: relative;
-            display: inline-block;
-            margin-bottom: 30px;
+            overflow: hidden;
+            padding: 80px 0 100px;
         }
-        
-        .section-title::after {
-            content: "";
+
+        .hero::before {
+            content: '';
             position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 50px;
-            height: 3px;
-            background-color: var(--accent-color);
+            top: -50%; left: -20%;
+            width: 600px; height: 600px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -30%; right: -10%;
+            width: 400px; height: 400px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 50%;
+        }
+
+        .hero-content { position: relative; z-index: 1; }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50px;
+            padding: 6px 16px;
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.15;
+            margin-bottom: 16px;
+        }
+
+        .hero-highlight { color: var(--accent); }
+
+        .hero p {
+            color: rgba(255,255,255,0.8);
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            margin-bottom: 32px;
+            max-width: 520px;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 32px;
+            margin-top: 40px;
+        }
+
+        .hero-stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: white;
+        }
+
+        .hero-stat-label {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.65);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Buttons ── */
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 13px 28px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245,158,11,0.35);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-radius: 12px;
+            padding: 11px 24px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-outline:hover {
+            border-color: rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* ── Features ── */
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px 24px;
+            text-align: center;
+            border: 1px solid #ede9fe;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(124,58,237,0.1);
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            width: 60px; height: 60px;
+            background: var(--primary-light);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        /* ── Search & Filter Bar ── */
+        .search-bar {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 12px 18px;
+            font-size: 15px;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+            color: var(--text);
+        }
+
+        .search-bar:focus { border-color: var(--primary); }
+
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid #e5e7eb;
+            background: white;
+            color: var(--muted);
+            transition: all 0.2s;
+        }
+
+        .filter-tab:hover { border-color: var(--primary); color: var(--primary); }
+
+        .filter-tab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* ── Product Cards ── */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid #ede9fe;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 24px 48px rgba(124,58,237,0.15);
+            border-color: var(--primary);
+        }
+
+        .product-img-wrap {
+            position: relative;
+            height: 180px;
+            overflow: hidden;
+            background: var(--primary-light);
+        }
+
+        .product-img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .product-card:hover .product-img { transform: scale(1.05); }
+
+        .stock-badge {
+            position: absolute;
+            top: 12px; right: 12px;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .stock-badge.high { background: rgba(16,185,129,0.9); color: white; }
+        .stock-badge.medium { background: rgba(245,158,11,0.9); color: white; }
+        .stock-badge.low { background: rgba(239,68,68,0.9); color: white; }
+        .stock-badge.out { background: rgba(107,114,128,0.9); color: white; }
+
+        .product-body {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-category {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .product-name {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text);
+            line-height: 1.3;
+        }
+
+        .product-desc {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.6;
+            flex: 1;
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .price {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .price-old {
+            font-size: 12px;
+            color: var(--muted);
+            text-decoration: line-through;
+        }
+
+        .add-cart-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 18px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .add-cart-btn:hover { background: var(--primary-dark); transform: scale(1.03); }
+        .add-cart-btn:disabled { background: #9ca3af; cursor: not-allowed; transform: none; }
+
+        .stock-count {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ── Cart Sidebar ── */
+        .cart-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .cart-overlay.open { opacity: 1; pointer-events: all; }
+
+        .cart-sidebar {
+            position: fixed;
+            top: 0; right: 0;
+            width: 400px;
+            max-width: 95vw;
+            height: 100vh;
+            background: white;
+            z-index: 201;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.15);
+        }
+
+        .cart-sidebar.open { transform: translateX(0); }
+
+        .cart-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--primary);
+            color: white;
+        }
+
+        .cart-header h3 { font-size: 18px; font-weight: 700; }
+
+        .cart-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .cart-close:hover { background: rgba(255,255,255,0.3); }
+
+        .cart-items { flex: 1; overflow-y: auto; padding: 16px; }
+
+        .cart-item {
+            display: flex;
+            gap: 14px;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid #f3f4f6;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+
+        .cart-item:hover { background: #fafafa; }
+
+        .cart-item-img {
+            width: 60px; height: 60px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: var(--primary-light);
+            flex-shrink: 0;
+        }
+
+        .cart-item-info { flex: 1; min-width: 0; }
+
+        .cart-item-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cart-item-price { font-size: 14px; color: var(--primary); font-weight: 700; }
+
+        .qty-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .qty-btn {
+            width: 26px; height: 26px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            color: var(--text);
+        }
+
+        .qty-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .qty-value { font-weight: 600; font-size: 14px; min-width: 20px; text-align: center; }
+
+        .cart-item-remove {
+            background: none;
+            border: none;
+            color: #d1d5db;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            transition: color 0.2s;
+            align-self: flex-start;
+        }
+
+        .cart-item-remove:hover { color: var(--danger); }
+
+        .cart-footer {
+            border-top: 1px solid #f3f4f6;
+            padding: 20px 24px;
+            background: #fafafa;
+        }
+
+        .cart-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .cart-total-label { color: var(--muted); font-size: 14px; }
+        .cart-total-value { font-weight: 700; font-size: 16px; color: var(--primary); }
+
+        .cart-total-grand { font-size: 20px; color: var(--text); margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e5e7eb; }
+
+        .checkout-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .checkout-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(124,58,237,0.35); }
+
+        .cart-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--muted);
+            gap: 12px;
+        }
+
+        .cart-empty i { font-size: 48px; color: #d1d5db; }
+        .cart-empty p { font-size: 15px; }
+
+        /* ── Toast ── */
+        #toast-container {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: white;
+            border-radius: 12px;
+            padding: 14px 18px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 280px;
+            max-width: 360px;
+            transform: translateX(120%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 4px solid var(--success);
+            pointer-events: all;
+        }
+
+        .toast.show { transform: translateX(0); }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.info { border-left-color: var(--primary); }
+
+        .toast-icon { font-size: 18px; }
+        .toast.success .toast-icon { color: var(--success); }
+        .toast.error .toast-icon { color: var(--danger); }
+        .toast.info .toast-icon { color: var(--primary); }
+
+        /* ── Loader ── */
+        .loader-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 0;
+            gap: 16px;
+            color: var(--muted);
+        }
+
+        .loader {
+            width: 48px; height: 48px;
+            border: 4px solid var(--primary-light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+
+        .empty-state i { font-size: 48px; color: #d1d5db; margin-bottom: 16px; }
+        .empty-state p { font-size: 15px; }
+
+        /* ── Section ── */
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 50px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: clamp(1.6rem, 3vw, 2.2rem);
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .section-sub {
+            color: var(--muted);
+            font-size: 15px;
+            max-width: 480px;
+        }
+
+        /* ── Contact ── */
+        .contact-card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #ede9fe;
+            padding: 28px;
+        }
+
+        .contact-info-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .contact-info-item:last-child { border-bottom: none; }
+
+        .contact-icon {
+            width: 40px; height: 40px;
+            background: var(--primary-light);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+            color: var(--text);
+            background: white;
+        }
+
+        .form-input:focus { border-color: var(--primary); }
+
+        /* ── Footer ── */
+        .footer {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: rgba(255,255,255,0.85);
+        }
+
+        .social-btn {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .social-btn:hover { background: var(--accent); transform: translateY(-2px); }
+
+        /* ── Utilities ── */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        .divider { height: 1px; background: #ede9fe; margin: 0; }
+
+        @media (max-width: 640px) {
+            .hero { padding: 56px 0 72px; }
+            .hero-stats { gap: 20px; flex-wrap: wrap; }
+            .cart-sidebar { width: 100%; }
         }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar text-white py-4 px-6 shadow-lg">
-        <div class="container mx-auto flex justify-between items-center">
-            <a href="#" class="text-2xl font-bold">Miu Shop</a>
-            <div class="hidden md:flex items-center space-x-6">
-                <a href="#" class="hover:text-yellow-300 transition">Trang chủ</a>
-                <a href="#products" class="hover:text-yellow-300 transition">Sản phẩm</a>
-                <a href="#contact" class="hover:text-yellow-300 transition">Liên hệ</a>
+
+<!-- ══ NAVBAR ══ -->
+<nav class="navbar">
+    <div class="container">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 0;">
+            <!-- Logo -->
+            <a href="#" style="color:white; font-size:22px; font-weight:800; text-decoration:none; display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-store"></i> Miu Shop
+            </a>
+
+            <!-- Desktop Nav -->
+            <div class="hidden md:flex" style="gap:28px; align-items:center;">
+                <a href="#" class="nav-link">Trang chủ</a>
+                <a href="#products" class="nav-link">Sản phẩm</a>
+                <a href="#contact" class="nav-link">Liên hệ</a>
             </div>
-            <button class="md:hidden focus:outline-none">
-                <i class="fas fa-bars text-2xl"></i>
-            </button>
-        </div>
-    </nav>
 
-    <!-- Hero Section -->
-    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-16">
-        <div class="container mx-auto px-6 text-center">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4">Tài khoản trực tuyến chính hãng</h1>
-            <p class="text-xl md:text-2xl mb-8">Cung cấp tài khoản Netflix, YouTube, Capcut và nhiều dịch vụ khác với giá tốt nhất</p>
-            <a href="#products" class="btn-primary text-white font-bold py-3 px-8 rounded-full text-lg">Xem sản phẩm</a>
-        </div>
-    </div>
-
-    <!-- Features -->
-    <div class="py-12 bg-white">
-        <div class="container mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="text-center">
-                    <div class="bg-purple-100 mx-auto rounded-full w-16 h-16 flex items-center justify-center mb-4">
-                        <i class="fas fa-check-circle text-purple-600 text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Chính hãng 100%</h3>
-                    <p class="text-gray-600">Tất cả tài khoản đều được đảm bảo chính hãng và hoạt động ổn định</p>
-                </div>
-                <div class="text-center">
-                    <div class="bg-purple-100 mx-auto rounded-full w-16 h-16 flex items-center justify-center mb-4">
-                        <i class="fas fa-bolt text-purple-600 text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Giao hàng nhanh</h3>
-                    <p class="text-gray-600">Thông tin tài khoản sẽ được gửi ngay sau khi thanh toán</p>
-                </div>
-                <div class="text-center">
-                    <div class="bg-purple-100 mx-auto rounded-full w-16 h-16 flex items-center justify-center mb-4">
-                        <i class="fas fa-headset text-purple-600 text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Hỗ trợ 24/7</h3>
-                    <p class="text-gray-600">Đội ngũ hỗ trợ khách hàng luôn sẵn sàng giúp đỡ bạn</p>
-                </div>
+            <!-- Cart + Mobile Toggle -->
+            <div style="display:flex; align-items:center; gap:12px;">
+                <button class="cart-btn" onclick="AppUI.openCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cartLabel">Giỏ hàng</span>
+                    <span class="cart-badge" id="cartBadge">0</span>
+                </button>
+                <button id="menuBtn" class="md:hidden" style="color:white; background:none; border:none; font-size:22px; cursor:pointer;">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Products Section -->
-    <div id="products" class="py-12 bg-gray-100">
-        <div class="container mx-auto px-6">
-            <h2 class="text-3xl font-bold text-center mb-8 section-title">Sản phẩm của chúng tôi</h2>
-            
-            <div id="productLoader" class="loader"></div>
-            
-            <div id="productGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Products will be loaded here from CSV -->
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="container" style="padding:12px 24px 16px; display:flex; flex-direction:column; gap:4px;">
+            <a href="#" class="nav-link" style="padding:10px 0;">Trang chủ</a>
+            <a href="#products" class="nav-link" style="padding:10px 0;">Sản phẩm</a>
+            <a href="#contact" class="nav-link" style="padding:10px 0;">Liên hệ</a>
+        </div>
+    </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+    <div class="container hero-content">
+        <div class="hero-badge">
+            <i class="fas fa-star" style="color:var(--accent);"></i>
+            Tin cậy bởi 10,000+ khách hàng
+        </div>
+        <h1>Tài khoản <span class="hero-highlight">Premium</span><br>giá tốt nhất</h1>
+        <p>Cung cấp tài khoản Netflix, YouTube, Spotify và nhiều dịch vụ streaming hàng đầu với giá ưu đãi, giao ngay sau thanh toán.</p>
+        <div style="display:flex; gap:14px; flex-wrap:wrap;">
+            <a href="#products" class="btn-primary">
+                <i class="fas fa-fire"></i> Mua ngay
+            </a>
+            <a href="#contact" class="btn-outline">
+                <i class="fas fa-headset"></i> Tư vấn
+            </a>
+        </div>
+        <div class="hero-stats">
+            <div>
+                <div class="hero-stat-value">10K+</div>
+                <div class="hero-stat-label">Khách hàng</div>
+            </div>
+            <div>
+                <div class="hero-stat-value">99%</div>
+                <div class="hero-stat-label">Hài lòng</div>
+            </div>
+            <div>
+                <div class="hero-stat-value">24/7</div>
+                <div class="hero-stat-label">Hỗ trợ</div>
+            </div>
+            <div>
+                <div class="hero-stat-value">100%</div>
+                <div class="hero-stat-label">Chính hãng</div>
             </div>
         </div>
     </div>
+</section>
 
-    <!-- Contact Section -->
-    <div id="contact" class="py-12 bg-white">
-        <div class="container mx-auto px-6">
-            <h2 class="text-3xl font-bold text-center mb-8 section-title">Liên hệ với chúng tôi</h2>
-            
-            <div class="max-w-4xl mx-auto">
-                <div class="bg-gray-50 rounded-lg shadow-lg p-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <h3 class="text-xl font-semibold mb-4">Thông tin liên hệ</h3>
-                            <p class="mb-3"><i class="fas fa-map-marker-alt mr-2 text-purple-600"></i> 123 Đường ABC, Quận XYZ, TP. Hồ Chí Minh</p>
-                            <p class="mb-3"><i class="fas fa-phone-alt mr-2 text-purple-600"></i> 0123 456 789</p>
-                            <p class="mb-3"><i class="fas fa-envelope mr-2 text-purple-600"></i> info@miushop.com</p>
-                            <p class="mb-3"><i class="fab fa-telegram mr-2 text-purple-600"></i> @miushop</p>
-                            
-                            <div class="flex mt-6">
-                                <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
-                                <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
-                                <a href="#" class="social-icon"><i class="fab fa-telegram"></i></a>
-                                <a href="#" class="social-icon"><i class="fab fa-tiktok"></i></a>
-                                <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <h3 class="text-xl font-semibold mb-4">Gửi tin nhắn cho chúng tôi</h3>
-                            <form>
-                                <div class="mb-4">
-                                    <input type="text" placeholder="Họ và tên" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
-                                </div>
-                                <div class="mb-4">
-                                    <input type="email" placeholder="Email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
-                                </div>
-                                <div class="mb-4">
-                                    <textarea rows="4" placeholder="Nội dung" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"></textarea>
-                                </div>
-                                <button type="button" class="btn-primary text-white font-bold py-2 px-6 rounded-lg w-full">Gửi tin nhắn</button>
-                            </form>
-                        </div>
+<!-- ══ FEATURES ══ -->
+<section style="padding: 64px 0; background: white;">
+    <div class="container">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px;">
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                <h3 style="font-size:16px; font-weight:700; margin-bottom:8px;">Chính hãng 100%</h3>
+                <p style="font-size:13px; color:var(--muted); line-height:1.6;">Tất cả tài khoản được đảm bảo chính hãng và hoạt động ổn định.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                <h3 style="font-size:16px; font-weight:700; margin-bottom:8px;">Giao ngay tức thì</h3>
+                <p style="font-size:13px; color:var(--muted); line-height:1.6;">Thông tin tài khoản gửi ngay sau khi thanh toán thành công.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-headset"></i></div>
+                <h3 style="font-size:16px; font-weight:700; margin-bottom:8px;">Hỗ trợ 24/7</h3>
+                <p style="font-size:13px; color:var(--muted); line-height:1.6;">Đội ngũ hỗ trợ luôn sẵn sàng giải đáp mọi thắc mắc của bạn.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-undo-alt"></i></div>
+                <h3 style="font-size:16px; font-weight:700; margin-bottom:8px;">Đổi trả dễ dàng</h3>
+                <p style="font-size:13px; color:var(--muted); line-height:1.6;">Cam kết đổi trả nếu tài khoản không hoạt động trong 24 giờ.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ PRODUCTS ══ -->
+<section id="products" style="padding: 64px 0; background: var(--bg);">
+    <div class="container">
+        <!-- Section Header -->
+        <div style="margin-bottom:36px;">
+            <div class="section-label"><i class="fas fa-box-open"></i> Sản phẩm</div>
+            <h2 class="section-title">Dịch vụ streaming cao cấp</h2>
+            <p class="section-sub">Lựa chọn từ các dịch vụ giải trí hàng đầu thế giới với giá cực ưu đãi.</p>
+        </div>
+
+        <!-- Search + Filter -->
+        <div style="background:white; border-radius:16px; padding:20px; margin-bottom:28px; border:1px solid #ede9fe; display:flex; flex-wrap:wrap; gap:16px; align-items:center;">
+            <div style="flex:1; min-width:200px; position:relative;">
+                <i class="fas fa-search" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted);"></i>
+                <input type="text" id="searchInput" class="search-bar" placeholder="Tìm kiếm sản phẩm..." style="padding-left:42px;" oninput="AppUI.applyFilters()">
+            </div>
+            <div class="filter-tabs" id="filterTabs">
+                <button class="filter-tab active" data-filter="all" onclick="AppUI.setFilter('all', this)">Tất cả</button>
+                <button class="filter-tab" data-filter="high" onclick="AppUI.setFilter('high', this)">Còn nhiều</button>
+                <button class="filter-tab" data-filter="medium" onclick="AppUI.setFilter('medium', this)">Còn ít</button>
+                <button class="filter-tab" data-filter="low" onclick="AppUI.setFilter('low', this)">Sắp hết</button>
+            </div>
+            <div style="font-size:13px; color:var(--muted); white-space:nowrap;">
+                <span id="productCount">0</span> sản phẩm
+            </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div id="productLoader" class="loader-wrap">
+            <div class="loader"></div>
+            <p>Đang tải sản phẩm...</p>
+        </div>
+
+        <div id="productGrid" class="product-grid" style="display:none;"></div>
+        <div id="productEmpty" class="empty-state" style="display:none;">
+            <i class="fas fa-box-open"></i>
+            <p>Không tìm thấy sản phẩm phù hợp.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ══ CONTACT ══ -->
+<section id="contact" style="padding:64px 0; background:white;">
+    <div class="container">
+        <div style="margin-bottom:36px;">
+            <div class="section-label"><i class="fas fa-envelope"></i> Liên hệ</div>
+            <h2 class="section-title">Chúng tôi luôn lắng nghe</h2>
+            <p class="section-sub">Mọi thắc mắc về sản phẩm, hãy liên hệ với chúng tôi.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:24px; max-width:900px;">
+            <!-- Info -->
+            <div class="contact-card">
+                <h3 style="font-size:17px; font-weight:700; margin-bottom:20px; color:var(--text);">Thông tin liên hệ</h3>
+                <div class="contact-info-item">
+                    <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <div>
+                        <div style="font-size:12px; color:var(--muted); margin-bottom:2px;">Địa chỉ</div>
+                        <div style="font-size:14px; font-weight:500;">123 Đường ABC, Q.XYZ, TP.HCM</div>
                     </div>
                 </div>
+                <div class="contact-info-item">
+                    <div class="contact-icon"><i class="fas fa-phone-alt"></i></div>
+                    <div>
+                        <div style="font-size:12px; color:var(--muted); margin-bottom:2px;">Điện thoại</div>
+                        <div style="font-size:14px; font-weight:500;">0123 456 789</div>
+                    </div>
+                </div>
+                <div class="contact-info-item">
+                    <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                    <div>
+                        <div style="font-size:12px; color:var(--muted); margin-bottom:2px;">Email</div>
+                        <div style="font-size:14px; font-weight:500;">info@miushop.com</div>
+                    </div>
+                </div>
+                <div class="contact-info-item">
+                    <div class="contact-icon"><i class="fab fa-telegram"></i></div>
+                    <div>
+                        <div style="font-size:12px; color:var(--muted); margin-bottom:2px;">Telegram</div>
+                        <div style="font-size:14px; font-weight:500;">@miushop</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <a href="#" style="width:38px; height:38px; border-radius:10px; background:var(--primary-light); display:flex; align-items:center; justify-content:center; color:var(--primary); text-decoration:none; font-size:16px; transition:all 0.2s;" onmouseover="this.style.background='var(--primary)';this.style.color='white';" onmouseout="this.style.background='var(--primary-light)';this.style.color='var(--primary)';"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" style="width:38px; height:38px; border-radius:10px; background:var(--primary-light); display:flex; align-items:center; justify-content:center; color:var(--primary); text-decoration:none; font-size:16px; transition:all 0.2s;" onmouseover="this.style.background='var(--primary)';this.style.color='white';" onmouseout="this.style.background='var(--primary-light)';this.style.color='var(--primary)';"><i class="fab fa-instagram"></i></a>
+                    <a href="#" style="width:38px; height:38px; border-radius:10px; background:var(--primary-light); display:flex; align-items:center; justify-content:center; color:var(--primary); text-decoration:none; font-size:16px; transition:all 0.2s;" onmouseover="this.style.background='var(--primary)';this.style.color='white';" onmouseout="this.style.background='var(--primary-light)';this.style.color='var(--primary)';"><i class="fab fa-telegram"></i></a>
+                    <a href="#" style="width:38px; height:38px; border-radius:10px; background:var(--primary-light); display:flex; align-items:center; justify-content:center; color:var(--primary); text-decoration:none; font-size:16px; transition:all 0.2s;" onmouseover="this.style.background='var(--primary)';this.style.color='white';" onmouseout="this.style.background='var(--primary-light)';this.style.color='var(--primary)';"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <div class="contact-card">
+                <h3 style="font-size:17px; font-weight:700; margin-bottom:20px; color:var(--text);">Gửi tin nhắn</h3>
+                <form id="contactForm" onsubmit="AppUI.submitContact(event)">
+                    <div style="margin-bottom:14px;">
+                        <input type="text" id="contactName" class="form-input" placeholder="Họ và tên *" required>
+                    </div>
+                    <div style="margin-bottom:14px;">
+                        <input type="email" id="contactEmail" class="form-input" placeholder="Email *" required>
+                    </div>
+                    <div style="margin-bottom:14px;">
+                        <input type="text" id="contactSubject" class="form-input" placeholder="Tiêu đề">
+                    </div>
+                    <div style="margin-bottom:20px;">
+                        <textarea id="contactMessage" class="form-input" rows="4" placeholder="Nội dung tin nhắn *" required style="resize:vertical;"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">
+                        <i class="fas fa-paper-plane"></i> Gửi tin nhắn
+                    </button>
+                </form>
             </div>
         </div>
     </div>
+</section>
 
-    <!-- Footer -->
-    <footer class="text-white py-8">
-        <div class="container mx-auto px-6">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-6 md:mb-0">
-                    <h2 class="text-2xl font-bold">Miu Shop</h2>
-                    <p class="mt-2">Cung cấp tài khoản trực tuyến chính hãng</p>
+<!-- ══ FOOTER ══ -->
+<footer class="footer" style="padding:48px 0 24px;">
+    <div class="container">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:32px; margin-bottom:32px;">
+            <div>
+                <div style="font-size:22px; font-weight:800; color:white; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-store"></i> Miu Shop
                 </div>
-                <div class="flex space-x-4">
-                    <a href="#" class="hover:text-yellow-300 transition">Trang chủ</a>
-                    <a href="#products" class="hover:text-yellow-300 transition">Sản phẩm</a>
-                    <a href="#contact" class="hover:text-yellow-300 transition">Liên hệ</a>
+                <p style="font-size:13px; line-height:1.7; color:rgba(255,255,255,0.65);">Cung cấp tài khoản premium chính hãng với giá tốt nhất thị trường.</p>
+                <div style="display:flex; gap:8px; margin-top:16px;">
+                    <a href="#" class="social-btn"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-btn"><i class="fab fa-telegram"></i></a>
+                    <a href="#" class="social-btn"><i class="fab fa-tiktok"></i></a>
                 </div>
             </div>
-            <hr class="border-purple-400 my-6">
-            <div class="text-center">
-                <p>&copy; 2024 Miu Shop. Tất cả quyền được bảo lưu.</p>
+            <div>
+                <h4 style="color:white; font-weight:700; margin-bottom:14px; font-size:14px;">Liên kết nhanh</h4>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <a href="#" style="color:rgba(255,255,255,0.65); text-decoration:none; font-size:13px; transition:color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.65)'">Trang chủ</a>
+                    <a href="#products" style="color:rgba(255,255,255,0.65); text-decoration:none; font-size:13px; transition:color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.65)'">Sản phẩm</a>
+                    <a href="#contact" style="color:rgba(255,255,255,0.65); text-decoration:none; font-size:13px; transition:color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.65)'">Liên hệ</a>
+                </div>
+            </div>
+            <div>
+                <h4 style="color:white; font-weight:700; margin-bottom:14px; font-size:14px;">Chính sách</h4>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <a href="#" style="color:rgba(255,255,255,0.65); text-decoration:none; font-size:13px;">Bảo mật thông tin</a>
+                    <a href="#" style="color:rgba(255,255,255,0.65); text-decoration:none; font-size:13px;">Điều khoản dịch vụ</a>
+                    <a href="#" style="color:rgba(255,255,255,0.65); text-decoration:none; font-size:13px;">Chính sách đổi trả</a>
+                </div>
             </div>
         </div>
-    </footer>
+        <div style="border-top:1px solid rgba(255,255,255,0.15); padding-top:20px; text-align:center; font-size:13px; color:rgba(255,255,255,0.5);">
+            &copy; 2025 Miu Shop. Tất cả quyền được bảo lưu.
+        </div>
+    </div>
+</footer>
 
-    <script>
-        // Function to parse CSV data
-        function parseCSV(csv) {
-            const lines = csv.split('\n');
-            const headers = lines[0].split(',');
-            const result = [];
-            
-            for(let i = 1; i < lines.length; i++) {
-                if (lines[i].trim() === '') continue;
-                
-                const obj = {};
-                const currentLine = lines[i].split(',');
-                
-                for(let j = 0; j < headers.length; j++) {
-                    obj[headers[j].trim()] = currentLine[j].trim();
-                }
-                
-                result.push(obj);
+<!-- ══ CART SIDEBAR ══ -->
+<div class="cart-overlay" id="cartOverlay" onclick="AppUI.closeCart()"></div>
+<div class="cart-sidebar" id="cartSidebar">
+    <div class="cart-header">
+        <h3><i class="fas fa-shopping-cart" style="margin-right:8px;"></i> Giỏ hàng</h3>
+        <button class="cart-close" onclick="AppUI.closeCart()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-footer" id="cartFooter" style="display:none;">
+        <div class="cart-total-row">
+            <span class="cart-total-label">Số lượng sản phẩm</span>
+            <span id="cartItemCount" style="font-weight:600;">0</span>
+        </div>
+        <div class="cart-total-row cart-total-grand">
+            <span style="font-weight:700; font-size:16px;">Tổng cộng</span>
+            <span class="cart-total-value" id="cartTotal">0 ₫</span>
+        </div>
+        <button class="checkout-btn" onclick="AppUI.checkout()">
+            <i class="fas fa-credit-card"></i> Thanh toán ngay
+        </button>
+        <button onclick="AppState.clearCart()" style="width:100%; background:none; border:none; color:var(--muted); font-size:13px; cursor:pointer; margin-top:10px; padding:6px;">
+            <i class="fas fa-trash-alt"></i> Xóa giỏ hàng
+        </button>
+    </div>
+</div>
+
+<!-- ══ TOAST CONTAINER ══ -->
+<div id="toast-container"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// STATE MANAGEMENT
+// ══════════════════════════════════════════════
+const AppState = {
+    products: [],
+    cart: [],
+    searchQuery: '',
+    stockFilter: 'all',
+
+    setProducts(products) {
+        this.products = products;
+        this.render();
+    },
+
+    addToCart(productId) {
+        const product = this.products.find(p => p.id === productId);
+        if (!product) return;
+
+        const stock = parseInt(product.stock);
+        if (stock <= 0) {
+            AppToast.show('Sản phẩm đã hết hàng!', 'error');
+            return;
+        }
+
+        const existing = this.cart.find(item => item.id === productId);
+        if (existing) {
+            if (existing.qty >= stock) {
+                AppToast.show('Không thể thêm, đã đạt số lượng tồn kho!', 'error');
+                return;
             }
-            
-            return result;
+            existing.qty += 1;
+        } else {
+            this.cart.push({ id: productId, qty: 1 });
         }
-        
-        // Function to format currency
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('vi-VN', {
-                style: 'currency',
-                currency: 'VND'
-            }).format(amount);
+
+        AppToast.show(`Đã thêm "${product.name}" vào giỏ hàng`, 'success');
+        this.renderCart();
+    },
+
+    removeFromCart(productId) {
+        this.cart = this.cart.filter(item => item.id !== productId);
+        this.renderCart();
+    },
+
+    updateQty(productId, delta) {
+        const item = this.cart.find(i => i.id === productId);
+        if (!item) return;
+
+        const product = this.products.find(p => p.id === productId);
+        const stock = parseInt(product.stock);
+        const newQty = item.qty + delta;
+
+        if (newQty <= 0) {
+            this.removeFromCart(productId);
+            return;
         }
-        
-        // Function to create product cards
-        function createProductCards(products) {
-            const productGrid = document.getElementById('productGrid');
-            productGrid.innerHTML = '';
-            
-            products.forEach(product => {
-                // Create stock badge class based on quantity
-                let stockBadgeClass = 'bg-green-500';
-                let stockStatus = 'Còn hàng';
-                
-                if (parseInt(product.stock) <= 5) {
-                    stockBadgeClass = 'bg-red-500';
-                    stockStatus = 'Sắp hết hàng';
-                } else if (parseInt(product.stock) <= 10) {
-                    stockBadgeClass = 'bg-yellow-500';
-                    stockStatus = 'Còn ít hàng';
-                }
-                
-                const productCard = document.createElement('div');
-                productCard.className = 'product-card bg-white overflow-hidden relative';
-                
-                productCard.innerHTML = `
-                    <div class="badge-stock ${stockBadgeClass} text-white">${stockStatus}</div>
-                    <img src="${product.image}" alt="${product.name}" class="product-img">
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold mb-2">${product.name}</h3>
-                        <div class="mb-4 price-tag">${formatCurrency(product.price)}</div>
-                        <p class="text-gray-600 mb-4">${product.description}</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-500">Còn lại: ${product.stock}</span>
-                            <button class="btn-primary text-white font-bold py-2 px-4 rounded">
-                                <i class="fas fa-shopping-cart mr-2"></i> Mua ngay
-                            </button>
+
+        if (newQty > stock) {
+            AppToast.show('Vượt quá số lượng tồn kho!', 'error');
+            return;
+        }
+
+        item.qty = newQty;
+        this.renderCart();
+    },
+
+    clearCart() {
+        this.cart = [];
+        this.renderCart();
+        AppToast.show('Đã xóa toàn bộ giỏ hàng', 'info');
+    },
+
+    getTotal() {
+        return this.cart.reduce((sum, item) => {
+            const product = this.products.find(p => p.id === item.id);
+            return sum + (product ? parseInt(product.price) * item.qty : 0);
+        }, 0);
+    },
+
+    getTotalItems() {
+        return this.cart.reduce((sum, item) => sum + item.qty, 0);
+    },
+
+    getFiltered() {
+        const query = this.searchQuery.toLowerCase().trim();
+        return this.products.filter(p => {
+            const matchSearch = !query ||
+                p.name.toLowerCase().includes(query) ||
+                p.description.toLowerCase().includes(query);
+
+            const stock = parseInt(p.stock);
+            const matchFilter =
+                this.stockFilter === 'all' ||
+                (this.stockFilter === 'high' && stock > 10) ||
+                (this.stockFilter === 'medium' && stock > 5 && stock <= 10) ||
+                (this.stockFilter === 'low' && stock <= 5 && stock > 0);
+
+            return matchSearch && matchFilter;
+        });
+    },
+
+    render() {
+        const filtered = this.getFiltered();
+        const grid = document.getElementById('productGrid');
+        const empty = document.getElementById('productEmpty');
+        const count = document.getElementById('productCount');
+
+        count.textContent = filtered.length;
+
+        if (filtered.length === 0) {
+            grid.style.display = 'none';
+            empty.style.display = 'block';
+            return;
+        }
+
+        empty.style.display = 'none';
+        grid.style.display = 'grid';
+        grid.innerHTML = filtered.map(p => AppUI.renderProductCard(p)).join('');
+    },
+
+    renderCart() {
+        const items = document.getElementById('cartItems');
+        const footer = document.getElementById('cartFooter');
+        const badge = document.getElementById('cartBadge');
+        const totalEl = document.getElementById('cartTotal');
+        const countEl = document.getElementById('cartItemCount');
+
+        const totalItems = this.getTotalItems();
+
+        // Update badge
+        if (totalItems > 0) {
+            badge.textContent = totalItems;
+            badge.classList.add('show');
+        } else {
+            badge.classList.remove('show');
+        }
+
+        if (this.cart.length === 0) {
+            items.innerHTML = `
+                <div class="cart-empty">
+                    <i class="fas fa-shopping-cart"></i>
+                    <p>Giỏ hàng trống</p>
+                    <p style="font-size:13px;">Hãy thêm sản phẩm vào giỏ hàng</p>
+                </div>`;
+            footer.style.display = 'none';
+            return;
+        }
+
+        footer.style.display = 'block';
+        totalEl.textContent = formatCurrency(this.getTotal());
+        countEl.textContent = totalItems;
+
+        items.innerHTML = this.cart.map(item => {
+            const product = this.products.find(p => p.id === item.id);
+            if (!product) return '';
+            return `
+                <div class="cart-item">
+                    <img src="${product.image}" alt="${product.name}" class="cart-item-img"
+                         onerror="this.style.background='var(--primary-light)';this.src='';">
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${product.name}</div>
+                        <div class="cart-item-price">${formatCurrency(parseInt(product.price) * item.qty)}</div>
+                        <div class="qty-control">
+                            <button class="qty-btn" onclick="AppState.updateQty('${item.id}', -1)">−</button>
+                            <span class="qty-value">${item.qty}</span>
+                            <button class="qty-btn" onclick="AppState.updateQty('${item.id}', 1)">+</button>
                         </div>
                     </div>
-                `;
-                
-                productGrid.appendChild(productCard);
-            });
-        }
-        
-        
-        // Function to load CSV file
-        function loadCSV() {
-            const loader = document.getElementById('productLoader');
-            
-            // First try to fetch the local CSV file
-            fetch('products.csv')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('No CSV file found');
-                    }
-                    return response.text();
-                })
-                .then(csvData => {
-                    const products = parseCSV(csvData);
-                    createProductCards(products);
-                    loader.style.display = 'none';
-                })
-                .catch(error => {
-                    console.error('Error loading CSV:', error);
-                    
-                    // If local CSV fails, use sample data
-                    const sampleProducts = [
-                        {
-                            id: 1,
-                            name: 'Netflix Premium',
-                            description: 'Tài khoản Netflix Premium 4K không giới hạn nội dung, xem được trên nhiều thiết bị cùng lúc.',
-                            price: '250000',
-                            image: 'https://cdn.jsdelivr.net/gh/stephanj/coffee-shop@main/frontend/public/images/netflix.jpg',
-                            stock: '15'
-                        },
-                        {
-                            id: 2,
-                            name: 'YouTube Premium',
-                            description: 'Xem YouTube không quảng cáo, nghe nhạc nền và tải video để xem offline.',
-                            price: '150000',
-                            image: 'https://cdn.jsdelivr.net/gh/stephanj/coffee-shop@main/frontend/public/images/youtube.jpg',
-                            stock: '20'
-                        },
-                        {
-                            id: 3,
-                            name: 'Capcut Pro',
-                            description: 'Ứng dụng chỉnh sửa video chuyên nghiệp với đầy đủ công cụ và hiệu ứng cao cấp.',
-                            price: '120000',
-                            image: 'https://cdn.jsdelivr.net/gh/stephanj/coffee-shop@main/frontend/public/images/edit.jpg',
-                            stock: '30'
-                        },
-                        {
-                            id: 4,
-                            name: 'Spotify Premium',
-                            description: 'Nghe nhạc không quảng cáo, chất lượng cao và tải nhạc để nghe offline.',
-                            price: '110000',
-                            image: 'https://cdn.jsdelivr.net/gh/stephanj/coffee-shop@main/frontend/public/images/spotify.jpg',
-                            stock: '25'
-                        },
-                        {
-                            id: 5,
-                            name: 'Adobe Creative Cloud',
-                            description: 'Trọn bộ ứng dụng sáng tạo của Adobe bao gồm Photoshop, Illustrator, Premiere Pro...',
-                            price: '350000',
-                            image: 'https://cdn.jsdelivr.net/gh/stephanj/coffee-shop@main/frontend/public/images/adobe.jpg',
-                            stock: '10'
-                        },
-                        {
-                            id: 6,
-                            name: 'Office 365',
-                            description: 'Bộ ứng dụng văn phòng đầy đủ tính năng với Word, Excel, PowerPoint và nhiều hơn nữa.',
-                            price: '200000',
-                            image: 'https://cdn.jsdelivr.net/gh/stephanj/coffee-shop@main/frontend/public/images/office.jpg',
-                            stock: '18'
-                        }
-                    ];
-                    
-                    createProductCards(sampleProducts);
-                    loader.style.display = 'none';
-                    
-                    // Show a message about using sample data
-                    const productSection = document.getElementById('products');
-                    const alertMessage = document.createElement('div');
-                    alertMessage.className = 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 max-w-4xl mx-auto';
-                    alertMessage.innerHTML = `
-                        <div class="flex items-center">
-                            <div class="py-1"><i class="fas fa-exclamation-circle text-yellow-500 mr-2"></i></div>
-                            <div>
-                                <p class="font-bold">Chú ý</p>
-                                <p>Không tìm thấy file <code>products.csv</code>. Đang hiển thị dữ liệu mẫu.</p>
-                                <p class="mt-2">Để sử dụng dữ liệu thực, vui lòng tạo file <code>products.csv</code> trong cùng thư mục với file HTML này.</p>
-                            </div>
+                    <button class="cart-item-remove" onclick="AppState.removeFromCart('${item.id}')" title="Xóa">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>`;
+        }).join('');
+    }
+};
+
+// ══════════════════════════════════════════════
+// UI CONTROLLER
+// ══════════════════════════════════════════════
+const AppUI = {
+    openCart() {
+        document.getElementById('cartOverlay').classList.add('open');
+        document.getElementById('cartSidebar').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    },
+
+    closeCart() {
+        document.getElementById('cartOverlay').classList.remove('open');
+        document.getElementById('cartSidebar').classList.remove('open');
+        document.body.style.overflow = '';
+    },
+
+    applyFilters() {
+        AppState.searchQuery = document.getElementById('searchInput').value;
+        AppState.render();
+    },
+
+    setFilter(filter, btn) {
+        AppState.stockFilter = filter;
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        AppState.render();
+    },
+
+    renderProductCard(product) {
+        const stock = parseInt(product.stock);
+        let badgeClass = 'high', badgeText = 'Còn hàng';
+        if (stock <= 0) { badgeClass = 'out'; badgeText = 'Hết hàng'; }
+        else if (stock <= 5) { badgeClass = 'low'; badgeText = 'Sắp hết'; }
+        else if (stock <= 10) { badgeClass = 'medium'; badgeText = 'Còn ít'; }
+
+        const inCart = AppState.cart.find(i => i.id === product.id);
+        const btnLabel = inCart ? `Trong giỏ (${inCart.qty})` : 'Thêm vào giỏ';
+        const disabled = stock <= 0 ? 'disabled' : '';
+
+        return `
+            <div class="product-card">
+                <div class="product-img-wrap">
+                    <img src="${product.image}" alt="${product.name}" class="product-img"
+                         onerror="this.style.display='none'; this.parentElement.style.background='var(--primary-light)';">
+                    <span class="stock-badge ${badgeClass}">${badgeText}</span>
+                </div>
+                <div class="product-body">
+                    <div class="product-category"><i class="fas fa-tag"></i> Tài khoản Premium</div>
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-desc">${product.description}</div>
+                    <div class="product-footer">
+                        <div>
+                            <div class="price">${formatCurrency(product.price)}</div>
+                            <div class="price-old">Tiết kiệm ngay hôm nay</div>
                         </div>
-                    `;
-                    
-                    productSection.insertBefore(alertMessage, productSection.children[1]);
-                });
+                        <button class="add-cart-btn" onclick="AppState.addToCart('${product.id}')" ${disabled}>
+                            <i class="fas fa-cart-plus"></i> ${btnLabel}
+                        </button>
+                    </div>
+                    <div class="stock-count">
+                        <i class="fas fa-box" style="font-size:11px;"></i>
+                        Còn lại: <strong>${stock}</strong> sản phẩm
+                    </div>
+                </div>
+            </div>`;
+    },
+
+    submitContact(e) {
+        e.preventDefault();
+        const name = document.getElementById('contactName').value;
+        AppToast.show(`Cảm ơn ${name}! Chúng tôi sẽ phản hồi sớm nhất.`, 'success');
+        e.target.reset();
+    },
+
+    checkout() {
+        if (AppState.cart.length === 0) return;
+        AppToast.show('Chức năng thanh toán đang được phát triển!', 'info');
+        this.closeCart();
+    }
+};
+
+// ══════════════════════════════════════════════
+// TOAST NOTIFICATIONS
+// ══════════════════════════════════════════════
+const AppToast = {
+    show(message, type = 'success') {
+        const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+        const container = document.getElementById('toast-container');
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            <i class="fas ${icons[type]} toast-icon"></i>
+            <span>${message}</span>`;
+
+        container.appendChild(toast);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => toast.classList.add('show'));
+        });
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 400);
+        }, 3000);
+    }
+};
+
+// ══════════════════════════════════════════════
+// DATA LAYER
+// ══════════════════════════════════════════════
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+}
+
+function parseCSV(csv) {
+    const lines = csv.trim().split('\n');
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(',').map(h => h.trim());
+    const results = [];
+
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        // Handle quoted CSV fields
+        const values = [];
+        let current = '', inQuotes = false;
+        for (const char of line) {
+            if (char === '"') { inQuotes = !inQuotes; }
+            else if (char === ',' && !inQuotes) { values.push(current.trim()); current = ''; }
+            else { current += char; }
         }
-        
-        // Load products when page is loaded
-        document.addEventListener('DOMContentLoaded', loadCSV);
-    </script>
+        values.push(current.trim());
+
+        if (values.length < headers.length) continue;
+
+        const obj = {};
+        headers.forEach((h, idx) => { obj[h] = values[idx] || ''; });
+        results.push(obj);
+    }
+
+    return results;
+}
+
+const SAMPLE_PRODUCTS = [
+    { id: '1', name: 'Netflix Premium', description: 'Tài khoản Netflix 4K Ultra HD, xem không giới hạn trên mọi thiết bị cùng lúc.', price: '250000', image: 'https://i.imgur.com/JyJHDvR.jpg', stock: '15' },
+    { id: '2', name: 'YouTube Premium', description: 'Xem YouTube không quảng cáo, nghe nhạc nền và tải video xem offline.', price: '150000', image: 'https://i.imgur.com/9xRJJvY.jpg', stock: '20' },
+    { id: '3', name: 'Capcut Pro', description: 'Ứng dụng chỉnh sửa video chuyên nghiệp với đầy đủ công cụ và hiệu ứng cao cấp.', price: '120000', image: 'https://i.imgur.com/3YnmNDw.jpg', stock: '8' },
+    { id: '4', name: 'Spotify Premium', description: 'Nghe nhạc không quảng cáo, chất lượng cao và tải nhạc nghe offline mọi lúc mọi nơi.', price: '110000', image: 'https://i.imgur.com/6UGVkjT.jpg', stock: '25' },
+    { id: '5', name: 'Adobe Creative Cloud', description: 'Trọn bộ ứng dụng sáng tạo Adobe: Photoshop, Illustrator, Premiere Pro và hơn 20 ứng dụng khác.', price: '350000', image: 'https://i.imgur.com/WFvxnBj.jpg', stock: '5' },
+    { id: '6', name: 'Office 365', description: 'Bộ ứng dụng văn phòng Microsoft đầy đủ: Word, Excel, PowerPoint, Teams và 1TB OneDrive.', price: '200000', image: 'https://i.imgur.com/LquPBuC.jpg', stock: '18' }
+];
+
+function initApp() {
+    // Mobile menu toggle
+    document.getElementById('menuBtn').addEventListener('click', () => {
+        document.getElementById('mobileMenu').classList.toggle('open');
+    });
+
+    // Load products
+    fetch('products.csv')
+        .then(res => {
+            if (!res.ok) throw new Error('CSV not found');
+            return res.text();
+        })
+        .then(csv => {
+            const products = parseCSV(csv);
+            if (products.length === 0) throw new Error('Empty CSV');
+            loadProducts(products);
+        })
+        .catch(() => {
+            loadProducts(SAMPLE_PRODUCTS);
+        });
+}
+
+function loadProducts(products) {
+    document.getElementById('productLoader').style.display = 'none';
+    document.getElementById('productGrid').style.display = 'grid';
+    AppState.setProducts(products);
+    AppState.renderCart();
+}
+
+document.addEventListener('DOMContentLoaded', initApp);
+</script>
 </body>
 </html>
