@@ -13,6 +13,11 @@ node_modules/
 # Vercel
 .vercel
 
+# Backend
+backend/node_modules/
+backend/dist/
+backend/.env
+
 # Misc
 .DS_Store
 *.pem

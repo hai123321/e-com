@@ -1,0 +1,46 @@
+import type { FastifyInstance } from 'fastify'
+import * as service from './orders.service.js'
+import { createOrderSchema, orderQuerySchema, updateOrderStatusSchema } from './orders.schema.js'
+
+export async function orderRoutes(app: FastifyInstance) {
+  // Public: create order
+  app.post('/orders', async (req, reply) => {
+    const input = createOrderSchema.parse(req.body)
+    const order = await service.createOrder(input)
+    return reply.status(201).send({ success: true, data: order })
+  })
+
+  // Admin: list orders
+  app.get('/admin/orders', {
+    preHandler: [app.authenticate],
+  }, async (req, reply) => {
+    const query = orderQuerySchema.parse(req.query)
+    const result = await service.listOrders(query)
+    return reply.send({ success: true, ...result })
+  })
+
+  // Admin: order detail
+  app.get<{ Params: { id: string } }>('/admin/orders/:id', {
+    preHandler: [app.authenticate],
+  }, async (req, reply) => {
+    const order = await service.getOrder(Number(req.params.id))
+    return reply.send({ success: true, data: order })
+  })
+
+  // Admin: update order status
+  app.put<{ Params: { id: string } }>('/admin/orders/:id/status', {
+    preHandler: [app.authenticate],
+  }, async (req, reply) => {
+    const input = updateOrderStatusSchema.parse(req.body)
+    const order = await service.updateOrderStatus(Number(req.params.id), input)
+    return reply.send({ success: true, data: order })
+  })
+
+  // Admin: dashboard stats
+  app.get('/admin/dashboard', {
+    preHandler: [app.authenticate],
+  }, async (_req, reply) => {
+    const stats = await service.getDashboardStats()
+    return reply.send({ success: true, data: stats })
+  })
+}

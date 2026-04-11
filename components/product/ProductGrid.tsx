@@ -21,10 +21,24 @@ export function ProductGrid() {
   const { searchQuery, stockFilter, setSearchQuery, setStockFilter } = useStore()
 
   useEffect(() => {
-    fetch('/api/products')
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL
+    const url = apiUrl ? `${apiUrl}/products` : '/api/products'
+
+    fetch(url, { signal: AbortSignal.timeout(5000) })
       .then((r) => r.json())
-      .then(({ products }) => { setAllProducts(products); setLoading(false) })
-      .catch(() => setLoading(false))
+      .then((json) => {
+        // Backend returns { success, data[] } — fallback accepts { products[] }
+        const list = json.data ?? json.products ?? []
+        setAllProducts(list)
+        setLoading(false)
+      })
+      .catch(() => {
+        // Fallback to local CSV route if backend is unavailable
+        fetch('/api/products')
+          .then((r) => r.json())
+          .then(({ products }) => { setAllProducts(products ?? []); setLoading(false) })
+          .catch(() => setLoading(false))
+      })
   }, [])
 
   const filtered = filterProducts(allProducts, searchQuery, stockFilter)
