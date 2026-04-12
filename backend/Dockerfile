@@ -20,6 +20,8 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
 COPY drizzle ./drizzle
+# data/ cần cho seed.ts đọc products.csv (ở root repo, được copy vào context qua docker-compose)
+COPY data ./data
 
 EXPOSE 3001
 
