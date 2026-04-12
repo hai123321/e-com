@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: [self-hosted, miu-server-e-com]
+    runs-on: [self-hosted, miu-server]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,18 +28,11 @@ jobs:
           docker compose pull --ignore-buildable
           docker compose up -d --build
 
-      - name: Chạy migrations và seed
-        run: |
-          docker compose exec -T api sh -c "
-            npm run migrate 2>/dev/null || npx drizzle-kit migrate
-          "
-          docker compose exec -T api sh -c "
-            ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} node -e \"
-              import('./scripts/seed.js').catch(() =>
-                import('./dist/scripts/seed.js')
-              )
-            \" 2>/dev/null || true
-          "
+      - name: Chạy migrations
+        run: docker compose exec -T api npm run migrate
+
+      - name: Seed database (bỏ qua nếu đã có data)
+        run: docker compose exec -T -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} api npm run seed
 
       - name: Xóa image cũ
         run: docker image prune -f
