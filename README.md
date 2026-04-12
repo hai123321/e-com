@@ -1,15 +1,15 @@
 # Miu Shop
 
-Cửa hàng bán tài khoản streaming premium (Netflix, Spotify, YouTube...) xây dựng bằng Next.js 14, TypeScript và Tailwind CSS.
+Cửa hàng bán tài khoản phần mềm và dịch vụ số (AI, Streaming, Học tập...) xây dựng bằng Next.js 14, TypeScript và Tailwind CSS.
 
-**Architecture:** Frontend (Vercel) → Backend API (VPS) → PostgreSQL (VPS)
+**Architecture:** Frontend (VPS) + Backend API (VPS) + PostgreSQL (VPS) — toàn bộ chạy trên Docker Compose.
 
 ## Tech Stack
 
 ### Frontend
 | Công nghệ | Phiên bản | Mục đích |
 |---|---|---|
-| [Next.js](https://nextjs.org) | 14.2.5 | Framework (App Router) |
+| [Next.js](https://nextjs.org) | 14.2.5 | Framework (App Router, standalone output) |
 | [TypeScript](https://typescriptlang.org) | ^5 | Type safety |
 | [Tailwind CSS](https://tailwindcss.com) | ^3.4 | Styling |
 | [Zustand](https://zustand-demo.pmnd.rs) | ^4.5 | State management (cart) |
@@ -28,10 +28,10 @@ Cửa hàng bán tài khoản streaming premium (Netflix, Spotify, YouTube...) x
 ### Infrastructure
 | Công nghệ | Mục đích |
 |---|---|
-| Docker + Docker Compose | Orchestration trên VPS |
+| Docker + Docker Compose | Orchestration toàn bộ stack trên VPS |
 | Nginx | Reverse proxy + SSL termination |
 | Let's Encrypt | SSL tự động gia hạn (12h) |
-| Vercel | Frontend hosting |
+| GitHub Actions + self-hosted runner | CI/CD tự động deploy khi push lên main |
 | Cloudflare | DNS (grey cloud / DNS only) |
 
 ## Tính năng
@@ -76,7 +76,12 @@ e-com/
 │   ├── store.ts
 │   ├── types.ts
 │   └── utils.ts
-├── backend/                        # API server (deploy lên VPS)
+├── nginx/
+│   ├── nginx.conf                  # Worker / logging config
+│   └── conf.d/
+│       ├── frontend.conf           # HTTPS miushop.io.vn → frontend:3000
+│       └── api.conf                # HTTPS api.miushop.io.vn → api:3001
+├── backend/                        # Fastify API server
 │   ├── src/
 │   │   ├── config.ts               # Zod env validation
 │   │   ├── index.ts                # Fastify bootstrap
@@ -95,21 +100,21 @@ e-com/
 │   ├── scripts/
 │   │   ├── seed.ts                 # Migrations + CSV import + admin user
 │   │   └── init-letsencrypt.sh    # Cấp SSL lần đầu
-│   ├── nginx/conf.d/api.conf       # HTTPS + rate limit
 │   ├── Dockerfile                  # Multi-stage build (~150MB)
-│   ├── docker-compose.yml          # db, api, nginx, certbot
-│   └── .env.example
-├── next.config.mjs                 # Rewrites /api/v1/* → backend
+│   └── drizzle/                    # Migration files
+├── Dockerfile                      # Multi-stage build Next.js (standalone)
+├── docker-compose.yml              # Full stack: frontend, api, db, nginx, certbot
+├── next.config.mjs                 # standalone output + rewrite /api/v1/* → api
 └── .env.example
 ```
 
-## Bắt đầu (Frontend only)
+## Bắt đầu (Local)
 
 ### Yêu cầu
 
 - Node.js >= 18
 
-### Chạy local
+### Chạy frontend only
 
 ```bash
 git clone https://github.com/hai123321/e-com.git
@@ -120,15 +125,28 @@ npm run dev
 
 Mở [http://localhost:3000](http://localhost:3000). Không cần backend — sản phẩm tải từ `data/products.csv` qua fallback route.
 
-## Deploy Backend lên VPS
+### Chạy full stack local
+
+```bash
+cp .env.example .env
+# Sửa .env: DB_PASSWORD, JWT_SECRET, ADMIN_PASSWORD
+
+docker compose up -d --build
+
+# Seed database lần đầu
+docker compose exec api npx tsx scripts/seed.ts
+```
+
+## Deploy lên VPS
 
 ### Yêu cầu VPS
 
-- Ubuntu 24.04, 4 vCore, 8GB RAM
+- Ubuntu 24.04, 2+ vCore, 4GB+ RAM
 - Docker + Docker Compose đã cài
-- Domain trỏ về IP VPS (DNS A record)
+- Domain trỏ về IP VPS (DNS A record cho cả `miushop.io.vn` và `api.miushop.io.vn`)
+- GitHub Actions self-hosted runner đã cài và chạy với label `miu-server-e-com`
 
-### Các bước
+### Lần đầu deploy (manual)
 
 ```bash
 # 1. Clone repo lên VPS
@@ -136,59 +154,60 @@ git clone https://github.com/hai123321/e-com.git
 cd e-com
 
 # 2. Tạo file .env
-cp backend/.env.example backend/.env
-# Sửa: DB_PASSWORD, JWT_SECRET (>= 32 ký tự), ADMIN_PASSWORD, SSL_EMAIL
+cp .env.example .env
+# Sửa: DB_USER, DB_PASSWORD, JWT_SECRET (>= 32 ký tự), ADMIN_PASSWORD
 
-# 3. Cấp SSL lần đầu (yêu cầu domain đã trỏ về VPS)
+# 3. Cấp SSL cho cả 2 domain
 bash backend/scripts/init-letsencrypt.sh
 
-# 4. Khởi động services
-docker compose -f backend/docker-compose.yml up -d
+# 4. Khởi động toàn bộ stack
+docker compose up -d --build
 
 # 5. Seed database (migrations + products + admin)
-docker compose -f backend/docker-compose.yml exec api \
-  npx tsx scripts/seed.ts
+docker compose exec api npx tsx scripts/seed.ts
 ```
 
-### Kiểm tra
+### CI/CD (sau khi merge vào main)
 
-```bash
-curl https://api.miushop.io.vn/api/v1/health
-# → { "status": "ok" }
-```
+Push lên `main` → GitHub Actions tự động:
+1. Build lại frontend và backend
+2. Khởi động lại các container
+3. Dọn dẹp image cũ
 
-### Biến môi trường backend (`backend/.env`)
+### Biến môi trường (`.env`)
 
 | Biến | Bắt buộc | Mô tả |
 |---|---|---|
 | `DB_USER` | ✓ | PostgreSQL user |
 | `DB_PASSWORD` | ✓ | PostgreSQL password |
-| `DATABASE_URL` | ✓ | `postgresql://user:pass@db:5432/miushop` |
 | `JWT_SECRET` | ✓ | Tối thiểu 32 ký tự |
 | `ADMIN_PASSWORD` | ✓ | Mật khẩu tài khoản admin |
-| `SSL_EMAIL` | ✓ | Email Let's Encrypt |
-| `CORS_ORIGIN` | | Mặc định: `http://localhost:3000` |
-| `PORT` | | Mặc định: `3001` |
+| `CORS_ORIGIN` | | Mặc định: `https://miushop.io.vn` |
+| `NEXT_PUBLIC_API_URL` | | Mặc định: `https://miushop.io.vn` |
+| `API_INTERNAL_URL` | | Mặc định: `http://api:3001` (Docker internal) |
 
-## Deploy Frontend lên Vercel
+### GitHub Secrets cần cấu hình
 
-1. Push code lên GitHub
-2. Vào [vercel.com](https://vercel.com) → **Add New Project** → chọn repo
-3. Thêm environment variable:
-   ```
-   NEXT_PUBLIC_API_URL=https://api.miushop.io.vn/api/v1
-   ```
-4. Deploy
+Vào **Settings → Secrets → Actions** của repo, thêm:
+
+```
+DB_USER
+DB_PASSWORD
+JWT_SECRET
+ADMIN_PASSWORD
+CORS_ORIGIN
+NEXT_PUBLIC_API_URL
+```
 
 ## Cấu hình DNS (Cloudflare)
 
 | Record | Name | Value |
 |---|---|---|
-| A | `@` | Vercel IP (lấy từ Vercel Dashboard) |
-| CNAME | `www` | `cname.vercel-dns.com` |
+| A | `@` | IP VPS |
+| A | `www` | IP VPS |
 | A | `api` | IP VPS |
 
-> Tất cả records dùng **grey cloud (DNS only)** để tránh conflict với Vercel edge network và SSL.
+> Tất cả records dùng **grey cloud (DNS only)** để SSL Let's Encrypt hoạt động đúng.
 
 ## API Endpoints
 
@@ -204,22 +223,26 @@ curl https://api.miushop.io.vn/api/v1/health
 
 ## Quản lý sản phẩm
 
-### Qua CSV (frontend fallback)
+### Qua CSV
 
 Chỉnh sửa `data/products.csv` — không cần thay đổi code.
 
 ```csv
-id,name,description,price,image,stock
-1,Netflix Premium,Tài khoản Netflix Premium 4K,250000,https://example.com/img.jpg,15
+name,description,price,image,stock,category
+Netflix Extra Slot 1 tháng,Tài khoản 1 slot riêng tư,60000,,20,Streaming
 ```
 
-### Qua Admin API (khi backend chạy)
+### Qua Admin API
 
 ```bash
 # Đăng nhập
-curl -X POST https://api.miushop.io.vn/api/v1/auth/login \
+TOKEN=$(curl -s -X POST https://api.miushop.io.vn/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"your_password"}'
+  -d '{"username":"admin","password":"your_password"}' | jq -r .data.token)
+
+# Xem đơn hàng
+curl https://api.miushop.io.vn/api/v1/admin/orders \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Quy tắc tồn kho
