@@ -35,11 +35,11 @@ if (!existingProduct) {
   await db.insert(products).values(
     rows.map((r) => ({
       name:        r.name,
-      description: r.description,
+      description: r.description ?? '',
       price:       parseInt(r.price),
-      image:       r.image,
-      stock:       parseInt(r.stock),
-      category:    'Streaming',
+      image:       r.image ?? '',
+      stock:       parseInt(r.stock) || 0,
+      category:    r.category ?? 'Khác',
     })),
   )
   console.log(`✅ Inserted ${rows.length} products`)
