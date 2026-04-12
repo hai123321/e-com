@@ -15,6 +15,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    networks:
+      - internal
 
   api:
     build:
@@ -30,8 +32,9 @@ services:
       JWT_SECRET:   ${JWT_SECRET}
       CORS_ORIGIN:  ${CORS_ORIGIN:-https://miushop.io.vn}
       PORT:         3001
-    ports:
-      - "127.0.0.1:3001:3001"
+    networks:
+      - internal
+      - proxy-net
 
   frontend:
     build:
@@ -41,43 +44,18 @@ services:
     depends_on:
       - api
     environment:
-      NODE_ENV:              production
-      NEXT_PUBLIC_API_URL:   ${NEXT_PUBLIC_API_URL:-https://miushop.io.vn}
-      # Internal Docker network URL used by Next.js server-side rewrites
-      API_INTERNAL_URL:      http://api:3001
-    ports:
-      - "127.0.0.1:3000:3000"
-
-  nginx:
-    image: nginx:1.27-alpine
-    restart: unless-stopped
-    depends_on:
-      - api
-      - frontend
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - certbot-conf:/etc/letsencrypt:ro
-      - certbot-www:/var/www/certbot:ro
-    command: >
-      /bin/sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done
-      & nginx -g 'daemon off;'"
-
-  certbot:
-    image: certbot/certbot
-    restart: unless-stopped
-    volumes:
-      - certbot-conf:/etc/letsencrypt
-      - certbot-www:/var/www/certbot
-    entrypoint: >
-      /bin/sh -c "trap exit TERM;
-      while :; do certbot renew --webroot -w /var/www/certbot --quiet;
-      sleep 12h & wait $${!}; done"
+      NODE_ENV:            production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://miushop.io.vn}
+      API_INTERNAL_URL:    http://api:3001
+    networks:
+      - internal
+      - proxy-net
 
 volumes:
   pgdata:
-  certbot-conf:
-  certbot-www:
+
+networks:
+  internal:
+    driver: bridge
+  proxy-net:
+    external: true
