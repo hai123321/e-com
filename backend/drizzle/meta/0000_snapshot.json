@@ -1,0 +1,110 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.products": {
+      "name": "products",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "serial", "primaryKey": true, "notNull": true },
+        "name": { "name": "name", "type": "varchar(255)", "primaryKey": false, "notNull": true },
+        "description": { "name": "description", "type": "text", "primaryKey": false, "notNull": true, "default": "''" },
+        "price": { "name": "price", "type": "integer", "primaryKey": false, "notNull": true },
+        "image": { "name": "image", "type": "varchar(512)", "primaryKey": false, "notNull": true, "default": "''" },
+        "stock": { "name": "stock", "type": "integer", "primaryKey": false, "notNull": true, "default": 0 },
+        "category": { "name": "category", "type": "varchar(100)", "primaryKey": false, "notNull": true, "default": "'Streaming'" },
+        "is_active": { "name": "is_active", "type": "boolean", "primaryKey": false, "notNull": true, "default": true },
+        "created_at": { "name": "created_at", "type": "timestamp with time zone", "primaryKey": false, "notNull": true, "default": "now()" },
+        "updated_at": { "name": "updated_at", "type": "timestamp with time zone", "primaryKey": false, "notNull": true, "default": "now()" }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "stock_non_negative": { "name": "stock_non_negative", "value": "\"products\".\"stock\" >= 0" }
+      }
+    },
+    "public.orders": {
+      "name": "orders",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "serial", "primaryKey": true, "notNull": true },
+        "customer_name": { "name": "customer_name", "type": "varchar(255)", "primaryKey": false, "notNull": true },
+        "customer_phone": { "name": "customer_phone", "type": "varchar(20)", "primaryKey": false, "notNull": true },
+        "customer_email": { "name": "customer_email", "type": "varchar(255)", "primaryKey": false, "notNull": false },
+        "status": { "name": "status", "type": "varchar(50)", "primaryKey": false, "notNull": true, "default": "'pending'" },
+        "total": { "name": "total", "type": "integer", "primaryKey": false, "notNull": true },
+        "note": { "name": "note", "type": "text", "primaryKey": false, "notNull": false },
+        "created_at": { "name": "created_at", "type": "timestamp with time zone", "primaryKey": false, "notNull": true, "default": "now()" },
+        "updated_at": { "name": "updated_at", "type": "timestamp with time zone", "primaryKey": false, "notNull": true, "default": "now()" }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "public.order_items": {
+      "name": "order_items",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "serial", "primaryKey": true, "notNull": true },
+        "order_id": { "name": "order_id", "type": "integer", "primaryKey": false, "notNull": true },
+        "product_id": { "name": "product_id", "type": "integer", "primaryKey": false, "notNull": true },
+        "product_name": { "name": "product_name", "type": "varchar(255)", "primaryKey": false, "notNull": true },
+        "product_price": { "name": "product_price", "type": "integer", "primaryKey": false, "notNull": true },
+        "quantity": { "name": "quantity", "type": "integer", "primaryKey": false, "notNull": true }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "order_items_order_id_orders_id_fk": {
+          "name": "order_items_order_id_orders_id_fk",
+          "tableFrom": "order_items",
+          "tableTo": "orders",
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "order_items_product_id_products_id_fk": {
+          "name": "order_items_product_id_products_id_fk",
+          "tableFrom": "order_items",
+          "tableTo": "products",
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "quantity_positive": { "name": "quantity_positive", "value": "\"order_items\".\"quantity\" > 0" }
+      }
+    },
+    "public.admins": {
+      "name": "admins",
+      "schema": "",
+      "columns": {
+        "id": { "name": "id", "type": "serial", "primaryKey": true, "notNull": true },
+        "username": { "name": "username", "type": "varchar(100)", "primaryKey": false, "notNull": true },
+        "password_hash": { "name": "password_hash", "type": "varchar(255)", "primaryKey": false, "notNull": true },
+        "created_at": { "name": "created_at", "type": "timestamp with time zone", "primaryKey": false, "notNull": true, "default": "now()" }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "admins_username_unique": { "name": "admins_username_unique", "columns": ["username"], "nullsNotDistinct": false }
+      },
+      "checkConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "_meta": { "columns": {}, "schemas": {}, "tables": {} }
+}
