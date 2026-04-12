@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy to VPS
 
 on:
   push:
@@ -6,15 +6,43 @@ on:
 
 jobs:
   deploy:
-    runs-on: [self-hosted, miu-server]
+    runs-on: [self-hosted, miu-server-e-com]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy với Docker Compose
+      - name: Create .env file
         run: |
-          docker compose down
+          cat > .env <<EOF
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+          NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+          API_INTERNAL_URL=http://api:3001
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          EOF
+
+      - name: Build và deploy
+        run: |
+          docker compose pull --ignore-buildable
           docker compose up -d --build
 
-      - name: Xoá image cũ
+      - name: Chạy migrations và seed
+        run: |
+          docker compose exec -T api sh -c "
+            npm run migrate 2>/dev/null || npx drizzle-kit migrate
+          "
+          docker compose exec -T api sh -c "
+            ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} node -e \"
+              import('./scripts/seed.js').catch(() =>
+                import('./dist/scripts/seed.js')
+              )
+            \" 2>/dev/null || true
+          "
+
+      - name: Xóa image cũ
         run: docker image prune -f
+
+      - name: Kiểm tra trạng thái
+        run: docker compose ps
