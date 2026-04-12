@@ -2,11 +2,11 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-COPY package*.json ./
+COPY backend/package*.json ./
 RUN npm ci
 
-COPY tsconfig.json ./
-COPY src ./src
+COPY backend/tsconfig.json ./
+COPY backend/src ./src
 RUN npm run build
 
 # ── Stage 2: Production ────────────────────────────────────────────────────────
@@ -15,12 +15,12 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY package*.json ./
+COPY backend/package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
-COPY drizzle ./drizzle
-# data/ cần cho seed.ts đọc products.csv (ở root repo, được copy vào context qua docker-compose)
+COPY backend/drizzle ./drizzle
+# data/ ở root repo — context là root nên copy được thẳng
 COPY data ./data
 
 EXPOSE 3001
