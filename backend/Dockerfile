@@ -7,6 +7,7 @@ RUN npm ci
 
 COPY backend/tsconfig.json ./
 COPY backend/src ./src
+COPY backend/scripts ./scripts
 RUN npm run build
 
 # ── Stage 2: Production ────────────────────────────────────────────────────────
