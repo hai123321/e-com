@@ -16,7 +16,9 @@ const db   = drizzle(pool)
 
 // Run migrations first
 console.log('📦 Running migrations...')
-await migrate(db, { migrationsFolder: resolve(__dirname, '../drizzle') })
+// dev: __dirname = /app/scripts  → ../drizzle = /app/drizzle
+// prod: __dirname = /app/dist/scripts → ../../drizzle = /app/drizzle
+await migrate(db, { migrationsFolder: resolve(__dirname, '../../drizzle') })
 
 // ── Seed products from CSV ──────────────────────────────────────────────────
 const [existingProduct] = await db.select().from(products).limit(1)

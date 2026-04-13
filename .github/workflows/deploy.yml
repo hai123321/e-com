@@ -74,9 +74,30 @@ jobs:
       - name: Build và deploy
         run: docker compose up -d --build
 
+      - name: Chờ api container healthy
+        run: |
+          echo "Waiting for api to be healthy..."
+          for i in $(seq 1 30); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' $(docker compose ps -q api) 2>/dev/null || echo "unknown")
+            echo "  attempt $i: $STATUS"
+            if [ "$STATUS" = "healthy" ]; then
+              echo "✅ api is healthy"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Timeout waiting for api"
+              docker compose logs api --tail=50
+              exit 1
+            fi
+            sleep 3
+          done
+
       - name: Migrate + Seed database
-        # seed.ts đã chạy migrate() nội bộ qua drizzle-orm (không cần drizzle-kit)
         run: docker compose exec -T -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} api npm run seed
+
+      - name: Show logs nếu seed thất bại
+        if: failure()
+        run: docker compose logs api --tail=80
 
       - name: Xóa image cũ
         run: docker image prune -f
