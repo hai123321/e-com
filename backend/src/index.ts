@@ -7,6 +7,7 @@ import errorHandler from './plugins/error-handler.js'
 import { productRoutes } from './modules/products/products.routes.js'
 import { orderRoutes } from './modules/orders/orders.routes.js'
 import { authRoutes } from './modules/auth/auth.routes.js'
+import { guideRoutes } from './modules/guides/guides.routes.js'
 
 const app = Fastify({
   logger: {
@@ -36,6 +37,7 @@ app.get('/api/v1/health', async (_req, reply) => {
 await app.register(productRoutes, { prefix: '/api/v1' })
 await app.register(orderRoutes,   { prefix: '/api/v1' })
 await app.register(authRoutes,    { prefix: '/api/v1' })
+await app.register(guideRoutes,   { prefix: '/api/v1' })
 
 // Start
 try {

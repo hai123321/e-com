@@ -54,3 +54,18 @@ export type NewProduct = typeof products.$inferInsert
 export type Order     = typeof orders.$inferSelect
 export type OrderItem = typeof orderItems.$inferSelect
 export type Admin     = typeof admins.$inferSelect
+
+export const guides = pgTable('guides', {
+  id:            serial('id').primaryKey(),
+  type:          varchar('type', { length: 255 }).notNull(),
+  descriptionVi: text('description_vi').notNull().default(''),
+  descriptionEn: text('description_en').notNull().default(''),
+  descriptionCn: text('description_cn').notNull().default(''),
+  isActive:      boolean('is_active').notNull().default(true),
+  sortOrder:     integer('sort_order').notNull().default(0),
+  createdAt:     timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:     timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export type Guide    = typeof guides.$inferSelect
+export type NewGuide = typeof guides.$inferInsert
