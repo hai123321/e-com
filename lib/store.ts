@@ -2,6 +2,7 @@
 
 import { create } from 'zustand'
 import type { CartItem, CategoryFilter, Product, StockFilter, Toast, ToastType } from './types'
+import type { Locale } from './i18n'
 
 interface CartStore {
   // Cart
@@ -23,6 +24,10 @@ interface CartStore {
   setSearchQuery: (q: string) => void
   setStockFilter: (f: StockFilter) => void
   setCategoryFilter: (f: CategoryFilter) => void
+
+  // Locale
+  locale: Locale
+  setLocale: (l: Locale) => void
 
   // Toasts
   toasts: Toast[]
@@ -91,6 +96,10 @@ export const useStore = create<CartStore>((set, get) => ({
   setSearchQuery: (q) => set({ searchQuery: q }),
   setStockFilter: (f) => set({ stockFilter: f }),
   setCategoryFilter: (f) => set({ categoryFilter: f }),
+
+  // ── Locale ────────────────────────────────────────
+  locale: 'vi',
+  setLocale: (l) => set({ locale: l }),
 
   // ── Toasts ────────────────────────────────────────
   toasts: [],

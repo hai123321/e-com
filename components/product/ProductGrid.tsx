@@ -4,31 +4,28 @@ import { useEffect, useState } from 'react'
 import { Search, PackageOpen, Loader2 } from 'lucide-react'
 import type { CategoryFilter, Product, StockFilter } from '@/lib/types'
 import { useStore } from '@/lib/store'
+import { useT } from '@/lib/hooks/useT'
 import { filterProducts } from '@/lib/utils'
 import { ProductCard } from './ProductCard'
 
-const CATEGORY_TABS: { value: CategoryFilter; label: string; icon: string }[] = [
-  { value: 'all',      label: 'Tất cả',   icon: '🛍️' },
-  { value: 'AI',       label: 'AI',        icon: '🤖' },
-  { value: 'Streaming',label: 'Streaming', icon: '📺' },
-  { value: 'Học tập',  label: 'Học tập',   icon: '📚' },
-  { value: 'Thiết kế', label: 'Thiết kế',  icon: '🎨' },
-  { value: 'VPN',      label: 'VPN',       icon: '🔒' },
-  { value: 'Năng suất',label: 'Năng suất', icon: '⚡' },
-  { value: 'Lưu trữ', label: 'Lưu trữ',  icon: '💾' },
-  { value: 'Khác',     label: 'Khác',      icon: '📦' },
+const CATEGORY_META: { value: CategoryFilter; icon: string }[] = [
+  { value: 'all',       icon: '🛍️' },
+  { value: 'AI',        icon: '🤖' },
+  { value: 'Streaming', icon: '📺' },
+  { value: 'Học tập',   icon: '📚' },
+  { value: 'Thiết kế',  icon: '🎨' },
+  { value: 'VPN',       icon: '🔒' },
+  { value: 'Năng suất', icon: '⚡' },
+  { value: 'Lưu trữ',  icon: '💾' },
+  { value: 'Khác',      icon: '📦' },
 ]
 
-const STOCK_TABS: { value: StockFilter; label: string }[] = [
-  { value: 'all',    label: 'Tất cả'   },
-  { value: 'high',   label: 'Còn nhiều' },
-  { value: 'medium', label: 'Còn ít'    },
-  { value: 'low',    label: 'Sắp hết'   },
-]
+const STOCK_VALUES: StockFilter[] = ['all', 'high', 'medium', 'low']
 
 export function ProductGrid() {
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const t = useT()
 
   const {
     searchQuery, stockFilter, categoryFilter,
@@ -63,17 +60,15 @@ export function ProductGrid() {
         <div className="mb-10">
           <div className="section-label">
             <PackageOpen className="w-4 h-4" />
-            Sản phẩm
+            {t.products.badge}
           </div>
-          <h2 className="section-title">Tài khoản Premium giá tốt</h2>
-          <p className="section-sub">
-            AI, Streaming, Học tập, VPN và nhiều hơn nữa — giá ưu đãi, giao nhanh.
-          </p>
+          <h2 className="section-title">{t.products.title}</h2>
+          <p className="section-sub">{t.products.sub}</p>
         </div>
 
         {/* Category filter */}
         <div className="flex gap-2 flex-wrap mb-4">
-          {CATEGORY_TABS.map((tab) => (
+          {CATEGORY_META.map((tab) => (
             <button
               key={tab.value}
               onClick={() => setCategoryFilter(tab.value)}
@@ -84,7 +79,7 @@ export function ProductGrid() {
               }`}
             >
               <span>{tab.icon}</span>
-              {tab.label}
+              {t.products.categories[tab.value]}
             </button>
           ))}
         </div>
@@ -96,32 +91,32 @@ export function ProductGrid() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Tìm kiếm sản phẩm..."
+              placeholder={t.products.search}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 focus:border-primary-500 rounded-xl text-sm outline-none transition-colors"
             />
           </div>
 
-          {/* Stock filter tabs */}
+          {/* Stock filter */}
           <div className="flex gap-2 flex-wrap">
-            {STOCK_TABS.map((tab) => (
+            {STOCK_VALUES.map((val) => (
               <button
-                key={tab.value}
-                onClick={() => setStockFilter(tab.value)}
+                key={val}
+                onClick={() => setStockFilter(val)}
                 className={`px-4 py-2 rounded-full text-xs font-semibold border-2 transition-all ${
-                  stockFilter === tab.value
+                  stockFilter === val
                     ? 'bg-primary-600 border-primary-600 text-white shadow-sm'
                     : 'border-gray-200 text-gray-500 hover:border-primary-300 hover:text-primary-600 bg-white'
                 }`}
               >
-                {tab.label}
+                {t.products.stock[val]}
               </button>
             ))}
           </div>
 
           <span className="text-xs text-gray-400 ml-auto whitespace-nowrap">
-            {filtered.length} sản phẩm
+            {t.products.count(filtered.length)}
           </span>
         </div>
 
@@ -129,12 +124,12 @@ export function ProductGrid() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
             <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
-            <p className="text-sm">Đang tải sản phẩm...</p>
+            <p className="text-sm">{t.products.loading}</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
             <PackageOpen className="w-14 h-14 text-gray-300" />
-            <p className="text-sm">Không tìm thấy sản phẩm phù hợp.</p>
+            <p className="text-sm">{t.products.empty}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
