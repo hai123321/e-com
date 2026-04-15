@@ -10,8 +10,9 @@ export function Navbar() {
   const count = totalItems()
 
   const navLinks = [
-    { href: '#', label: 'Trang chủ' },
+    { href: '/', label: 'Trang chủ' },
     { href: '#products', label: 'Sản phẩm' },
+    { href: '/huong-dan', label: 'Hướng dẫn' },
     { href: '#contact', label: 'Liên hệ' },
   ]
 

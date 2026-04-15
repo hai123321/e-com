@@ -1,7 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
-import type { CartItem, Product, StockFilter, Toast, ToastType } from './types'
+import type { CartItem, CategoryFilter, Product, StockFilter, Toast, ToastType } from './types'
 
 interface CartStore {
   // Cart
@@ -19,8 +19,10 @@ interface CartStore {
   // Filters
   searchQuery: string
   stockFilter: StockFilter
+  categoryFilter: CategoryFilter
   setSearchQuery: (q: string) => void
   setStockFilter: (f: StockFilter) => void
+  setCategoryFilter: (f: CategoryFilter) => void
 
   // Toasts
   toasts: Toast[]
@@ -85,8 +87,10 @@ export const useStore = create<CartStore>((set, get) => ({
   // ── Filters ───────────────────────────────────────
   searchQuery: '',
   stockFilter: 'all',
+  categoryFilter: 'all',
   setSearchQuery: (q) => set({ searchQuery: q }),
   setStockFilter: (f) => set({ stockFilter: f }),
+  setCategoryFilter: (f) => set({ categoryFilter: f }),
 
   // ── Toasts ────────────────────────────────────────
   toasts: [],

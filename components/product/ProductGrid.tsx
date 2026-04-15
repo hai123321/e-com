@@ -2,12 +2,24 @@
 
 import { useEffect, useState } from 'react'
 import { Search, PackageOpen, Loader2 } from 'lucide-react'
-import type { Product, StockFilter } from '@/lib/types'
+import type { CategoryFilter, Product, StockFilter } from '@/lib/types'
 import { useStore } from '@/lib/store'
 import { filterProducts } from '@/lib/utils'
 import { ProductCard } from './ProductCard'
 
-const FILTER_TABS: { value: StockFilter; label: string }[] = [
+const CATEGORY_TABS: { value: CategoryFilter; label: string; icon: string }[] = [
+  { value: 'all',      label: 'Tất cả',   icon: '🛍️' },
+  { value: 'AI',       label: 'AI',        icon: '🤖' },
+  { value: 'Streaming',label: 'Streaming', icon: '📺' },
+  { value: 'Học tập',  label: 'Học tập',   icon: '📚' },
+  { value: 'Thiết kế', label: 'Thiết kế',  icon: '🎨' },
+  { value: 'VPN',      label: 'VPN',       icon: '🔒' },
+  { value: 'Năng suất',label: 'Năng suất', icon: '⚡' },
+  { value: 'Lưu trữ', label: 'Lưu trữ',  icon: '💾' },
+  { value: 'Khác',     label: 'Khác',      icon: '📦' },
+]
+
+const STOCK_TABS: { value: StockFilter; label: string }[] = [
   { value: 'all',    label: 'Tất cả'   },
   { value: 'high',   label: 'Còn nhiều' },
   { value: 'medium', label: 'Còn ít'    },
@@ -18,22 +30,23 @@ export function ProductGrid() {
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
-  const { searchQuery, stockFilter, setSearchQuery, setStockFilter } = useStore()
+  const {
+    searchQuery, stockFilter, categoryFilter,
+    setSearchQuery, setStockFilter, setCategoryFilter,
+  } = useStore()
 
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL
-    const url = apiUrl ? `${apiUrl}/products` : '/api/products'
+    const url = apiUrl ? `${apiUrl}/api/v1/products` : '/api/products'
 
     fetch(url, { signal: AbortSignal.timeout(5000) })
       .then((r) => r.json())
       .then((json) => {
-        // Backend returns { success, data[] } — fallback accepts { products[] }
         const list = json.data ?? json.products ?? []
         setAllProducts(list)
         setLoading(false)
       })
       .catch(() => {
-        // Fallback to local CSV route if backend is unavailable
         fetch('/api/products')
           .then((r) => r.json())
           .then(({ products }) => { setAllProducts(products ?? []); setLoading(false) })
@@ -41,7 +54,7 @@ export function ProductGrid() {
       })
   }, [])
 
-  const filtered = filterProducts(allProducts, searchQuery, stockFilter)
+  const filtered = filterProducts(allProducts, searchQuery, stockFilter, categoryFilter)
 
   return (
     <section id="products" className="py-20 bg-primary-50">
@@ -52,13 +65,31 @@ export function ProductGrid() {
             <PackageOpen className="w-4 h-4" />
             Sản phẩm
           </div>
-          <h2 className="section-title">Dịch vụ streaming cao cấp</h2>
+          <h2 className="section-title">Tài khoản Premium giá tốt</h2>
           <p className="section-sub">
-            Lựa chọn từ các dịch vụ giải trí hàng đầu thế giới với giá cực ưu đãi.
+            AI, Streaming, Học tập, VPN và nhiều hơn nữa — giá ưu đãi, giao nhanh.
           </p>
         </div>
 
-        {/* Search + Filter bar */}
+        {/* Category filter */}
+        <div className="flex gap-2 flex-wrap mb-4">
+          {CATEGORY_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setCategoryFilter(tab.value)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold border-2 transition-all ${
+                categoryFilter === tab.value
+                  ? 'bg-primary-600 border-primary-600 text-white shadow-sm'
+                  : 'border-gray-200 text-gray-500 hover:border-primary-300 hover:text-primary-600 bg-white'
+              }`}
+            >
+              <span>{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Search + Stock filter bar */}
         <div className="card p-4 mb-8 flex flex-wrap items-center gap-4">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px]">
@@ -72,9 +103,9 @@ export function ProductGrid() {
             />
           </div>
 
-          {/* Filter tabs */}
+          {/* Stock filter tabs */}
           <div className="flex gap-2 flex-wrap">
-            {FILTER_TABS.map((tab) => (
+            {STOCK_TABS.map((tab) => (
               <button
                 key={tab.value}
                 onClick={() => setStockFilter(tab.value)}
