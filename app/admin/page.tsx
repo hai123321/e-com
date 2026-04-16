@@ -223,7 +223,7 @@ function ProductsTab() {
   const f = (key: keyof typeof form) => (v: string) =>
     setForm(prev => ({ ...prev, [key]: ['price', 'stock'].includes(key) ? parseInt(v) || 0 : v }))
 
-  const ProductForm = () => (
+  const productFormJsx = (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <Input label="Tên sản phẩm" value={form.name} onChange={f('name')} required />
@@ -290,7 +290,7 @@ function ProductsTab() {
       </div>
       {(creating || editing) && (
         <Modal title={editing ? `Sửa: ${editing.name}` : 'Thêm sản phẩm mới'} onClose={() => { setCreating(false); setEditing(null) }}>
-          <ProductForm />
+          {productFormJsx}
         </Modal>
       )}
     </>
@@ -331,7 +331,7 @@ function GuidesTab() {
   const f = (key: keyof typeof form) => (v: string) =>
     setForm(prev => ({ ...prev, [key]: key === 'sortOrder' ? parseInt(v) || 0 : v }))
 
-  const GuideForm = () => (
+  const guideFormJsx = (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <Input label="Thứ tự" value={form.sortOrder} onChange={f('sortOrder')} type="number" />
@@ -373,7 +373,7 @@ function GuidesTab() {
       </div>
       {(creating || editing) && (
         <Modal title={editing ? 'Sửa hướng dẫn' : 'Thêm hướng dẫn mới'} onClose={() => { setEditing(null); setCreating(false) }}>
-          <GuideForm />
+          {guideFormJsx}
         </Modal>
       )}
     </>
@@ -446,7 +446,7 @@ function PricingRulesTab() {
 
   const f = (key: string) => (v: string) => setForm(prev => ({ ...prev, [key]: ['priority'].includes(key) ? parseInt(v) || 0 : v }))
 
-  const RuleForm = () => (
+  const ruleFormJsx = (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <Input label="Tên rule" value={form.name} onChange={f('name')} required />
@@ -530,7 +530,7 @@ function PricingRulesTab() {
       </div>
       {(creating || editing) && (
         <Modal title={editing ? 'Sửa pricing rule' : 'Thêm pricing rule'} onClose={() => { setEditing(null); setCreating(false) }}>
-          <RuleForm />
+          {ruleFormJsx}
         </Modal>
       )}
     </>
@@ -577,7 +577,7 @@ function PromotionsTab() {
 
   const f = (key: string) => (v: string) => setForm(prev => ({ ...prev, [key]: v }))
 
-  const PromoForm = () => (
+  const promoFormJsx = (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <Input label="Mã giảm giá" value={form.code} onChange={f('code')} placeholder="SALE20" required />
@@ -661,7 +661,7 @@ function PromotionsTab() {
       </div>
       {(creating || editing) && (
         <Modal title={editing ? `Sửa: ${editing.code}` : 'Tạo mã khuyến mại'} onClose={() => { setEditing(null); setCreating(false) }}>
-          <PromoForm />
+          {promoFormJsx}
         </Modal>
       )}
     </>
