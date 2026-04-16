@@ -9,6 +9,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'imgur.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'logo.clearbit.com' },
+      { protocol: 'https', hostname: 'upload.wikimedia.org' },
     ],
   },
 
