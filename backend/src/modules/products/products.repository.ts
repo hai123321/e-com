@@ -50,6 +50,14 @@ export async function softDeleteProduct(id: number) {
   return row ?? null
 }
 
+export async function findProductsByGroupKey(groupKey: string) {
+  return db
+    .select()
+    .from(products)
+    .where(and(eq(products.groupKey, groupKey), eq(products.isActive, true)))
+    .orderBy(products.price)
+}
+
 export async function decrementStock(id: number, qty: number) {
   await db.update(products)
     .set({ stock: sql`${products.stock} - ${qty}`, updatedAt: new Date() })

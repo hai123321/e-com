@@ -1,7 +1,8 @@
 'use client'
 
 import Image from 'next/image'
-import { ShoppingCart, Box } from 'lucide-react'
+import Link from 'next/link'
+import { ShoppingCart, Box, ChevronRight } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useStore } from '@/lib/store'
 import { useT } from '@/lib/hooks/useT'
@@ -82,12 +83,23 @@ export function ProductCard({ product }: Props) {
           </button>
         </div>
 
-        {/* Stock count */}
-        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
-          <Box className="w-3 h-3 text-gray-400" />
-          <span className="text-xs text-gray-400">
-            {t.card.stock} <strong className="text-gray-600">{product.stock}</strong> {t.card.stockUnit}
-          </span>
+        {/* Stock + detail link */}
+        <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-100">
+          <div className="flex items-center gap-1.5">
+            <Box className="w-3 h-3 text-gray-400" />
+            <span className="text-xs text-gray-400">
+              {t.card.stock} <strong className="text-gray-600">{product.stock}</strong> {t.card.stockUnit}
+            </span>
+          </div>
+          {product.groupKey && (
+            <Link
+              href={`/san-pham/${product.groupKey}`}
+              className="flex items-center gap-0.5 text-xs text-primary-500 hover:text-primary-700 font-medium transition-colors whitespace-nowrap"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Xem gói khác <ChevronRight className="w-3 h-3" />
+            </Link>
+          )}
         </div>
       </div>
     </article>

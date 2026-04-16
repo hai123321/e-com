@@ -12,6 +12,7 @@ export const products = pgTable('products', {
   image:       varchar('image', { length: 512 }).notNull().default(''),
   stock:       integer('stock').notNull().default(0),
   category:    varchar('category', { length: 100 }).notNull().default('Streaming'),
+  groupKey:    varchar('group_key', { length: 100 }).notNull().default(''),
   isActive:    boolean('is_active').notNull().default(true),
   createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

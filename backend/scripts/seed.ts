@@ -42,6 +42,7 @@ if (!existingProduct) {
       image:       r.image ?? '',
       stock:       parseInt(r.stock) || 0,
       category:    r.category ?? 'Khác',
+      groupKey:    r.group_key ?? '',
     })),
   )
   console.log(`✅ Inserted ${rows.length} products`)

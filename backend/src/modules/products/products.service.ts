@@ -25,6 +25,12 @@ export async function updateProduct(id: number, input: UpdateProductInput) {
   return product
 }
 
+export async function listProductsByGroup(groupKey: string) {
+  const rows = await repo.findProductsByGroupKey(groupKey)
+  if (rows.length === 0) throw Object.assign(new Error('Group not found'), { statusCode: 404 })
+  return rows
+}
+
 export async function deleteProduct(id: number) {
   const product = await repo.softDeleteProduct(id)
   if (!product) throw Object.assign(new Error('Product not found'), { statusCode: 404 })
