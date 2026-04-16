@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingCart, Box, ChevronRight } from 'lucide-react'
+import { ShoppingCart, Box } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useStore } from '@/lib/store'
 import { useT } from '@/lib/hooks/useT'
@@ -21,26 +21,24 @@ export function ProductCard({ product }: Props) {
   const isOut = status === 'out'
   const inCart = items.find((i) => i.product.id === product.id)
   const svc = getServiceConfig(product.name, product.category)
+  const detailHref = product.groupKey ? `/san-pham/${product.groupKey}` : null
 
-  return (
-    <article className="card group flex flex-col overflow-hidden hover:border-primary-300 hover:shadow-xl hover:shadow-primary-100/50 hover:-translate-y-1.5 transition-all duration-300">
+  const cardContent = (
+    <>
       {/* Image / branded fallback */}
-      <div className="relative h-48 overflow-hidden">
+      <div className="relative h-48 overflow-hidden bg-white">
         {product.image ? (
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-            onError={(e) => {
-              const parent = (e.target as HTMLImageElement).parentElement
-              if (parent) parent.innerHTML = `
-                <div class="w-full h-full bg-gradient-to-br ${svc.bg} flex flex-col items-center justify-center gap-2">
-                  <span class="text-5xl">${svc.icon}</span>
-                </div>`
-            }}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
+          <div className={`w-full h-full bg-gradient-to-br ${svc.bg} flex items-center justify-center group-hover:scale-105 transition-transform duration-500`}>
+            <Image
+              src={product.image}
+              alt={product.name}
+              width={96}
+              height={96}
+              unoptimized
+              className="object-contain w-24 h-24 rounded-xl bg-white/10 p-2"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+          </div>
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${svc.bg} flex flex-col items-center justify-center gap-2 group-hover:scale-105 transition-transform duration-500`}>
             <span className="text-5xl select-none">{svc.icon}</span>
@@ -74,7 +72,7 @@ export function ProductCard({ product }: Props) {
           </div>
 
           <button
-            onClick={() => addItem(product)}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); addItem(product) }}
             disabled={isOut}
             className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white text-xs font-bold rounded-xl px-4 py-2.5 transition-all hover:shadow-lg hover:shadow-primary-200 disabled:cursor-not-allowed whitespace-nowrap"
           >
@@ -83,25 +81,31 @@ export function ProductCard({ product }: Props) {
           </button>
         </div>
 
-        {/* Stock + detail link */}
-        <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-100">
-          <div className="flex items-center gap-1.5">
-            <Box className="w-3 h-3 text-gray-400" />
-            <span className="text-xs text-gray-400">
-              {t.card.stock} <strong className="text-gray-600">{product.stock}</strong> {t.card.stockUnit}
-            </span>
-          </div>
-          {product.groupKey && (
-            <Link
-              href={`/san-pham/${product.groupKey}`}
-              className="flex items-center gap-0.5 text-xs text-primary-500 hover:text-primary-700 font-medium transition-colors whitespace-nowrap"
-              onClick={(e) => e.stopPropagation()}
-            >
-              Xem gói khác <ChevronRight className="w-3 h-3" />
-            </Link>
+        {/* Stock */}
+        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
+          <Box className="w-3 h-3 text-gray-400" />
+          <span className="text-xs text-gray-400">
+            {t.card.stock} <strong className="text-gray-600">{product.stock}</strong> {t.card.stockUnit}
+          </span>
+          {detailHref && (
+            <span className="ml-auto text-xs text-primary-400 font-medium">Xem các gói →</span>
           )}
         </div>
       </div>
+    </>
+  )
+
+  if (detailHref) {
+    return (
+      <Link href={detailHref} className="card group flex flex-col overflow-hidden hover:border-primary-300 hover:shadow-xl hover:shadow-primary-100/50 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer">
+        {cardContent}
+      </Link>
+    )
+  }
+
+  return (
+    <article className="card group flex flex-col overflow-hidden hover:border-primary-300 hover:shadow-xl hover:shadow-primary-100/50 hover:-translate-y-1.5 transition-all duration-300">
+      {cardContent}
     </article>
   )
 }
