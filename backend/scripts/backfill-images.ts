@@ -146,7 +146,6 @@ const IMAGES: Record<string, string> = {
   bumble:        'https://logo.clearbit.com/bumble.com',
   leonardo:      'https://logo.clearbit.com/leonardo.ai',
   elevenlabs:    'https://logo.clearbit.com/elevenlabs.io',
-  'apple-music': 'https://logo.clearbit.com/apple.com',
 }
 
 let groupUpdated = 0
