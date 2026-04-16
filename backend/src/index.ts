@@ -28,7 +28,8 @@ await app.register(jwtPlugin)
 await app.register(errorHandler)
 
 // Google OAuth2 (only register when credentials are configured)
-if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET && config.GOOGLE_CALLBACK_URL) {
+if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
+  const callbackUri = config.GOOGLE_CALLBACK_URL || 'https://api.miushop.io.vn/api/v1/auth/google/callback'
   await app.register(oauth2Plugin, {
     name: 'googleOAuth2',
     scope: ['profile', 'email'],
@@ -45,8 +46,9 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET && config.GOOGLE_CALL
       },
     },
     startRedirectPath: '/api/v1/auth/google',
-    callbackUri: config.GOOGLE_CALLBACK_URL,
+    callbackUri,
   })
+  app.log.info('✅ Google OAuth2 registered')
 }
 
 // Health check
