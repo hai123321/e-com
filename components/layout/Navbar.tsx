@@ -15,7 +15,7 @@ const LOCALES: { value: Locale; flag: string; label: string }[] = [
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
-  const { openCart, totalItems, locale, setLocale } = useStore()
+  const { openCart, totalItems, locale, setLocale, user, clearUser } = useStore()
   const t = useT()
   const count = totalItems()
 
@@ -81,6 +81,37 @@ export function Navbar() {
                 </div>
               )}
             </div>
+
+            {/* User auth */}
+            {user ? (
+              <div className="relative group">
+                <button className="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl px-3 py-2 text-sm font-semibold transition-all">
+                  <div className="w-6 h-6 rounded-full bg-accent-400 flex items-center justify-center text-xs font-bold">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="hidden sm:inline max-w-[80px] truncate">{user.name}</span>
+                </button>
+                <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 min-w-[140px] hidden group-hover:block">
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-xs font-semibold text-gray-900 truncate">{user.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  </div>
+                  <button
+                    onClick={() => { clearUser() }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <a
+                href="/dang-nhap"
+                className="hidden sm:flex items-center gap-1.5 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+              >
+                Đăng nhập
+              </a>
+            )}
 
             {/* Cart */}
             <button

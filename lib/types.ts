@@ -24,3 +24,37 @@ export interface Toast {
   message: string
   type: ToastType
 }
+
+export interface UserSession {
+  id: number
+  email: string
+  name: string
+  avatar?: string | null
+}
+
+export interface PricingRule {
+  id: number
+  name: string
+  description: string
+  ruleType: 'multiplier' | 'fixed_add' | 'stock_based' | 'time_based' | 'manual_override'
+  params: Record<string, unknown>
+  scopeType: 'global' | 'category' | 'product'
+  scopeValue?: string | null
+  priority: number
+  isActive: boolean
+  startsAt?: string | null
+  endsAt?: string | null
+}
+
+export interface Promotion {
+  id: number
+  code: string
+  discountType: 'percent' | 'fixed'
+  discountValue: number
+  minOrderValue?: number | null
+  maxUses?: number | null
+  usedCount: number
+  isActive: boolean
+  expiresAt?: string | null
+  createdAt: string
+}

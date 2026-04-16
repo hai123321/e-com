@@ -1,7 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
-import type { CartItem, CategoryFilter, Product, StockFilter, Toast, ToastType } from './types'
+import type { CartItem, CategoryFilter, Product, StockFilter, Toast, ToastType, UserSession } from './types'
 import type { Locale } from './i18n'
 
 interface CartStore {
@@ -33,6 +33,12 @@ interface CartStore {
   toasts: Toast[]
   addToast: (message: string, type?: ToastType) => void
   removeToast: (id: string) => void
+
+  // User auth
+  user: UserSession | null
+  userToken: string | null
+  setUser: (user: UserSession, token: string) => void
+  clearUser: () => void
 }
 
 export const useStore = create<CartStore>((set, get) => ({
@@ -110,4 +116,16 @@ export const useStore = create<CartStore>((set, get) => ({
   },
   removeToast: (id) =>
     set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+
+  // ── User auth ─────────────────────────────────────
+  user: null,
+  userToken: null,
+  setUser: (user, token) => {
+    set({ user, userToken: token })
+    if (typeof window !== 'undefined') localStorage.setItem('user_token', token)
+  },
+  clearUser: () => {
+    set({ user: null, userToken: null })
+    if (typeof window !== 'undefined') localStorage.removeItem('user_token')
+  },
 }))

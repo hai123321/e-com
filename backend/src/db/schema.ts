@@ -1,6 +1,6 @@
 import {
   pgTable, serial, varchar, text, integer, boolean,
-  timestamp, check,
+  timestamp, check, jsonb,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
@@ -70,3 +70,48 @@ export const guides = pgTable('guides', {
 
 export type Guide    = typeof guides.$inferSelect
 export type NewGuide = typeof guides.$inferInsert
+
+// ── Users ──────────────────────────────────────────────────────────────────
+export const users = pgTable('users', {
+  id:           serial('id').primaryKey(),
+  email:        varchar('email', { length: 255 }).notNull().unique(),
+  name:         varchar('name', { length: 255 }).notNull().default(''),
+  avatar:       varchar('avatar', { length: 512 }),
+  passwordHash: varchar('password_hash', { length: 255 }),
+  googleId:     varchar('google_id', { length: 255 }).unique(),
+  isActive:     boolean('is_active').notNull().default(true),
+  createdAt:    timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+// ── Pricing Rules ───────────────────────────────────────────────────────────
+export const pricingRules = pgTable('pricing_rules', {
+  id:          serial('id').primaryKey(),
+  name:        varchar('name', { length: 255 }).notNull(),
+  description: text('description').notNull().default(''),
+  ruleType:    varchar('rule_type', { length: 50 }).notNull(),
+  params:      jsonb('params').notNull().default({}),
+  scopeType:   varchar('scope_type', { length: 20 }).notNull().default('global'),
+  scopeValue:  varchar('scope_value', { length: 255 }),
+  priority:    integer('priority').notNull().default(0),
+  isActive:    boolean('is_active').notNull().default(true),
+  startsAt:    timestamp('starts_at', { withTimezone: true }),
+  endsAt:      timestamp('ends_at', { withTimezone: true }),
+  createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+// ── Promotions ──────────────────────────────────────────────────────────────
+export const promotions = pgTable('promotions', {
+  id:            serial('id').primaryKey(),
+  code:          varchar('code', { length: 50 }).notNull().unique(),
+  discountType:  varchar('discount_type', { length: 10 }).notNull(),
+  discountValue: integer('discount_value').notNull(),
+  minOrderValue: integer('min_order_value'),
+  maxUses:       integer('max_uses'),
+  usedCount:     integer('used_count').notNull().default(0),
+  isActive:      boolean('is_active').notNull().default(true),
+  expiresAt:     timestamp('expires_at', { withTimezone: true }),
+  createdAt:     timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:     timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})

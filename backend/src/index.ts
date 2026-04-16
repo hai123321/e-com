@@ -8,6 +8,9 @@ import { productRoutes } from './modules/products/products.routes.js'
 import { orderRoutes } from './modules/orders/orders.routes.js'
 import { authRoutes } from './modules/auth/auth.routes.js'
 import { guideRoutes } from './modules/guides/guides.routes.js'
+import { userAuthRoutes } from './modules/user-auth/user-auth.routes.js'
+import { pricingRoutes } from './modules/pricing/pricing.routes.js'
+import { promotionRoutes } from './modules/promotions/promotions.routes.js'
 
 const app = Fastify({
   logger: {
@@ -34,10 +37,13 @@ app.get('/api/v1/health', async (_req, reply) => {
 })
 
 // Routes
-await app.register(productRoutes, { prefix: '/api/v1' })
-await app.register(orderRoutes,   { prefix: '/api/v1' })
-await app.register(authRoutes,    { prefix: '/api/v1' })
-await app.register(guideRoutes,   { prefix: '/api/v1' })
+await app.register(productRoutes,  { prefix: '/api/v1' })
+await app.register(orderRoutes,    { prefix: '/api/v1' })
+await app.register(authRoutes,     { prefix: '/api/v1' })
+await app.register(guideRoutes,    { prefix: '/api/v1' })
+await app.register(userAuthRoutes, { prefix: '/api/v1' })
+await app.register(pricingRoutes,   { prefix: '/api/v1' })
+await app.register(promotionRoutes, { prefix: '/api/v1' })
 
 // Start
 try {
