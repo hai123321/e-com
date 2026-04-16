@@ -1,7 +1,14 @@
+import { z } from 'zod'
 import type { FastifyInstance } from 'fastify'
 import { registerSchema, loginSchema } from './user-auth.schema.js'
-import { registerUser, loginUser, getMe, findOrCreateGoogleUser } from './user-auth.service.js'
+import { registerUser, loginUser, getMe, findOrCreateGoogleUser, updateProfile } from './user-auth.service.js'
+import { findOrdersByEmail } from '../orders/orders.repository.js'
 import { config } from '../../config.js'
+
+const updateProfileSchema = z.object({
+  name:   z.string().min(1).max(255).optional(),
+  avatar: z.string().url().max(512).optional().nullable(),
+})
 
 export async function userAuthRoutes(app: FastifyInstance) {
   // POST /auth/user/register
@@ -26,6 +33,26 @@ export async function userAuthRoutes(app: FastifyInstance) {
     const user = await getMe(payload.id)
     if (!user) return reply.status(404).send({ success: false, error: 'User not found' })
     return reply.send({ success: true, data: user })
+  })
+
+  // PUT /auth/user/profile
+  app.put('/auth/user/profile', {
+    preHandler: [app.authenticateUser],
+  }, async (req, reply) => {
+    const payload = req.user as { id: number; email: string; role: string }
+    const input = updateProfileSchema.parse(req.body)
+    const user = await updateProfile(payload.id, input)
+    if (!user) return reply.status(404).send({ success: false, error: 'User not found' })
+    return reply.send({ success: true, data: user })
+  })
+
+  // GET /auth/user/orders
+  app.get('/auth/user/orders', {
+    preHandler: [app.authenticateUser],
+  }, async (req, reply) => {
+    const payload = req.user as { id: number; email: string; role: string }
+    const orders = await findOrdersByEmail(payload.email)
+    return reply.send({ success: true, data: orders })
   })
 
   // GET /auth/google/callback — exchange code → profile → JWT → redirect to frontend

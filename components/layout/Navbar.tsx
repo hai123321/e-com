@@ -91,11 +91,24 @@ export function Navbar() {
                   </div>
                   <span className="hidden sm:inline max-w-[80px] truncate">{user.name}</span>
                 </button>
-                <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 min-w-[140px] hidden group-hover:block">
+                <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 min-w-[160px] hidden group-hover:block">
                   <div className="px-4 py-3 border-b border-gray-100">
                     <p className="text-xs font-semibold text-gray-900 truncate">{user.name}</p>
                     <p className="text-xs text-gray-500 truncate">{user.email}</p>
                   </div>
+                  <a
+                    href="/tai-khoan"
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
+                  >
+                    Tài khoản của tôi
+                  </a>
+                  <a
+                    href="/tai-khoan?tab=orders"
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
+                  >
+                    Lịch sử đơn hàng
+                  </a>
+                  <div className="border-t border-gray-100" />
                   <button
                     onClick={() => { clearUser() }}
                     className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"

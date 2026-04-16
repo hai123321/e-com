@@ -74,6 +74,16 @@ export async function findOrCreateGoogleUser(
   return { token, user: safeUser }
 }
 
+export async function updateProfile(
+  userId: number,
+  input: { name?: string; avatar?: string | null }
+): Promise<Omit<User, 'passwordHash'> | null> {
+  const user = await updateUser(userId, input)
+  if (!user) return null
+  const { passwordHash: _, ...safeUser } = user
+  return safeUser
+}
+
 export async function getMe(userId: number): Promise<Omit<User, 'passwordHash'> | null> {
   const user = await findUserById(userId)
   if (!user) return null
