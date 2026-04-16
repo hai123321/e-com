@@ -15,6 +15,7 @@ const LOCALES: { value: Locale; flag: string; label: string }[] = [
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
+  const [userOpen, setUserOpen] = useState(false)
   const { openCart, totalItems, locale, setLocale, user, clearUser } = useStore()
   const t = useT()
   const count = totalItems()
@@ -84,38 +85,50 @@ export function Navbar() {
 
             {/* User auth */}
             {user ? (
-              <div className="relative group">
+              <div
+                className="relative"
+                onMouseEnter={() => setUserOpen(true)}
+                onMouseLeave={() => setUserOpen(false)}
+              >
                 <button className="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl px-3 py-2 text-sm font-semibold transition-all">
-                  <div className="w-6 h-6 rounded-full bg-accent-400 flex items-center justify-center text-xs font-bold">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-accent-400 flex items-center justify-center text-xs font-bold">
+                      {(user.name ?? '').charAt(0).toUpperCase() || '?'}
+                    </div>
+                  )}
                   <span className="hidden sm:inline max-w-[80px] truncate">{user.name}</span>
                 </button>
-                <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 min-w-[160px] hidden group-hover:block">
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <p className="text-xs font-semibold text-gray-900 truncate">{user.name}</p>
-                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                {userOpen && (
+                  <div className="absolute right-0 top-full bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 min-w-[180px]">
+                    {/* invisible bridge to prevent gap between button and dropdown */}
+                    <div className="absolute -top-2 left-0 right-0 h-2" />
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-xs font-semibold text-gray-900 truncate">{user.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    </div>
+                    <a
+                      href="/tai-khoan"
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
+                    >
+                      Tài khoản của tôi
+                    </a>
+                    <a
+                      href="/tai-khoan?tab=orders"
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
+                    >
+                      Lịch sử đơn hàng
+                    </a>
+                    <div className="border-t border-gray-100" />
+                    <button
+                      onClick={() => { clearUser(); setUserOpen(false) }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Đăng xuất
+                    </button>
                   </div>
-                  <a
-                    href="/tai-khoan"
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
-                  >
-                    Tài khoản của tôi
-                  </a>
-                  <a
-                    href="/tai-khoan?tab=orders"
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
-                  >
-                    Lịch sử đơn hàng
-                  </a>
-                  <div className="border-t border-gray-100" />
-                  <button
-                    onClick={() => { clearUser() }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Đăng xuất
-                  </button>
-                </div>
+                )}
               </div>
             ) : (
               <a
