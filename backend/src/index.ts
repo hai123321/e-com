@@ -37,7 +37,12 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET && config.GOOGLE_CALL
         id: config.GOOGLE_CLIENT_ID,
         secret: config.GOOGLE_CLIENT_SECRET,
       },
-      auth: oauth2Plugin.GOOGLE_CONFIGURATION,
+      auth: {
+        authorizeHost: 'https://accounts.google.com',
+        authorizePath: '/o/oauth2/v2/auth',
+        tokenHost: 'https://oauth2.googleapis.com',
+        tokenPath: '/token',
+      },
     },
     startRedirectPath: '/api/v1/auth/google',
     callbackUri: config.GOOGLE_CALLBACK_URL,
