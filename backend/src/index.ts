@@ -1,4 +1,5 @@
 import Fastify from 'fastify'
+import oauth2Plugin from '@fastify/oauth2'
 import { config } from './config.js'
 import { checkDbConnection } from './db/client.js'
 import corsPlugin from './plugins/cors.js'
@@ -25,6 +26,23 @@ const app = Fastify({
 await app.register(corsPlugin)
 await app.register(jwtPlugin)
 await app.register(errorHandler)
+
+// Google OAuth2 (only register when credentials are configured)
+if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET && config.GOOGLE_CALLBACK_URL) {
+  await app.register(oauth2Plugin, {
+    name: 'googleOAuth2',
+    scope: ['profile', 'email'],
+    credentials: {
+      client: {
+        id: config.GOOGLE_CLIENT_ID,
+        secret: config.GOOGLE_CLIENT_SECRET,
+      },
+      auth: oauth2Plugin.GOOGLE_CONFIGURATION,
+    },
+    startRedirectPath: '/api/v1/auth/google',
+    callbackUri: config.GOOGLE_CALLBACK_URL,
+  })
+}
 
 // Health check
 app.get('/api/v1/health', async (_req, reply) => {

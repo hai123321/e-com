@@ -21,6 +21,10 @@ jobs:
           NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
           API_INTERNAL_URL=http://api:3001
           ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}
+          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
           EOF
 
       - name: Build và deploy
