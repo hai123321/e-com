@@ -41,13 +41,13 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://miushop.io.vn}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.miushop.io.vn}
     restart: unless-stopped
     depends_on:
       - api
     environment:
       NODE_ENV:            production
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://miushop.io.vn}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.miushop.io.vn}
       API_INTERNAL_URL:    http://api:3001
     networks:
       - internal

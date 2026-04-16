@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { BookOpen, ChevronDown, Loader2, Wrench } from 'lucide-react'
 import { useT } from '@/lib/hooks/useT'
 import { useStore } from '@/lib/store'
+import { apiUrl } from '@/lib/api'
 
 interface Guide {
   id: number
@@ -21,9 +22,7 @@ export default function HuongDanPage() {
   const [loadingGuides, setLoadingGuides] = useState(true)
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL
-    const url = apiUrl ? `${apiUrl}/api/v1/guides` : '/api/guides'
-    fetch(url, { signal: AbortSignal.timeout(5000) })
+    fetch(apiUrl('/guides'), { signal: AbortSignal.timeout(5000) })
       .then((r) => r.json())
       .then((json) => {
         setGuides(json.data ?? [])

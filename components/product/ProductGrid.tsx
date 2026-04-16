@@ -6,6 +6,7 @@ import type { CategoryFilter, Product, StockFilter } from '@/lib/types'
 import { useStore } from '@/lib/store'
 import { useT } from '@/lib/hooks/useT'
 import { filterProducts } from '@/lib/utils'
+import { apiUrl } from '@/lib/api'
 import { ProductCard } from './ProductCard'
 
 const CATEGORY_META: { value: CategoryFilter; icon: string }[] = [
@@ -33,22 +34,14 @@ export function ProductGrid() {
   } = useStore()
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL
-    const url = apiUrl ? `${apiUrl}/api/v1/products` : '/api/products'
-
-    fetch(url, { signal: AbortSignal.timeout(5000) })
+    fetch(apiUrl('/products'), { signal: AbortSignal.timeout(5000) })
       .then((r) => r.json())
       .then((json) => {
         const list = json.data ?? json.products ?? []
         setAllProducts(list)
         setLoading(false)
       })
-      .catch(() => {
-        fetch('/api/products')
-          .then((r) => r.json())
-          .then(({ products }) => { setAllProducts(products ?? []); setLoading(false) })
-          .catch(() => setLoading(false))
-      })
+      .catch(() => setLoading(false))
   }, [])
 
   const filtered = filterProducts(allProducts, searchQuery, stockFilter, categoryFilter)
