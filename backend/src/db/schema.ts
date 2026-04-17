@@ -116,3 +116,17 @@ export const promotions = pgTable('promotions', {
   createdAt:     timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:     timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+export const banners = pgTable('banners', {
+  id:        serial('id').primaryKey(),
+  title:     varchar('title', { length: 255 }).notNull().default(''),
+  subtitle:  varchar('subtitle', { length: 255 }).notNull().default(''),
+  image:     varchar('image', { length: 512 }).notNull().default(''),
+  href:      varchar('href', { length: 512 }).notNull().default('/#products'),
+  priority:  integer('priority').notNull().default(0),
+  isActive:  boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+export type Banner    = typeof banners.$inferSelect
+export type NewBanner = typeof banners.$inferInsert

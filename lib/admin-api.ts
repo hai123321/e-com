@@ -67,4 +67,13 @@ export const adminApi = {
     adminFetch(`/admin/promotions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deletePromotion: (id: number) =>
     adminFetch(`/admin/promotions/${id}`, { method: 'DELETE' }),
+
+  // Banners
+  getBanners: () => adminFetch('/admin/banners'),
+  createBanner: (data: unknown) =>
+    adminFetch('/admin/banners', { method: 'POST', body: JSON.stringify(data) }),
+  updateBanner: (id: number, data: unknown) =>
+    adminFetch(`/admin/banners/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteBanner: (id: number) =>
+    adminFetch(`/admin/banners/${id}`, { method: 'DELETE' }),
 }

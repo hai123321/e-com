@@ -12,6 +12,7 @@ import { guideRoutes } from './modules/guides/guides.routes.js'
 import { userAuthRoutes } from './modules/user-auth/user-auth.routes.js'
 import { pricingRoutes } from './modules/pricing/pricing.routes.js'
 import { promotionRoutes } from './modules/promotions/promotions.routes.js'
+import { bannerRoutes } from './modules/banners/banners.routes.js'
 
 const app = Fastify({
   logger: {
@@ -69,6 +70,7 @@ await app.register(guideRoutes,    { prefix: '/api/v1' })
 await app.register(userAuthRoutes, { prefix: '/api/v1' })
 await app.register(pricingRoutes,   { prefix: '/api/v1' })
 await app.register(promotionRoutes, { prefix: '/api/v1' })
+await app.register(bannerRoutes,    { prefix: '/api/v1' })
 
 // Start
 try {

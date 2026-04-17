@@ -29,8 +29,12 @@ interface Promotion {
   minOrderValue?: number; maxUses?: number; usedCount: number
   isActive: boolean; expiresAt?: string; createdAt: string
 }
+interface Banner {
+  id: number; title: string; subtitle: string; image: string
+  href: string; priority: number; isActive: boolean
+}
 
-const TABS = ['Đơn hàng', 'Sản phẩm', 'Nhóm SP', 'Hướng dẫn', 'Cấu hình giá', 'Khuyến mại'] as const
+const TABS = ['Đơn hàng', 'Sản phẩm', 'Nhóm SP', 'Hướng dẫn', 'Cấu hình giá', 'Khuyến mại', 'Banner'] as const
 type Tab = typeof TABS[number]
 
 const STATUS_LABELS: Record<string, string> = {
@@ -684,6 +688,114 @@ function PromotionsTab() {
   )
 }
 
+// ─── Banners Tab ─────────────────────────────────────────────────────────────
+function BannersTab() {
+  const [banners, setBanners] = useState<Banner[]>([])
+  const [creating, setCreating] = useState(false)
+  const [editing, setEditing] = useState<Banner | null>(null)
+  const [loading, setLoading] = useState(true)
+  const empty: Omit<Banner, 'id'> = { title: '', subtitle: '', image: '', href: '/#products', priority: 0, isActive: true }
+  const [form, setForm] = useState<Omit<Banner, 'id'>>(empty)
+
+  useEffect(() => {
+    adminApi.getBanners().then(r => { setBanners(r.data ?? []); setLoading(false) })
+  }, [])
+
+  const save = async () => {
+    if (editing) {
+      const r = await adminApi.updateBanner(editing.id, form)
+      setBanners(prev => prev.map(b => b.id === editing.id ? r.data : b))
+      setEditing(null)
+    } else {
+      const r = await adminApi.createBanner(form)
+      setBanners(prev => [r.data, ...prev])
+      setCreating(false)
+    }
+  }
+
+  const del = async (id: number) => {
+    if (!confirm('Xóa banner này?')) return
+    await adminApi.deleteBanner(id)
+    setBanners(prev => prev.filter(b => b.id !== id))
+  }
+
+  const f = (key: keyof typeof form) => (v: string) =>
+    setForm(prev => ({ ...prev, [key]: key === 'priority' ? parseInt(v) || 0 : v }))
+
+  const bannerFormJsx = (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <Input label="Tiêu đề" value={form.title} onChange={f('title')} required />
+        <Input label="Phụ đề" value={form.subtitle} onChange={f('subtitle')} placeholder="Mô tả ngắn" />
+        <Input label="Ảnh (URL)" value={form.image} onChange={f('image')} placeholder="/api/logos/netflix.jpg" />
+        <Input label="Liên kết (href)" value={form.href} onChange={f('href')} placeholder="/san-pham/netflix" />
+        <Input label="Độ ưu tiên (số lớn = hiển thị trước)" value={form.priority} onChange={f('priority')} type="number" />
+      </div>
+      <div className="flex items-center gap-2">
+        <input type="checkbox" id="bannerIsActive" checked={form.isActive}
+          onChange={e => setForm(p => ({ ...p, isActive: e.target.checked }))}
+          className="rounded" />
+        <label htmlFor="bannerIsActive" className="text-gray-400 text-sm">Đang hiển thị</label>
+      </div>
+      <div className="flex gap-3 pt-2">
+        <Btn onClick={save}>Lưu</Btn>
+        <Btn variant="ghost" onClick={() => { setEditing(null); setCreating(false) }}>Hủy</Btn>
+      </div>
+    </div>
+  )
+
+  if (loading) return <p className="text-gray-500 text-sm">Đang tải...</p>
+
+  return (
+    <>
+      <div className="flex justify-end mb-4">
+        <Btn onClick={() => { setForm(empty); setCreating(true) }}>+ Thêm banner</Btn>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-800">
+              {['Tiêu đề', 'Phụ đề', 'Ảnh', 'Liên kết', 'Ưu tiên', 'Trạng thái', ''].map(h => (
+                <th key={h} className="text-left text-gray-500 font-medium py-3 px-3 text-xs">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {banners.length === 0 && (
+              <tr><td colSpan={7} className="text-center text-gray-600 py-8 text-sm">Chưa có banner nào</td></tr>
+            )}
+            {banners.map(b => (
+              <tr key={b.id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                <td className="py-3 px-3 text-white font-medium">{b.title}</td>
+                <td className="py-3 px-3 text-gray-400 text-xs">{b.subtitle || '—'}</td>
+                <td className="py-3 px-3 text-gray-500 text-xs font-mono truncate max-w-[120px]">{b.image || '—'}</td>
+                <td className="py-3 px-3 text-gray-500 text-xs font-mono truncate max-w-[120px]">{b.href}</td>
+                <td className="py-3 px-3 text-gray-400">{b.priority}</td>
+                <td className="py-3 px-3">
+                  <span className={`text-xs px-2 py-1 rounded-lg border ${b.isActive ? 'bg-green-900/40 text-green-400 border-green-800' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
+                    {b.isActive ? 'Hiển thị' : 'Ẩn'}
+                  </span>
+                </td>
+                <td className="py-3 px-3">
+                  <div className="flex gap-2">
+                    <Btn size="sm" variant="ghost" onClick={() => { setForm(b); setEditing(b) }}>Sửa</Btn>
+                    <Btn size="sm" variant="danger" onClick={() => del(b.id)}>Xóa</Btn>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {(creating || editing) && (
+        <Modal title={editing ? `Sửa: ${editing.title}` : 'Thêm banner mới'} onClose={() => { setEditing(null); setCreating(false) }}>
+          {bannerFormJsx}
+        </Modal>
+      )}
+    </>
+  )
+}
+
 // ─── Main Admin Page ─────────────────────────────────────────────────────────
 export default function AdminPage() {
   const router = useRouter()
@@ -713,6 +825,7 @@ export default function AdminPage() {
     'Hướng dẫn':   <GuidesTab />,
     'Cấu hình giá': <PricingRulesTab />,
     'Khuyến mại':  <PromotionsTab />,
+    'Banner':      <BannersTab />,
   }
 
   return (
