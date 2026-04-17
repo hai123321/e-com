@@ -13,6 +13,7 @@ interface Order {
 interface Product {
   id: number; name: string; price: number; stock: number; category: string
   description: string; image: string; groupKey: string; isActive: boolean
+  featuredPriority: number
 }
 interface Guide {
   id: number; sortOrder: number; type: string
@@ -189,7 +190,7 @@ function ProductsTab() {
   const [editing, setEditing] = useState<Product | null>(null)
   const [creating, setCreating] = useState(false)
   const [loading, setLoading] = useState(true)
-  const emptyForm = { name: '', price: 0, stock: 0, category: 'AI', description: '', image: '', groupKey: '', isActive: true }
+  const emptyForm = { name: '', price: 0, stock: 0, category: 'AI', description: '', image: '', groupKey: '', isActive: true, featuredPriority: 0 }
   const [form, setForm] = useState<Omit<Product, 'id'>>(emptyForm)
 
   useEffect(() => {
@@ -222,7 +223,7 @@ function ProductsTab() {
   )
 
   const f = (key: keyof typeof form) => (v: string) =>
-    setForm(prev => ({ ...prev, [key]: ['price', 'stock'].includes(key) ? parseInt(v) || 0 : v }))
+    setForm(prev => ({ ...prev, [key]: ['price', 'stock', 'featuredPriority'].includes(key) ? parseInt(v) || 0 : v }))
 
   const productFormJsx = (
     <div className="space-y-4">
@@ -233,6 +234,7 @@ function ProductsTab() {
         <Input label="Tồn kho" value={form.stock} onChange={f('stock')} type="number" required />
         <Input label="Danh mục" value={form.category} onChange={f('category')} placeholder="AI" />
         <Input label="Ảnh (URL)" value={form.image} onChange={f('image')} placeholder="/api/logos/netflix.jpg" />
+        <Input label="Ưu tiên trang chủ (0=ẩn, 1-10=hiện)" value={form.featuredPriority} onChange={f('featuredPriority')} type="number" />
       </div>
       <Input label="Mô tả" value={form.description} onChange={f('description')} rows={3} />
       <div className="flex items-center gap-2">

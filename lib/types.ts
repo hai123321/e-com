@@ -7,6 +7,7 @@ export interface Product {
   stock: number
   category?: string
   groupKey?: string
+  featuredPriority?: number
 }
 
 export interface CartItem {
