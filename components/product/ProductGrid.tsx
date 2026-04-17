@@ -64,7 +64,7 @@ export function ProductGrid() {
       }
     }
 
-    return [...cheapestByGroup.values(), ...singletons]
+    return [...Array.from(cheapestByGroup.values()), ...singletons]
   }, [filtered])
 
   return (
