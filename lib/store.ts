@@ -37,8 +37,10 @@ interface CartStore {
   // User auth
   user: UserSession | null
   userToken: string | null
+  sessionHydrated: boolean          // true once SessionHydrator has finished (success or not)
   setUser: (user: UserSession, token: string) => void
   clearUser: () => void
+  setSessionHydrated: () => void
 }
 
 export const useStore = create<CartStore>((set, get) => ({
@@ -120,6 +122,7 @@ export const useStore = create<CartStore>((set, get) => ({
   // ── User auth ─────────────────────────────────────
   user: null,
   userToken: null,
+  sessionHydrated: false,
   setUser: (user, token) => {
     set({ user, userToken: token })
     if (typeof window !== 'undefined') localStorage.setItem('user_token', token)
@@ -128,4 +131,5 @@ export const useStore = create<CartStore>((set, get) => ({
     set({ user: null, userToken: null })
     if (typeof window !== 'undefined') localStorage.removeItem('user_token')
   },
+  setSessionHydrated: () => set({ sessionHydrated: true }),
 }))

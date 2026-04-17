@@ -25,7 +25,7 @@ function formatDate(s: string) {
 function TaiKhoanContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user, userToken, setUser, clearUser } = useStore()
+  const { user, userToken, setUser, clearUser, sessionHydrated } = useStore()
 
   const [tab, setTab] = useState<'profile' | 'orders' | 'topup'>(() => {
     const p = searchParams.get('tab')
@@ -46,10 +46,12 @@ function TaiKhoanContent() {
   const [loadingOrders, setLoadingOrders] = useState(false)
   const [expandedOrder, setExpandedOrder] = useState<number | null>(null)
 
-  // Redirect if not logged in
+  // Redirect if not logged in — wait for hydration first so we don't
+  // redirect before localStorage token is restored
   useEffect(() => {
+    if (!sessionHydrated) return  // still loading
     if (!user) router.replace('/dang-nhap')
-  }, [user, router])
+  }, [sessionHydrated, user, router])
 
   // Sync form with user data
   useEffect(() => {
@@ -91,7 +93,12 @@ function TaiKhoanContent() {
     }
   }
 
-  if (!user) return null
+  // While waiting for session hydration, show a neutral loading state
+  if (!sessionHydrated || !user) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+    </div>
+  )
 
   const initials = (user.name ?? '').charAt(0).toUpperCase() || '?'
 
