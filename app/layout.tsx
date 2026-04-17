@@ -5,6 +5,7 @@ import { ToastContainer } from '@/components/ui/ToastContainer'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { CartSidebar } from '@/components/cart/CartSidebar'
+import { SessionHydrator } from '@/components/layout/SessionHydrator'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi" className={inter.variable}>
       <body>
+        <SessionHydrator />
         <Navbar />
         {children}
         <Footer />

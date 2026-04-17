@@ -3,9 +3,10 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { User, Package, Save, ChevronDown, ChevronUp, LogOut } from 'lucide-react'
+import { User, Package, Save, ChevronDown, ChevronUp, LogOut, Wallet } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { updateProfile, fetchMyOrders, type UserOrder } from '@/lib/auth'
+import { vietQrUrl } from '@/lib/payment'
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   pending:   { label: 'Chờ xác nhận', cls: 'bg-yellow-100 text-yellow-700' },
@@ -26,9 +27,13 @@ function TaiKhoanContent() {
   const searchParams = useSearchParams()
   const { user, userToken, setUser, clearUser } = useStore()
 
-  const [tab, setTab] = useState<'profile' | 'orders'>(() =>
-    searchParams.get('tab') === 'orders' ? 'orders' : 'profile'
-  )
+  const [tab, setTab] = useState<'profile' | 'orders' | 'topup'>(() => {
+    const p = searchParams.get('tab')
+    if (p === 'orders') return 'orders'
+    if (p === 'topup')  return 'topup'
+    return 'profile'
+  })
+  const [topupAmount, setTopupAmount] = useState(0)
 
   // Profile state
   const [name, setName] = useState('')
@@ -128,6 +133,7 @@ function TaiKhoanContent() {
           {([
             { key: 'profile', label: 'Thông tin cá nhân', Icon: User },
             { key: 'orders',  label: 'Lịch sử đơn hàng', Icon: Package },
+            { key: 'topup',   label: 'Nạp tiền',          Icon: Wallet },
           ] as const).map(({ key, label, Icon }) => (
             <button
               key={key}
@@ -314,6 +320,76 @@ function TaiKhoanContent() {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Top-up Tab */}
+        {tab === 'topup' && (
+          <div className="max-w-sm">
+            <div className="card p-8 text-center">
+              <h2 className="font-bold text-lg text-gray-900 mb-1">Nạp tiền vào tài khoản</h2>
+              <p className="text-sm text-gray-500 mb-6">
+                Chuyển khoản theo thông tin bên dưới. Số dư sẽ được cập nhật sau khi xác nhận.
+              </p>
+
+              {/* Amount input */}
+              <div className="mb-5 text-left">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Số tiền nạp (VNĐ)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step={10000}
+                  value={topupAmount || ''}
+                  onChange={(e) => setTopupAmount(Number(e.target.value))}
+                  placeholder="100000"
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  {[50000, 100000, 200000, 500000].map((amt) => (
+                    <button
+                      key={amt}
+                      onClick={() => setTopupAmount(amt)}
+                      className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
+                        topupAmount === amt
+                          ? 'bg-primary-700 border-primary-700 text-white'
+                          : 'border-gray-300 text-gray-600 hover:border-primary-400 hover:text-primary-700'
+                      }`}
+                    >
+                      {(amt / 1000).toFixed(0)}k
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* QR code */}
+              <div className="flex justify-center mb-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={vietQrUrl(topupAmount, `topup ${user?.email ?? ''}`)}
+                  alt="QR nạp tiền"
+                  width={260}
+                  height={300}
+                  className="rounded-2xl border border-gray-200 shadow"
+                />
+              </div>
+
+              {/* Transfer content */}
+              <div className="bg-primary-50 border border-primary-200 rounded-xl px-4 py-3 mb-4">
+                <p className="text-xs text-gray-500 mb-1">Nội dung chuyển khoản</p>
+                <code className="font-bold text-primary-800 text-sm">
+                  topup {user?.email ?? ''}
+                </code>
+              </div>
+
+              <div className="text-left space-y-1.5 text-sm text-gray-500">
+                <p>• Chuyển khoản đúng nội dung để được xác nhận tự động</p>
+                <p>• Số dư cập nhật trong vòng 5–15 phút</p>
+                <p>• Liên hệ hỗ trợ:{' '}
+                  <a href="https://zalo.me/0383574189" target="_blank" rel="noopener noreferrer"
+                    className="text-primary-700 font-semibold">Zalo 038.357.4189</a>
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </div>

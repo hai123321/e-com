@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { adminApi } from '@/lib/admin-api'
+import { GroupImagesTab } from './GroupImagesTab'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 interface Order {
@@ -28,7 +29,7 @@ interface Promotion {
   isActive: boolean; expiresAt?: string; createdAt: string
 }
 
-const TABS = ['Đơn hàng', 'Sản phẩm', 'Hướng dẫn', 'Cấu hình giá', 'Khuyến mại'] as const
+const TABS = ['Đơn hàng', 'Sản phẩm', 'Nhóm SP', 'Hướng dẫn', 'Cấu hình giá', 'Khuyến mại'] as const
 type Tab = typeof TABS[number]
 
 const STATUS_LABELS: Record<string, string> = {
@@ -463,12 +464,25 @@ function PricingRulesTab() {
             className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm">
             <option value="global">Toàn bộ sản phẩm</option>
             <option value="category">Theo danh mục</option>
+            <option value="group">Theo nhóm sản phẩm (group_key)</option>
             <option value="product">Theo sản phẩm cụ thể (ID)</option>
           </select>
         </div>
         {form.scopeType !== 'global' && (
-          <Input label={form.scopeType === 'category' ? 'Tên danh mục' : 'ID sản phẩm'}
-            value={form.scopeValue ?? ''} onChange={f('scopeValue')} placeholder={form.scopeType === 'category' ? 'AI' : '123'} />
+          <Input
+            label={
+              form.scopeType === 'category' ? 'Tên danh mục' :
+              form.scopeType === 'group'    ? 'Group key' :
+                                              'ID sản phẩm'
+            }
+            value={form.scopeValue ?? ''}
+            onChange={f('scopeValue')}
+            placeholder={
+              form.scopeType === 'category' ? 'AI' :
+              form.scopeType === 'group'    ? 'netflix' :
+                                              '123'
+            }
+          />
         )}
         <Input label="Độ ưu tiên (số lớn = ưu tiên hơn)" value={form.priority} onChange={f('priority')} type="number" />
         <div>
@@ -691,11 +705,12 @@ export default function AdminPage() {
   if (!authed) return null
 
   const TAB_COMPONENTS: Record<Tab, React.ReactNode> = {
-    'Đơn hàng': <OrdersTab />,
-    'Sản phẩm': <ProductsTab />,
-    'Hướng dẫn': <GuidesTab />,
+    'Đơn hàng':    <OrdersTab />,
+    'Sản phẩm':    <ProductsTab />,
+    'Nhóm SP':     <GroupImagesTab />,
+    'Hướng dẫn':   <GuidesTab />,
     'Cấu hình giá': <PricingRulesTab />,
-    'Khuyến mại': <PromotionsTab />,
+    'Khuyến mại':  <PromotionsTab />,
   }
 
   return (

@@ -27,6 +27,9 @@ jobs:
           FRONTEND_URL=${{ secrets.FRONTEND_URL }}
           EOF
 
+      - name: Tạo thư mục logos
+        run: mkdir -p data/logos && chmod 777 data/logos
+
       - name: Build và deploy
         run: docker compose up -d --build
 
