@@ -54,6 +54,9 @@ jobs:
       - name: Migrate + Seed database
         run: docker compose exec -T -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} api npm run seed
 
+      - name: Generate product descriptions
+        run: docker compose exec -T api npm run gen-desc
+
       - name: Show logs nếu seed thất bại
         if: failure()
         run: docker compose logs api --tail=80
