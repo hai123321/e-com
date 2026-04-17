@@ -45,5 +45,5 @@ export async function POST(req: NextRequest) {
   await mkdir(logosDir, { recursive: true })
   await writeFile(filePath, buffer)
 
-  return NextResponse.json({ success: true, data: { path: `/logos/${groupKey}.jpg` } })
+  return NextResponse.json({ success: true, data: { path: `/api/logos/${groupKey}.jpg` } })
 }

@@ -232,7 +232,7 @@ function ProductsTab() {
         <Input label="Giá (VND)" value={form.price} onChange={f('price')} type="number" required />
         <Input label="Tồn kho" value={form.stock} onChange={f('stock')} type="number" required />
         <Input label="Danh mục" value={form.category} onChange={f('category')} placeholder="AI" />
-        <Input label="Ảnh (URL)" value={form.image} onChange={f('image')} placeholder="/logos/netflix.jpg" />
+        <Input label="Ảnh (URL)" value={form.image} onChange={f('image')} placeholder="/api/logos/netflix.jpg" />
       </div>
       <Input label="Mô tả" value={form.description} onChange={f('description')} rows={3} />
       <div className="flex items-center gap-2">
