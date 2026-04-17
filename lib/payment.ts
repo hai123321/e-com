@@ -1,9 +1,9 @@
 // ── Bank Transfer Config ────────────────────────────────────────────────────
 // Thay đổi thông tin ngân hàng tại đây
 export const BANK = {
-  id: 'MB',                // MB Bank — xem danh sách tại vietqr.io/danh-sach-ngan-hang
-  account: '0383574189',   // Số tài khoản hoặc số điện thoại MBBank
-  name: 'TRIEU HAI',       // Tên chủ tài khoản (UPPERCASE)
+  id: 'TCB',           // Techcombank — xem danh sách tại vietqr.io/danh-sach-ngan-hang
+  account: '666684',   // Số tài khoản Techcombank (kiểm tra lại số đầy đủ nếu cần)
+  name: 'TRIEU NAM HAI',
 }
 
 /**
