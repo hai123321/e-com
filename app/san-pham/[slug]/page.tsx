@@ -121,6 +121,7 @@ export default function ProductDetailPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Product | null>(null)
+  const [heroImgErr, setHeroImgErr] = useState(false)
 
   const meta = GROUP_META[slug] ?? { name: slug, tagline: '' }
 
@@ -180,23 +181,10 @@ export default function ProductDetailPage() {
           <div className="lg:col-span-2">
             <div className="card overflow-hidden sticky top-24">
               <div className={`relative h-56 bg-gradient-to-br ${svc.bg} flex items-center justify-center`}>
-                {heroImage ? (
+                {heroImage && !heroImgErr ? (
                   <div className="relative w-28 h-28 rounded-2xl overflow-hidden bg-white/10 shadow-xl">
-                    <Image
-                      src={heroImage}
-                      alt={meta.name}
-                      fill
-                      className="object-contain p-3"
-                      onError={(e) => {
-                        const el = e.target as HTMLImageElement
-                        el.style.display = 'none'
-                        const span = document.createElement('span')
-                        span.textContent = svc.icon
-                        span.className = 'text-6xl'
-                        el.parentElement?.appendChild(span)
-                      }}
-                      sizes="112px"
-                    />
+                    <Image src={heroImage} alt={meta.name} fill className="object-contain p-3"
+                      onError={() => setHeroImgErr(true)} sizes="112px" />
                   </div>
                 ) : (
                   <span className="text-7xl">{svc.icon}</span>

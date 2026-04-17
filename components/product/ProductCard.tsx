@@ -61,8 +61,8 @@ export function ProductCard({ product }: Props) {
         <span className="text-xs font-semibold text-primary-600 uppercase tracking-wider mb-1.5">
           {t.card.label}
         </span>
-        <h3 className="font-bold text-gray-900 text-base leading-snug mb-2">{product.name}</h3>
-        <p className="text-sm text-gray-500 leading-relaxed flex-1 mb-4 line-clamp-2">
+        <h3 className="font-bold text-gray-900 text-base leading-snug mb-1">{product.name}</h3>
+        <p className="text-xs text-gray-400 leading-relaxed flex-1 mb-4 line-clamp-2">
           {product.description}
         </p>
 
@@ -70,6 +70,9 @@ export function ProductCard({ product }: Props) {
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-xl font-extrabold text-primary-700">
+              {product.groupKey && (
+                <span className="text-xs text-gray-400 mr-0.5">Từ</span>
+              )}
               {formatCurrency(product.price)}
             </div>
             <div className="text-xs text-gray-400">{t.card.unit}</div>

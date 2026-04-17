@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Search, PackageOpen, Loader2 } from 'lucide-react'
 import type { CategoryFilter, Product, StockFilter } from '@/lib/types'
 import { useStore } from '@/lib/store'
@@ -45,6 +45,27 @@ export function ProductGrid() {
   }, [])
 
   const filtered = filterProducts(allProducts, searchQuery, stockFilter, categoryFilter)
+
+  // De-duplicate by groupKey: keep cheapest representative per group.
+  // Products without groupKey are shown individually.
+  const representativeList = useMemo<Product[]>(() => {
+    const cheapestByGroup = new Map<string, Product>()
+    const singletons: Product[] = []
+
+    for (const p of filtered) {
+      const key = p.groupKey
+      if (!key) {
+        singletons.push(p)
+        continue
+      }
+      const current = cheapestByGroup.get(key)
+      if (!current || p.price < current.price) {
+        cheapestByGroup.set(key, p)
+      }
+    }
+
+    return [...cheapestByGroup.values(), ...singletons]
+  }, [filtered])
 
   return (
     <section id="products" className="py-20 bg-primary-50">
@@ -109,7 +130,7 @@ export function ProductGrid() {
           </div>
 
           <span className="text-xs text-gray-400 ml-auto whitespace-nowrap">
-            {t.products.count(filtered.length)}
+            {filtered.length} nhóm / sản phẩm
           </span>
         </div>
 
@@ -119,14 +140,14 @@ export function ProductGrid() {
             <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
             <p className="text-sm">{t.products.loading}</p>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : representativeList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
             <PackageOpen className="w-14 h-14 text-gray-300" />
             <p className="text-sm">{t.products.empty}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filtered.map((p) => (
+            {representativeList.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
