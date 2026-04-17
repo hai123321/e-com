@@ -184,6 +184,7 @@ export default function ProductDetailPage() {
                 {heroImage && !heroImgErr ? (
                   <div className="relative w-28 h-28 rounded-2xl overflow-hidden bg-white/10 shadow-xl">
                     <Image src={heroImage} alt={meta.name} fill className="object-contain p-3"
+                      unoptimized
                       onError={() => setHeroImgErr(true)} sizes="112px" />
                   </div>
                 ) : (
