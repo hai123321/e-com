@@ -9,6 +9,7 @@ import { formatCurrency } from '@/lib/utils'
 import { getServiceConfig } from '@/lib/service-config'
 import { vietQrUrl } from '@/lib/payment'
 import { apiUrl } from '@/lib/api'
+import type { Product } from '@/lib/types'
 
 type Step = 'cart' | 'form' | 'payment'
 
@@ -18,6 +19,69 @@ interface OrderResult {
   customerName: string
 }
 
+// ── Cart item with image fallback ────────────────────────────────────────────
+interface CartItemProps {
+  product: Product
+  qty: number
+  onUpdateQty: (id: string, delta: number) => void
+  onRemove: (id: string) => void
+}
+
+function CartItem({ product, qty, onUpdateQty, onRemove }: CartItemProps) {
+  const [imgError, setImgError] = useState(false)
+  const svc = getServiceConfig(product.name, product.category)
+  const showImage = product.image && !imgError
+
+  return (
+    <div className="flex gap-3 p-3 rounded-2xl border border-gray-100 hover:border-primary-100 hover:bg-primary-50/30 transition-colors group">
+      <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-primary-50 shrink-0">
+        {showImage ? (
+          <Image
+            src={product.image!}
+            alt={product.name}
+            fill
+            className="object-cover"
+            onError={() => setImgError(true)}
+            sizes="64px"
+          />
+        ) : (
+          <div className={`w-full h-full bg-gradient-to-br ${svc.bg} flex items-center justify-center`}>
+            <span className="text-2xl">{svc.icon}</span>
+          </div>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-gray-900 truncate">{product.name}</p>
+        <p className="text-sm font-bold text-primary-700 mt-0.5">
+          {formatCurrency(product.price * qty)}
+        </p>
+        <div className="flex items-center gap-2 mt-2">
+          <button
+            onClick={() => onUpdateQty(product.id, -1)}
+            className="w-7 h-7 rounded-lg border border-gray-200 hover:bg-primary-600 hover:border-primary-600 hover:text-white flex items-center justify-center transition-all"
+          >
+            <Minus className="w-3 h-3" />
+          </button>
+          <span className="text-sm font-bold w-6 text-center">{qty}</span>
+          <button
+            onClick={() => onUpdateQty(product.id, 1)}
+            className="w-7 h-7 rounded-lg border border-gray-200 hover:bg-primary-600 hover:border-primary-600 hover:text-white flex items-center justify-center transition-all"
+          >
+            <Plus className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+      <button
+        onClick={() => onRemove(product.id)}
+        className="self-start text-gray-300 hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  )
+}
+
+// ── Cart Sidebar ──────────────────────────────────────────────────────────────
 export function CartSidebar() {
   const {
     items, isCartOpen, closeCart,
@@ -34,7 +98,6 @@ export function CartSidebar() {
   const [submitting, setSubmitting] = useState(false)
   const [order, setOrder] = useState<OrderResult | null>(null)
 
-  // Pre-fill from logged-in user
   const openCheckout = () => {
     if (user) {
       setName((n) => n || user.name)
@@ -45,7 +108,6 @@ export function CartSidebar() {
 
   const handleClose = () => {
     closeCart()
-    // Reset after animation
     setTimeout(() => { setStep('cart'); setOrder(null) }, 350)
   }
 
@@ -137,53 +199,15 @@ export function CartSidebar() {
                   </button>
                 </div>
               ) : (
-                items.map(({ product, qty }) => {
-                  const svc = getServiceConfig(product.name, product.category)
-                  return (
-                    <div
-                      key={product.id}
-                      className="flex gap-3 p-3 rounded-2xl border border-gray-100 hover:border-primary-100 hover:bg-primary-50/30 transition-colors group"
-                    >
-                      <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-primary-50 shrink-0">
-                        {product.image ? (
-                          <Image
-                            src={product.image}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                            sizes="64px"
-                          />
-                        ) : (
-                          <div className={`w-full h-full bg-gradient-to-br ${svc.bg} flex items-center justify-center`}>
-                            <span className="text-2xl">{svc.icon}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{product.name}</p>
-                        <p className="text-sm font-bold text-primary-700 mt-0.5">
-                          {formatCurrency(product.price * qty)}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <button onClick={() => updateQty(product.id, -1)}
-                            className="w-7 h-7 rounded-lg border border-gray-200 hover:bg-primary-600 hover:border-primary-600 hover:text-white flex items-center justify-center transition-all">
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="text-sm font-bold w-6 text-center">{qty}</span>
-                          <button onClick={() => updateQty(product.id, 1)}
-                            className="w-7 h-7 rounded-lg border border-gray-200 hover:bg-primary-600 hover:border-primary-600 hover:text-white flex items-center justify-center transition-all">
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                      <button onClick={() => removeItem(product.id)}
-                        className="self-start text-gray-300 hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )
-                })
+                items.map(({ product, qty }) => (
+                  <CartItem
+                    key={product.id}
+                    product={product}
+                    qty={qty}
+                    onUpdateQty={updateQty}
+                    onRemove={removeItem}
+                  />
+                ))
               )}
             </div>
             {items.length > 0 && (
@@ -196,13 +220,17 @@ export function CartSidebar() {
                   <span className="font-bold text-gray-900">{t.cart.total}</span>
                   <span className="text-xl font-extrabold text-primary-700">{formatCurrency(totalPrice())}</span>
                 </div>
-                <button onClick={openCheckout}
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary-700 to-primary-600 hover:from-primary-800 hover:to-primary-700 text-white font-bold py-3.5 rounded-xl transition-all hover:shadow-lg hover:shadow-primary-200 hover:-translate-y-0.5 text-sm">
+                <button
+                  onClick={openCheckout}
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary-700 to-primary-600 hover:from-primary-800 hover:to-primary-700 text-white font-bold py-3.5 rounded-xl transition-all hover:shadow-lg hover:shadow-primary-200 hover:-translate-y-0.5 text-sm"
+                >
                   <CreditCard className="w-4 h-4" />
                   {t.cart.checkout}
                 </button>
-                <button onClick={clearCart}
-                  className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-red-500 transition-colors py-1">
+                <button
+                  onClick={clearCart}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-red-500 transition-colors py-1"
+                >
                   <Trash2 className="w-3 h-3" />
                   {t.cart.clear}
                 </button>
@@ -217,27 +245,35 @@ export function CartSidebar() {
             <div className="flex-1 p-5 space-y-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Họ và tên *</label>
-                <input required value={name} onChange={(e) => setName(e.target.value)}
+                <input
+                  required value={name} onChange={(e) => setName(e.target.value)}
                   placeholder="Nguyễn Văn A"
-                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Số điện thoại *</label>
-                <input required value={phone} onChange={(e) => setPhone(e.target.value)}
+                <input
+                  required value={phone} onChange={(e) => setPhone(e.target.value)}
                   placeholder="0901234567" type="tel"
-                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Email (nhận tài khoản)</label>
-                <input value={email} onChange={(e) => setEmail(e.target.value)}
+                <input
+                  value={email} onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com" type="email"
-                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Ghi chú</label>
-                <textarea value={note} onChange={(e) => setNote(e.target.value)}
+                <textarea
+                  value={note} onChange={(e) => setNote(e.target.value)}
                   rows={3} placeholder="Yêu cầu đặc biệt..."
-                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none" />
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                />
               </div>
               {/* Order summary */}
               <div className="bg-gray-50 rounded-2xl p-4 space-y-1.5">
@@ -254,8 +290,10 @@ export function CartSidebar() {
               </div>
             </div>
             <div className="shrink-0 p-5 border-t border-gray-100">
-              <button type="submit" disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 bg-primary-700 hover:bg-primary-800 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl text-sm transition-colors">
+              <button
+                type="submit" disabled={submitting}
+                className="w-full flex items-center justify-center gap-2 bg-primary-700 hover:bg-primary-800 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl text-sm transition-colors"
+              >
                 <CreditCard className="w-4 h-4" />
                 {submitting ? 'Đang đặt...' : 'Xác nhận & Đặt hàng'}
               </button>
@@ -304,8 +342,10 @@ export function CartSidebar() {
               <p>• Hỗ trợ: <a href="https://zalo.me/0383574189" target="_blank" rel="noopener noreferrer" className="text-primary-700 font-semibold">Zalo 038.357.4189</a></p>
             </div>
 
-            <button onClick={handleClose}
-              className="w-full bg-primary-700 hover:bg-primary-800 text-white font-bold py-3 rounded-xl text-sm transition-colors">
+            <button
+              onClick={handleClose}
+              className="w-full bg-primary-700 hover:bg-primary-800 text-white font-bold py-3 rounded-xl text-sm transition-colors"
+            >
               Đóng
             </button>
           </div>

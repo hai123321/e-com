@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ShoppingCart, Box } from 'lucide-react'
@@ -22,31 +23,34 @@ export function ProductCard({ product }: Props) {
   const inCart = items.find((i) => i.product.id === product.id)
   const svc = getServiceConfig(product.name, product.category)
   const detailHref = product.groupKey ? `/san-pham/${product.groupKey}` : null
+  const [imgError, setImgError] = React.useState(false)
+
+  const showImage = product.image && !imgError
 
   const cardContent = (
     <>
       {/* Image / branded fallback */}
       <div className="relative h-48 overflow-hidden bg-white">
-        {product.image ? (
-          <div className={`w-full h-full bg-gradient-to-br ${svc.bg} flex items-center justify-center group-hover:scale-105 transition-transform duration-500`}>
+        <div className={`w-full h-full bg-gradient-to-br ${svc.bg} flex flex-col items-center justify-center gap-2 group-hover:scale-105 transition-transform duration-500`}>
+          {showImage ? (
             <Image
-              src={product.image}
+              src={product.image!}
               alt={product.name}
               width={96}
               height={96}
               unoptimized
               className="object-contain w-24 h-24 rounded-xl bg-white/10 p-2"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+              onError={() => setImgError(true)}
             />
-          </div>
-        ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${svc.bg} flex flex-col items-center justify-center gap-2 group-hover:scale-105 transition-transform duration-500`}>
-            <span className="text-5xl select-none">{svc.icon}</span>
-            <span className="text-white/60 text-xs font-medium uppercase tracking-wider">
-              {product.category ?? 'Premium'}
-            </span>
-          </div>
-        )}
+          ) : (
+            <>
+              <span className="text-5xl select-none">{svc.icon}</span>
+              <span className="text-white/60 text-xs font-medium uppercase tracking-wider">
+                {product.category ?? 'Premium'}
+              </span>
+            </>
+          )}
+        </div>
         <div className="absolute top-3 right-3">
           <StockBadge status={status} />
         </div>
