@@ -1,4 +1,5 @@
 import * as repo from './orders.repository.js'
+import { sendOrderConfirmationEmail } from '../../shared/email.js'
 import type { CreateOrderInput, OrderQuery, UpdateStatusInput } from './orders.schema.js'
 
 export async function createOrder(input: CreateOrderInput) {
@@ -22,6 +23,20 @@ export async function getOrder(id: number) {
 export async function updateOrderStatus(id: number, input: UpdateStatusInput) {
   const order = await repo.updateOrderStatus(id, input.status)
   if (!order) throw Object.assign(new Error('Order not found'), { statusCode: 404 })
+
+  if (input.status === 'confirmed' && order.customerEmail) {
+    const full = await repo.findOrderById(id)
+    if (full) {
+      sendOrderConfirmationEmail({
+        to: order.customerEmail,
+        customerName: order.customerName,
+        orderId: order.id,
+        items: full.items,
+        total: order.total,
+      }).catch(() => { /* non-critical — log in production */ })
+    }
+  }
+
   return order
 }
 
