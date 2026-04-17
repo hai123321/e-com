@@ -40,8 +40,17 @@ export async function POST(req: NextRequest) {
   }
 
   const logosDir = join(process.cwd(), 'public', 'logos')
+  const filePath  = join(logosDir, `${groupKey}.jpg`)
+
+  console.log('[upload-logo] cwd:', process.cwd())
+  console.log('[upload-logo] logosDir:', logosDir)
+  console.log('[upload-logo] filePath:', filePath)
+  console.log('[upload-logo] bufferSize:', buffer.length)
+
   await mkdir(logosDir, { recursive: true })
-  await writeFile(join(logosDir, `${groupKey}.jpg`), buffer)
+  await writeFile(filePath, buffer)
+
+  console.log('[upload-logo] write OK')
 
   return NextResponse.json({ success: true, data: { path: `/logos/${groupKey}.jpg` } })
 }
