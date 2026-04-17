@@ -23,12 +23,9 @@ export async function GET(
   }
 
   const filePath = join(process.cwd(), 'public', 'logos', key)
-  console.log('[logos] GET', key, '→', filePath, '| cwd:', process.cwd())
 
   try {
     const file = await readFile(filePath)
-
-    console.log('[logos] read OK, size:', file.length)
 
     const ext = key.split('.').pop()?.toLowerCase()
     const contentType =
@@ -42,8 +39,10 @@ export async function GET(
         'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
       },
     })
-  } catch (err) {
-    console.log('[logos] read FAILED:', (err as NodeJS.ErrnoException).code, filePath)
-    return new NextResponse('Not found', { status: 404 })
+  } catch {
+    return new NextResponse('Not found', {
+      status: 404,
+      headers: { 'Cache-Control': 'no-store' },
+    })
   }
 }
