@@ -10,8 +10,18 @@ export const createProductSchema = z.object({
 })
 
 export const updateProductSchema = createProductSchema.partial().extend({
-  isActive: z.boolean().optional(),
+  isActive:   z.boolean().optional(),
+  salePrice:  z.number().int().positive().nullable().optional(),
+  saleEndsAt: z.string().datetime().nullable().optional()
+    .transform((v) => v ? new Date(v) : v),
 })
+
+export const setFlashSaleSchema = z.object({
+  salePrice:  z.number().int().positive(),
+  saleEndsAt: z.string().datetime().transform((v) => new Date(v)),
+})
+
+export const clearFlashSaleSchema = z.object({})
 
 export const productQuerySchema = z.object({
   search:   z.string().optional(),
@@ -20,6 +30,7 @@ export const productQuerySchema = z.object({
   limit:    z.coerce.number().int().min(1).max(100).default(20),
 })
 
-export type CreateProductInput = z.infer<typeof createProductSchema>
-export type UpdateProductInput = z.infer<typeof updateProductSchema>
-export type ProductQuery       = z.infer<typeof productQuerySchema>
+export type CreateProductInput  = z.infer<typeof createProductSchema>
+export type UpdateProductInput  = z.infer<typeof updateProductSchema>
+export type ProductQuery        = z.infer<typeof productQuerySchema>
+export type SetFlashSaleInput   = z.infer<typeof setFlashSaleSchema>

@@ -1,21 +1,33 @@
 'use client'
 
 import Image from 'next/image'
-import { ShoppingCart, Box } from 'lucide-react'
+import { ShoppingCart, Box, TrendingUp } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useStore } from '@/lib/store'
 import { StockBadge } from '@/components/ui/Badge'
-import { formatCurrency, getStockStatus } from '@/lib/utils'
+import { FlashSaleBadge } from '@/components/product/FlashSaleBadge'
+import { Countdown } from '@/components/ui/Countdown'
+import { formatCurrency, getStockStatus, getProductBadge } from '@/lib/utils'
 
 interface Props {
   product: Product
 }
 
+function isFlashSaleActive(product: Product): boolean {
+  return !!(
+    product.salePrice &&
+    product.saleEndsAt &&
+    new Date(product.saleEndsAt) > new Date()
+  )
+}
+
 export function ProductCard({ product }: Props) {
   const { addItem, items } = useStore()
   const status = getStockStatus(product.stock)
+  const badge = getProductBadge(product.stock, product.soldCount)
   const isOut = status === 'out'
   const inCart = items.find((i) => i.product.id === product.id)
+  const onSale = isFlashSaleActive(product)
 
   return (
     <article className="card group flex flex-col overflow-hidden hover:border-primary-300 hover:shadow-xl hover:shadow-primary-100/50 hover:-translate-y-1.5 transition-all duration-300">
@@ -29,8 +41,19 @@ export function ProductCard({ product }: Props) {
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
-        <div className="absolute top-3 right-3">
-          <StockBadge status={status} />
+        <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
+          {onSale && (
+            <span className="bg-red-500 text-white text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full animate-pulse">
+              FLASH
+            </span>
+          )}
+          {badge === 'hot' && (
+            <span className="bg-orange-500 text-white text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full">
+              🔥 HOT
+            </span>
+          )}
+          {badge === 'low' && <StockBadge status="low" />}
+          {badge === 'out' && <StockBadge status="out" />}
         </div>
       </div>
 
@@ -46,12 +69,21 @@ export function ProductCard({ product }: Props) {
 
         {/* Price + CTA */}
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-xl font-extrabold text-primary-700">
-              {formatCurrency(product.price)}
+          {onSale ? (
+            <FlashSaleBadge
+              originalPrice={product.price}
+              salePrice={product.salePrice!}
+              saleEndsAt={product.saleEndsAt!}
+              compact
+            />
+          ) : (
+            <div>
+              <div className="text-xl font-extrabold text-primary-700">
+                {formatCurrency(product.price)}
+              </div>
+              <div className="text-xs text-gray-400">/ tài khoản</div>
             </div>
-            <div className="text-xs text-gray-400">/ tài khoản</div>
-          </div>
+          )}
 
           <button
             onClick={() => addItem(product)}
@@ -63,12 +95,33 @@ export function ProductCard({ product }: Props) {
           </button>
         </div>
 
-        {/* Stock count */}
-        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
-          <Box className="w-3 h-3 text-gray-400" />
-          <span className="text-xs text-gray-400">
-            Còn lại: <strong className="text-gray-600">{product.stock}</strong> sản phẩm
-          </span>
+        {/* Flash sale countdown */}
+        {onSale && (
+          <div className="flex items-center gap-1.5 mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
+            <span className="text-[11px] text-red-500 font-medium">⚡ Kết thúc sau:</span>
+            <Countdown
+              endsAt={product.saleEndsAt!}
+              className="text-[11px] text-red-600 font-bold"
+            />
+          </div>
+        )}
+
+        {/* Stock + sold count */}
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+          <div className="flex items-center gap-1.5">
+            <Box className="w-3 h-3 text-gray-400" />
+            <span className="text-xs text-gray-400">
+              Còn lại: <strong className="text-gray-600">{product.stock}</strong>
+            </span>
+          </div>
+          {(product.soldCount ?? 0) > 0 && (
+            <div className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 text-orange-400" />
+              <span className="text-xs text-orange-500 font-medium">
+                {product.soldCount} đã bán
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </article>
