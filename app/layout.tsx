@@ -6,6 +6,8 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { CartSidebar } from '@/components/cart/CartSidebar'
 import { SessionHydrator } from '@/components/layout/SessionHydrator'
+import { PromoBar } from '@/components/layout/PromoBar'
+import { FloatingContact } from '@/components/layout/FloatingContact'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -26,10 +28,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SessionHydrator />
         <Navbar />
+        <PromoBar />
         {children}
         <Footer />
         <CartSidebar />
         <ToastContainer />
+        <FloatingContact />
       </body>
     </html>
   )

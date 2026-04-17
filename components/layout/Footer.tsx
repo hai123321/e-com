@@ -78,6 +78,18 @@ export function Footer() {
           </div>
         </div>
 
+        {/* Payment logos + trust strip */}
+        <div className="border-t border-white/10 pt-6 pb-4">
+          <p className="text-xs text-white/40 text-center mb-3">Thanh toán an toàn &amp; bảo mật</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <span className="px-3 py-1 rounded text-xs font-bold text-white" style={{ backgroundColor: '#A50064' }}>MoMo</span>
+            <span className="px-3 py-1 rounded text-xs font-bold text-white" style={{ backgroundColor: '#0866FF' }}>VNPay</span>
+            <span className="px-3 py-1 rounded text-xs font-bold text-white" style={{ backgroundColor: '#1A1F71' }}>VISA</span>
+            <span className="px-3 py-1 rounded text-xs font-bold text-white" style={{ backgroundColor: '#252525' }}>MC</span>
+            <span className="px-3 py-1 rounded text-xs font-bold text-white" style={{ backgroundColor: '#0068FF' }}>ZaloPay</span>
+          </div>
+        </div>
+
         <div className="border-t border-white/10 pt-6 text-center text-xs text-white/40">
           {t.footer.copyright(year)}
         </div>

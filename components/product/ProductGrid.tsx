@@ -23,9 +23,32 @@ const CATEGORY_META: { value: CategoryFilter; icon: string }[] = [
 
 const STOCK_VALUES: StockFilter[] = ['all', 'high', 'medium', 'low']
 
+type PriceRange = 'all' | 'lt50' | '50to100' | '100to200' | '200to500' | 'gt500'
+
+const PRICE_PRESETS: { value: PriceRange; label: string }[] = [
+  { value: 'all',      label: 'Tất cả' },
+  { value: 'lt50',     label: '< 50K' },
+  { value: '50to100',  label: '50K – 100K' },
+  { value: '100to200', label: '100K – 200K' },
+  { value: '200to500', label: '200K – 500K' },
+  { value: 'gt500',    label: '> 500K' },
+]
+
+function matchesPrice(price: number, range: PriceRange): boolean {
+  switch (range) {
+    case 'all':      return true
+    case 'lt50':     return price < 50_000
+    case '50to100':  return price >= 50_000 && price < 100_000
+    case '100to200': return price >= 100_000 && price < 200_000
+    case '200to500': return price >= 200_000 && price < 500_000
+    case 'gt500':    return price >= 500_000
+  }
+}
+
 export function ProductGrid() {
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [priceFilter, setPriceFilter] = useState<PriceRange>('all')
   const t = useT()
 
   const {
@@ -66,6 +89,11 @@ export function ProductGrid() {
 
     return [...Array.from(cheapestByGroup.values()), ...singletons]
   }, [filtered])
+
+  const priceFilteredList = useMemo<Product[]>(
+    () => representativeList.filter((p) => matchesPrice(p.price, priceFilter)),
+    [representativeList, priceFilter],
+  )
 
   return (
     <section id="products" className="py-20 bg-primary-50">
@@ -132,6 +160,24 @@ export function ProductGrid() {
           <span className="text-xs text-gray-400 ml-auto whitespace-nowrap">
             {filtered.length} nhóm / sản phẩm
           </span>
+
+          {/* Price range row */}
+          <div className="w-full flex gap-2 flex-wrap items-center pt-3 border-t border-gray-100">
+            <span className="text-xs text-gray-500 font-semibold whitespace-nowrap">Giá:</span>
+            {PRICE_PRESETS.map((preset) => (
+              <button
+                key={preset.value}
+                onClick={() => setPriceFilter(preset.value)}
+                className={`px-4 py-2 rounded-full text-xs font-semibold border-2 transition-all ${
+                  priceFilter === preset.value
+                    ? 'bg-primary-600 border-primary-600 text-white shadow-sm'
+                    : 'border-gray-200 text-gray-500 hover:border-primary-300 hover:text-primary-600 bg-white'
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Grid */}
@@ -140,14 +186,14 @@ export function ProductGrid() {
             <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
             <p className="text-sm">{t.products.loading}</p>
           </div>
-        ) : representativeList.length === 0 ? (
+        ) : priceFilteredList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
             <PackageOpen className="w-14 h-14 text-gray-300" />
             <p className="text-sm">{t.products.empty}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {representativeList.map((p) => (
+            {priceFilteredList.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>

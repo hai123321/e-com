@@ -51,6 +51,18 @@ export function ProductCard({ product }: Props) {
             </>
           )}
         </div>
+        {/* HOT / NEW badge — top-left */}
+        {product.stock <= 5 && status !== 'out' && (
+          <span className="absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white z-10">
+            🔥 Hot
+          </span>
+        )}
+        {product.stock > 50 && (
+          <span className="absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-white z-10">
+            Mới
+          </span>
+        )}
+
         <div className="absolute top-3 right-3">
           <StockBadge status={status} />
         </div>
