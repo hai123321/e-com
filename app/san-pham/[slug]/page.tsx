@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
-import ProductDetailClient, { GROUP_META } from './ProductDetailClient'
+import ProductDetailClient from './ProductDetailClient'
+import { GROUP_META } from './group-meta'
 import type { Product } from '@/lib/types'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://miushop.io.vn'
