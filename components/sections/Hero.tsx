@@ -1,65 +1,73 @@
+'use client'
+
 import { Zap, ShieldCheck, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { useT } from '@/lib/hooks/useT'
+import { BannerSlider } from './BannerSlider'
 
-const stats = [
-  { value: '10K+', label: 'Khách hàng' },
-  { value: '99%',  label: 'Hài lòng'   },
-  { value: '24/7', label: 'Hỗ trợ'     },
-  { value: '100%', label: 'Chính hãng' },
-]
+const STAT_VALUES = ['10K+', '99%', '24/7', '100%']
 
 export function Hero() {
+  const t = useT()
+
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-700 to-primary-500 py-24 lg:py-32">
+    <section className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-700 to-primary-500 py-14 lg:py-16">
       {/* Background blobs */}
       <div className="hero-blob w-96 h-96 bg-white/5 -top-24 -left-24" />
       <div className="hero-blob w-72 h-72 bg-accent-500/10 bottom-0 right-0" />
 
       <div className="section-container relative z-10">
-        <div className="max-w-2xl">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 rounded-full px-4 py-1.5 text-white text-sm font-medium mb-6">
-            <ShieldCheck className="w-4 h-4 text-accent-400" />
-            Tin cậy bởi 10,000+ khách hàng
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+          {/* Left column */}
+          <div className="lg:col-span-3">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 rounded-full px-4 py-1.5 text-white text-sm font-medium mb-6">
+              <ShieldCheck className="w-4 h-4 text-accent-400" />
+              {t.hero.badge}
+            </div>
+
+            {/* Heading */}
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-4">
+              {t.hero.title1}{' '}
+              <span className="text-accent-400">{t.hero.title2}</span>
+              <br />
+              {t.hero.title3}
+            </h1>
+
+            <p className="text-white/75 text-base mb-6 leading-relaxed">
+              {t.hero.desc}
+            </p>
+
+            {/* CTA */}
+            <div className="flex flex-wrap gap-3">
+              <a href="/#products">
+                <Button size="lg" variant="primary" className="shadow-lg shadow-accent-500/30">
+                  <Zap className="w-5 h-5" />
+                  {t.hero.ctaBuy}
+                </Button>
+              </a>
+              <a href="/#contact">
+                <Button size="lg" variant="outline">
+                  {t.hero.ctaContact}
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </a>
+            </div>
+
+            {/* Stats */}
+            <div className="flex flex-wrap gap-6 mt-8 pt-8 border-t border-white/10">
+              {t.hero.stats.map((label, i) => (
+                <div key={label}>
+                  <div className="text-2xl font-extrabold text-white">{STAT_VALUES[i]}</div>
+                  <div className="text-xs text-white/50 uppercase tracking-widest mt-0.5">{label}</div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Heading */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-5">
-            Tài khoản{' '}
-            <span className="text-accent-400">Premium</span>
-            <br />
-            giá tốt nhất
-          </h1>
-
-          <p className="text-white/75 text-lg mb-8 leading-relaxed">
-            Netflix, Spotify, YouTube và hơn 20 dịch vụ streaming hàng đầu thế giới.
-            Giao ngay sau thanh toán, hỗ trợ đổi trả 24 giờ.
-          </p>
-
-          {/* CTA */}
-          <div className="flex flex-wrap gap-4">
-            <a href="#products">
-              <Button size="lg" variant="primary" className="shadow-lg shadow-accent-500/30">
-                <Zap className="w-5 h-5" />
-                Mua ngay
-              </Button>
-            </a>
-            <a href="#contact">
-              <Button size="lg" variant="outline">
-                Tư vấn miễn phí
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </a>
-          </div>
-
-          {/* Stats */}
-          <div className="flex flex-wrap gap-8 mt-12 pt-10 border-t border-white/10">
-            {stats.map((s) => (
-              <div key={s.label}>
-                <div className="text-3xl font-extrabold text-white">{s.value}</div>
-                <div className="text-xs text-white/50 uppercase tracking-widest mt-0.5">{s.label}</div>
-              </div>
-            ))}
+          {/* Right column: banner slider */}
+          <div className="lg:col-span-2 hidden lg:block">
+            <BannerSlider />
           </div>
         </div>
       </div>

@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+backend/node_modules
+
+# Frontend source — not needed in api image
+.next
+src
+app
+components
+hooks
+lib
+public
+styles
+
+# Git & CI
+.git
+.github
+.claude
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Misc
+*.md
+.DS_Store

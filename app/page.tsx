@@ -1,23 +1,17 @@
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
+export const revalidate = 60
+
 import { Hero } from '@/components/sections/Hero'
+import { FeaturedProducts } from '@/components/product/FeaturedProducts'
 import { Features } from '@/components/sections/Features'
 import { Contact } from '@/components/sections/Contact'
-import { ProductGrid } from '@/components/product/ProductGrid'
-import { CartSidebar } from '@/components/cart/CartSidebar'
 
 export default function Home() {
   return (
-    <>
-      <Navbar />
-      <main>
-        <Hero />
-        <Features />
-        <ProductGrid />
-        <Contact />
-      </main>
-      <Footer />
-      <CartSidebar />
-    </>
+    <main>
+      <Hero />
+      <FeaturedProducts />
+      <Features />
+      <Contact />
+    </main>
   )
 }

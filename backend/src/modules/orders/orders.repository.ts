@@ -117,6 +117,23 @@ export async function findOrdersByPhone(phone: string) {
   )
 }
 
+export async function findOrdersByEmail(email: string) {
+  const rows = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.customerEmail, email))
+    .orderBy(desc(orders.createdAt))
+    .limit(50)
+
+  const withItems = await Promise.all(
+    rows.map(async (order) => {
+      const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id))
+      return { ...order, items }
+    }),
+  )
+  return withItems
+}
+
 export async function getDashboardStats() {
   const [[{ total: totalOrders }], [{ total: totalRevenue }], [{ total: totalProducts }]] =
     await Promise.all([

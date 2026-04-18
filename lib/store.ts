@@ -1,7 +1,8 @@
 'use client'
 
 import { create } from 'zustand'
-import type { CartItem, Product, StockFilter, Toast, ToastType } from './types'
+import type { CartItem, CategoryFilter, Product, StockFilter, Toast, ToastType, UserSession } from './types'
+import type { Locale } from './i18n'
 
 interface CartStore {
   // Cart
@@ -19,13 +20,27 @@ interface CartStore {
   // Filters
   searchQuery: string
   stockFilter: StockFilter
+  categoryFilter: CategoryFilter
   setSearchQuery: (q: string) => void
   setStockFilter: (f: StockFilter) => void
+  setCategoryFilter: (f: CategoryFilter) => void
+
+  // Locale
+  locale: Locale
+  setLocale: (l: Locale) => void
 
   // Toasts
   toasts: Toast[]
   addToast: (message: string, type?: ToastType) => void
   removeToast: (id: string) => void
+
+  // User auth
+  user: UserSession | null
+  userToken: string | null
+  sessionHydrated: boolean          // true once SessionHydrator has finished (success or not)
+  setUser: (user: UserSession, token: string) => void
+  clearUser: () => void
+  setSessionHydrated: () => void
 }
 
 export const useStore = create<CartStore>((set, get) => ({
@@ -85,8 +100,14 @@ export const useStore = create<CartStore>((set, get) => ({
   // ── Filters ───────────────────────────────────────
   searchQuery: '',
   stockFilter: 'all',
+  categoryFilter: 'all',
   setSearchQuery: (q) => set({ searchQuery: q }),
   setStockFilter: (f) => set({ stockFilter: f }),
+  setCategoryFilter: (f) => set({ categoryFilter: f }),
+
+  // ── Locale ────────────────────────────────────────
+  locale: 'vi',
+  setLocale: (l) => set({ locale: l }),
 
   // ── Toasts ────────────────────────────────────────
   toasts: [],
@@ -97,4 +118,18 @@ export const useStore = create<CartStore>((set, get) => ({
   },
   removeToast: (id) =>
     set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+
+  // ── User auth ─────────────────────────────────────
+  user: null,
+  userToken: null,
+  sessionHydrated: false,
+  setUser: (user, token) => {
+    set({ user, userToken: token })
+    if (typeof window !== 'undefined') localStorage.setItem('user_token', token)
+  },
+  clearUser: () => {
+    set({ user: null, userToken: null })
+    if (typeof window !== 'undefined') localStorage.removeItem('user_token')
+  },
+  setSessionHydrated: () => set({ sessionHydrated: true }),
 }))
