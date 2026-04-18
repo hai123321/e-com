@@ -34,8 +34,21 @@ export function ProductCard({ product }: Props) {
   const svc = getServiceConfig(product.name, product.category)
   const detailHref = product.groupKey ? `/san-pham/${product.groupKey}` : null
   const [imgError, setImgError] = React.useState(false)
+  const [isAdding, setIsAdding] = React.useState(false)
+  const [cartAnimKey, setCartAnimKey] = React.useState(0)
   const onSale = isFlashSaleActive(product)
   const showImage = product.image && !imgError
+  const soldCount = product.soldCount ?? 0
+
+  function handleAddToCart(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (isAdding || isOut) return
+    addItem(product)
+    setIsAdding(true)
+    setCartAnimKey((k) => k + 1)
+    setTimeout(() => setIsAdding(false), 500)
+  }
 
   const cardContent = (
     <>
@@ -100,15 +113,23 @@ export function ProductCard({ product }: Props) {
                 {formatCurrency(product.price)}
               </div>
               <div className="text-xs text-gray-400">{t.card.unit}</div>
+              {soldCount > 0 && (
+                <div className="text-xs text-gray-400 mt-0.5">
+                  {soldCount.toLocaleString('vi-VN')} u0111u00e3 mua
+                </div>
+              )}
             </div>
           )}
 
           <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); addItem(product) }}
-            disabled={isOut}
+            onClick={handleAddToCart}
+            disabled={isOut || isAdding}
             className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white text-xs font-bold rounded-xl px-4 py-2.5 transition-all hover:shadow-lg hover:shadow-primary-200 disabled:cursor-not-allowed whitespace-nowrap"
           >
-            <ShoppingCart className="w-3.5 h-3.5" />
+            <ShoppingCart
+              key={cartAnimKey}
+              className={`w-3.5 h-3.5 ${isAdding ? 'animate-cart-bounce' : ''}`}
+            />
             {isOut ? t.card.outOfStock ?? 'u2014' : inCart ? `${t.card.inCart} (${inCart.qty})` : t.card.add}
           </button>
         </div>
@@ -150,14 +171,14 @@ export function ProductCard({ product }: Props) {
 
   if (detailHref) {
     return (
-      <Link href={detailHref} className="card group flex flex-col overflow-hidden hover:border-primary-300 hover:shadow-xl hover:shadow-primary-100/50 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer">
+      <Link href={detailHref} className="card group flex flex-col overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-primary-300 hover:-translate-y-2 hover:shadow-[0_20px_60px_rgba(139,92,246,0.3)] cursor-pointer">
         {cardContent}
       </Link>
     )
   }
 
   return (
-    <article className="card group flex flex-col overflow-hidden hover:border-primary-300 hover:shadow-xl hover:shadow-primary-100/50 hover:-translate-y-1.5 transition-all duration-300">
+    <article className="card group flex flex-col overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-primary-300 hover:-translate-y-2 hover:shadow-[0_20px_60px_rgba(139,92,246,0.3)]">
       {cardContent}
     </article>
   )
