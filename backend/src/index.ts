@@ -1,7 +1,7 @@
 import Fastify from 'fastify'
 import oauth2Plugin from '@fastify/oauth2'
 import { config } from './config.js'
-import { checkDbConnection } from './db/client.js'
+import { db, checkDbConnection } from './db/client.js'
 import corsPlugin from './plugins/cors.js'
 import jwtPlugin from './plugins/jwt.js'
 import errorHandler from './plugins/error-handler.js'
@@ -13,6 +13,13 @@ import { userAuthRoutes } from './modules/user-auth/user-auth.routes.js'
 import { pricingRoutes } from './modules/pricing/pricing.routes.js'
 import { promotionRoutes } from './modules/promotions/promotions.routes.js'
 import { bannerRoutes } from './modules/banners/banners.routes.js'
+import { referralRoutes } from './modules/referral/referral.routes.js'
+import { migrate } from 'drizzle-orm/node-postgres/migrator'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const migrationsFolder = join(__dirname, '../../drizzle')
 
 const app = Fastify({
   logger: {
@@ -71,6 +78,16 @@ await app.register(userAuthRoutes, { prefix: '/api/v1' })
 await app.register(pricingRoutes,   { prefix: '/api/v1' })
 await app.register(promotionRoutes, { prefix: '/api/v1' })
 await app.register(bannerRoutes,    { prefix: '/api/v1' })
+await app.register(referralRoutes,  { prefix: '/api/v1' })
+
+// Run pending migrations before starting
+try {
+  await migrate(db, { migrationsFolder })
+  app.log.info('✅ Database migrations applied')
+} catch (err) {
+  app.log.error(err, 'Migration failed')
+  process.exit(1)
+}
 
 // Start
 try {
