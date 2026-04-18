@@ -1,12 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, Box, ChevronRight, Loader2, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, ChevronRight, Loader2, ShoppingCart, Zap } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useStore } from '@/lib/store'
-import { useT } from '@/lib/hooks/useT'
 import { StockBadge } from '@/components/ui/Badge'
 import { formatCurrency, getStockStatus } from '@/lib/utils'
 import { getServiceConfig } from '@/lib/service-config'
@@ -112,14 +111,31 @@ const GROUP_META: Record<string, { name: string; tagline: string }> = {
 
 export { GROUP_META }
 
+function extractDurationDays(name: string, description: string): number {
+  const text = name + ' ' + description
+  const monthMatch = text.match(/(\d+)\s*tháng/)
+  const dayMatch = text.match(/(\d+)\s*ngày/)
+  if (monthMatch) return parseInt(monthMatch[1]) * 30
+  if (dayMatch) return parseInt(dayMatch[1])
+  return 30
+}
+
+function extractFeatures(description: string): string[] {
+  return description
+    .split(/\.\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 8)
+    .slice(0, 3)
+}
+
 export default function ProductDetailClient({ slug }: { slug: string }) {
   const { addItem, items } = useStore()
-  const t = useT()
 
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Product | null>(null)
   const [heroImgErr, setHeroImgErr] = useState(false)
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
 
   const meta = GROUP_META[slug] ?? { name: slug, tagline: '' }
 
@@ -135,7 +151,38 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
       .catch(() => setLoading(false))
   }, [slug])
 
+  useEffect(() => {
+    const observers: IntersectionObserver[] = []
+    cardRefs.current.forEach((el) => {
+      if (!el) return
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            el.classList.add('pricing-card-visible')
+            obs.disconnect()
+          }
+        },
+        { threshold: 0.1 },
+      )
+      obs.observe(el)
+      observers.push(obs)
+    })
+    return () => observers.forEach((o) => o.disconnect())
+  }, [products.length])
+
   const svc = getServiceConfig(meta.name, products[0]?.category)
+
+  const tiersWithMeta = products.map((p) => {
+    const days = extractDurationDays(p.name, p.description)
+    return { product: p, days, pricePerDay: p.price / days }
+  })
+
+  const cheapestPricePerDay = tiersWithMeta.length
+    ? Math.min(...tiersWithMeta.map((t) => t.pricePerDay))
+    : 0
+  const highestStockId = products.length
+    ? products.reduce((a, b) => (a.stock >= b.stock ? a : b)).id
+    : null
 
   if (loading) {
     return (
@@ -162,6 +209,18 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
 
   return (
     <main className="min-h-screen bg-primary-50">
+      <style>{`
+        .pricing-card {
+          opacity: 0;
+          transform: translateY(20px);
+          transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .pricing-card-visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      `}</style>
+
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-100">
         <div className="section-container py-3">
@@ -205,7 +264,6 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                   <div className="bg-primary-50 border border-primary-200 rounded-xl p-4 mb-5">
                     <p className="text-xs text-primary-600 font-semibold mb-1">Gói đã chọn</p>
                     <p className="font-bold text-gray-800 text-sm leading-snug">{selected.name}</p>
-                    <p className="text-xs text-gray-500 mt-1">{selected.description}</p>
                     <div className="flex items-center justify-between mt-3">
                       <span className="text-xl font-extrabold text-primary-700">
                         {formatCurrency(selected.price)}
@@ -238,58 +296,135 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
             </div>
           </div>
 
-          {/* Right — Variant list */}
+          {/* Right — Pricing card grid */}
           <div className="lg:col-span-3">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">
+            <h2 className="text-lg font-bold text-gray-800 mb-6">
               Chọn gói phù hợp
               <span className="ml-2 text-sm font-normal text-gray-400">({products.length} gói)</span>
             </h2>
 
-            <div className="flex flex-col gap-3">
-              {products.map((p) => {
+            <div
+              className={`grid gap-4 ${
+                products.length === 1
+                  ? 'grid-cols-1'
+                  : products.length === 2
+                    ? 'grid-cols-1 sm:grid-cols-2'
+                    : 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'
+              }`}
+            >
+              {tiersWithMeta.map(({ product: p, days, pricePerDay }, idx) => {
                 const st = getStockStatus(p.stock)
                 const isSelected = selected?.id === p.id
                 const isOut = st === 'out'
+                const isCheapest =
+                  Math.abs(pricePerDay - cheapestPricePerDay) < 0.01 && products.length > 1
+                const isPopular = p.id === highestStockId && products.length > 1
+                const features = extractFeatures(p.description)
 
                 return (
-                  <button
+                  <div
                     key={p.id}
-                    onClick={() => !isOut && setSelected(p)}
-                    disabled={isOut}
-                    className={`w-full text-left card p-4 transition-all duration-200 border-2 ${
-                      isSelected
-                        ? 'border-primary-500 bg-primary-50 shadow-md shadow-primary-100'
-                        : isOut
-                          ? 'border-gray-100 opacity-50 cursor-not-allowed'
-                          : 'border-transparent hover:border-primary-200 hover:shadow-md cursor-pointer'
-                    }`}
+                    ref={(el) => { cardRefs.current[idx] = el }}
+                    className="pricing-card"
+                    style={{ transitionDelay: `${idx * 80}ms` }}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          {isSelected && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-primary-500 shrink-0" />
+                    <div
+                      onClick={() => !isOut && setSelected(p)}
+                      className={`relative h-full flex flex-col rounded-2xl border-2 transition-all duration-200 ${
+                        isSelected
+                          ? 'border-primary-500 shadow-lg shadow-primary-100 bg-white'
+                          : isOut
+                            ? 'border-gray-100 opacity-50 cursor-not-allowed bg-gray-50'
+                            : 'border-gray-200 hover:border-primary-300 hover:shadow-md bg-white cursor-pointer'
+                      } ${isPopular && !isOut ? 'ring-2 ring-primary-400 ring-offset-2' : ''}`}
+                    >
+                      {/* Badges */}
+                      {(isPopular || isCheapest) && !isOut && (
+                        <div className="absolute -top-3 left-4 flex gap-2">
+                          {isPopular && (
+                            <span className="inline-flex items-center gap-1 bg-primary-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">
+                              <Zap className="w-2.5 h-2.5" /> Phổ biến nhất
+                            </span>
                           )}
-                          <span className={`font-semibold text-sm leading-snug ${isSelected ? 'text-primary-700' : 'text-gray-800'}`}>
-                            {p.name}
-                          </span>
+                          {isCheapest && !isPopular && (
+                            <span className="inline-flex items-center gap-1 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">
+                              Tiết kiệm nhất
+                            </span>
+                          )}
+                          {isCheapest && isPopular && (
+                            <span className="inline-flex items-center gap-1 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">
+                              Tiết kiệm nhất
+                            </span>
+                          )}
                         </div>
-                        <p className="text-xs text-gray-500 leading-relaxed">{p.description}</p>
-                        <div className="flex items-center gap-3 mt-2.5">
-                          <span className="text-lg font-extrabold text-primary-700">
+                      )}
+
+                      <div className="p-5 flex-1 flex flex-col">
+                        {/* Name */}
+                        <h3 className={`font-bold text-sm leading-snug mb-3 ${
+                          isSelected ? 'text-primary-700' : 'text-gray-800'
+                        }`}>
+                          {p.name}
+                        </h3>
+
+                        {/* Price */}
+                        <div className="mb-4">
+                          <span className={`text-2xl font-extrabold ${
+                            isSelected ? 'text-primary-600' : 'text-gray-900'
+                          }`}>
                             {formatCurrency(p.price)}
                           </span>
-                          <div className="flex items-center gap-1 text-xs text-gray-400">
-                            <Box className="w-3 h-3" />
-                            {p.stock} còn lại
-                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {days >= 30
+                              ? `${days / 30} tháng · ${formatCurrency(Math.round(pricePerDay))}/ngày`
+                              : `${days} ngày · ${formatCurrency(Math.round(pricePerDay))}/ngày`}
+                          </p>
                         </div>
-                      </div>
-                      <div className="shrink-0 mt-1">
-                        <StockBadge status={st} />
+
+                        {/* Features */}
+                        <ul className="flex-1 flex flex-col gap-1.5 mb-4">
+                          {features.map((feat, i) => (
+                            <li key={i} className="flex items-start gap-1.5 text-xs text-gray-600">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-primary-500 shrink-0 mt-0.5" />
+                              <span className="leading-relaxed">{feat}</span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        {/* Stock */}
+                        <div className="flex items-center justify-between mb-3">
+                          <StockBadge status={st} />
+                          {!isOut && (
+                            <span className="text-xs text-gray-400">{p.stock} còn lại</span>
+                          )}
+                        </div>
+
+                        {/* Buy button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (!isOut) addItem(p)
+                          }}
+                          disabled={isOut}
+                          className={`w-full flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all ${
+                            isOut
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : isSelected
+                                ? 'bg-primary-600 text-white hover:bg-primary-700 shadow'
+                                : 'bg-primary-50 text-primary-700 hover:bg-primary-100 border border-primary-200'
+                          }`}
+                        >
+                          <ShoppingCart className="w-3.5 h-3.5" />
+                          {isOut
+                            ? 'Hết hàng'
+                            : items.find((i) => i.product.id === p.id)
+                              ? 'Thêm nữa'
+                              : 'Thêm vào giỏ'
+                          }
+                        </button>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 )
               })}
             </div>
