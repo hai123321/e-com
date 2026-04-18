@@ -388,11 +388,15 @@ function GuidesTab() {
 }
 
 // ─── Pricing Rules Tab ──────────────────────────────────────────────────────
+const KNOWN_CATEGORIES = ['AI', 'Streaming', 'Học tập', 'Thiết kế', 'VPN', 'Năng suất', 'Lưu trữ', 'Khác']
+
 function PricingRulesTab() {
   const [rules, setRules] = useState<PricingRule[]>([])
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<PricingRule | null>(null)
   const [loading, setLoading] = useState(true)
+  const [groups, setGroups] = useState<Array<{ key: string; count: number; category: string }>>([])
+  const [groupSearch, setGroupSearch] = useState('')
 
   const emptyForm = { name: '', description: '', ruleType: 'multiplier', params: { factor: 1.2 }, scopeType: 'global', scopeValue: '', priority: 0, isActive: true, startsAt: '', endsAt: '' }
   const [form, setForm] = useState<Omit<PricingRule, 'id'>>(emptyForm as unknown as Omit<PricingRule, 'id'>)
@@ -400,6 +404,20 @@ function PricingRulesTab() {
 
   useEffect(() => {
     adminApi.getPricingRules().then(r => { setRules(r.data ?? []); setLoading(false) })
+    adminApi.getProducts().then(r => {
+      const products: Product[] = r.data ?? r.products ?? []
+      const map = new Map<string, { count: number; category: string }>()
+      for (const p of products) {
+        if (!p.groupKey) continue
+        const existing = map.get(p.groupKey)
+        map.set(p.groupKey, { count: (existing?.count ?? 0) + 1, category: p.category || '' })
+      }
+      setGroups(
+        Array.from(map.entries())
+          .map(([key, { count, category }]) => ({ key, count, category }))
+          .sort((a, b) => a.key.localeCompare(b.key))
+      )
+    })
   }, [])
 
   const RULE_EXAMPLES: Record<string, string> = {
@@ -466,29 +484,86 @@ function PricingRulesTab() {
         </div>
         <div>
           <label className="text-gray-400 text-xs font-medium mb-1 block">Phạm vi áp dụng</label>
-          <select value={form.scopeType} onChange={e => f('scopeType')(e.target.value)}
+          <select value={form.scopeType}
+            onChange={e => { f('scopeType')(e.target.value); f('scopeValue')(''); setGroupSearch('') }}
             className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm">
-            <option value="global">Toàn bộ sản phẩm</option>
-            <option value="category">Theo danh mục</option>
-            <option value="group">Theo nhóm sản phẩm (group_key)</option>
-            <option value="product">Theo sản phẩm cụ thể (ID)</option>
+            <option value="global">🌐 Toàn bộ sản phẩm</option>
+            <option value="category">📂 Theo danh mục</option>
+            <option value="group">📦 Theo nhóm sản phẩm (group_key)</option>
+            <option value="product">🎯 Theo sản phẩm cụ thể (ID)</option>
           </select>
         </div>
-        {form.scopeType !== 'global' && (
-          <Input
-            label={
-              form.scopeType === 'category' ? 'Tên danh mục' :
-              form.scopeType === 'group'    ? 'Group key' :
-                                              'ID sản phẩm'
-            }
-            value={form.scopeValue ?? ''}
-            onChange={f('scopeValue')}
-            placeholder={
-              form.scopeType === 'category' ? 'AI' :
-              form.scopeType === 'group'    ? 'netflix' :
-                                              '123'
-            }
-          />
+
+        {/* Category dropdown */}
+        {form.scopeType === 'category' && (
+          <div>
+            <label className="text-gray-400 text-xs font-medium mb-1 block">Danh mục<span className="text-red-500 ml-0.5">*</span></label>
+            <select value={form.scopeValue ?? ''}
+              onChange={e => f('scopeValue')(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm">
+              <option value="">-- Chọn danh mục --</option>
+              {KNOWN_CATEGORIES.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Group key dropdown with search */}
+        {form.scopeType === 'group' && (
+          <div className="col-span-2">
+            <label className="text-gray-400 text-xs font-medium mb-1 block">
+              Nhóm sản phẩm (group_key)<span className="text-red-500 ml-0.5">*</span>
+              <span className="ml-2 text-gray-600 font-normal">({groups.length} nhóm)</span>
+            </label>
+            {/* Search filter */}
+            <input
+              type="text"
+              value={groupSearch}
+              onChange={e => setGroupSearch(e.target.value)}
+              placeholder="🔍 Tìm nhóm... (netflix, chatgpt, ...)"
+              className="w-full bg-gray-900 border border-gray-700 text-gray-300 rounded-xl px-3 py-2 text-sm mb-2 placeholder:text-gray-600"
+            />
+            {/* Selected value display */}
+            {form.scopeValue && (
+              <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-primary-900/40 border border-primary-800 rounded-lg">
+                <span className="text-primary-400 text-xs font-mono">{form.scopeValue}</span>
+                <button onClick={() => f('scopeValue')('')} className="ml-auto text-gray-500 hover:text-red-400 text-xs">✕ Bỏ chọn</button>
+              </div>
+            )}
+            {/* Scrollable group list */}
+            <div className="bg-gray-900 border border-gray-700 rounded-xl overflow-y-auto max-h-52">
+              {groups
+                .filter(g => !groupSearch || g.key.includes(groupSearch.toLowerCase()) || g.category.toLowerCase().includes(groupSearch.toLowerCase()))
+                .map(g => (
+                  <button
+                    key={g.key}
+                    type="button"
+                    onClick={() => { f('scopeValue')(g.key); setGroupSearch('') }}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-800 transition-colors border-b border-gray-800/50 last:border-0 ${
+                      form.scopeValue === g.key ? 'bg-primary-900/50 text-primary-300' : 'text-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {form.scopeValue === g.key && <span className="text-primary-400">✓</span>}
+                      <span className="font-mono text-xs text-gray-400">{g.key}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded">{g.category}</span>
+                      <span className="text-[10px] text-gray-600">{g.count} SP</span>
+                    </div>
+                  </button>
+                ))}
+              {groups.filter(g => !groupSearch || g.key.includes(groupSearch.toLowerCase())).length === 0 && (
+                <p className="text-center text-gray-600 text-xs py-4">Không tìm thấy nhóm nào</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Product ID input */}
+        {form.scopeType === 'product' && (
+          <Input label="ID sản phẩm" value={form.scopeValue ?? ''} onChange={f('scopeValue')} placeholder="123" />
         )}
         <Input label="Độ ưu tiên (số lớn = ưu tiên hơn)" value={form.priority} onChange={f('priority')} type="number" />
         <div>
@@ -537,7 +612,14 @@ function PricingRulesTab() {
                     {RULE_LABELS[r.ruleType] ?? r.ruleType}
                   </span>
                 </div>
-                <p className="text-gray-500 text-xs">Phạm vi: {r.scopeType === 'global' ? 'Tất cả' : `${r.scopeType}: ${r.scopeValue}`} · Ưu tiên: {r.priority}</p>
+                <p className="text-gray-500 text-xs">
+                  Phạm vi:{' '}
+                  {r.scopeType === 'global'   ? '🌐 Tất cả sản phẩm' :
+                   r.scopeType === 'category' ? `📂 Danh mục: ${r.scopeValue}` :
+                   r.scopeType === 'group'    ? <span>📦 Nhóm: <span className="font-mono text-primary-400">{r.scopeValue}</span></span> :
+                                               `🎯 Sản phẩm ID: ${r.scopeValue}`}
+                  {' '}· Ưu tiên: {r.priority}
+                </p>
                 <p className="text-gray-600 text-xs font-mono mt-1">{JSON.stringify(r.params)}</p>
               </div>
               <div className="flex gap-2 shrink-0 ml-4">
