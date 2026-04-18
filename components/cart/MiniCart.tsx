@@ -5,11 +5,13 @@ import Link from 'next/link'
 import { X, ShoppingCart, Minus, Plus, Trash2 } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { useCart } from '@/hooks/useCart'
+import { useT } from '@/lib/hooks/useT'
 
 export function MiniCart() {
   const isMiniCartOpen = useStore((s) => s.isMiniCartOpen)
   const closeMiniCart = useStore((s) => s.closeMiniCart)
   const { items, itemCount, subtotal, discountAmount, grandTotal, promoCode, updateQty, removeItem } = useCart()
+  const t = useT()
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export function MiniCart() {
         <div className="flex items-center gap-2">
           <ShoppingCart className="w-4 h-4 text-primary-600" />
           <span className="text-sm font-semibold text-gray-900">
-            Giỏ hàng ({itemCount})
+            {t.miniCart.title(itemCount)}
           </span>
         </div>
         <button onClick={closeMiniCart} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -49,7 +51,7 @@ export function MiniCart() {
       {items.length === 0 ? (
         <div className="px-4 py-8 text-center">
           <ShoppingCart className="w-10 h-10 text-gray-200 mx-auto mb-2" />
-          <p className="text-sm text-gray-400">Giỏ hàng trống</p>
+          <p className="text-sm text-gray-400">{t.miniCart.empty}</p>
         </div>
       ) : (
         <div className="divide-y divide-gray-50">
@@ -63,7 +65,7 @@ export function MiniCart() {
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-gray-900 truncate">{product.name}</p>
                 <p className="text-xs text-primary-600 font-semibold mt-0.5">
-                  {product.price.toLocaleString('vi-VN')}đ
+                  {product.price.toLocaleString()}đ
                 </p>
               </div>
               <div className="flex items-center gap-1">
@@ -90,7 +92,7 @@ export function MiniCart() {
             </div>
           ))}
           {remaining > 0 && (
-            <p className="px-4 py-2 text-xs text-gray-400 text-center">+{remaining} sản phẩm khác</p>
+            <p className="px-4 py-2 text-xs text-gray-400 text-center">{t.miniCart.moreItems(remaining)}</p>
           )}
         </div>
       )}
@@ -99,18 +101,18 @@ export function MiniCart() {
       {items.length > 0 && (
         <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/50 space-y-1.5">
           <div className="flex justify-between text-xs text-gray-500">
-            <span>Tạm tính</span>
-            <span>{subtotal.toLocaleString('vi-VN')}đ</span>
+            <span>{t.miniCart.subtotal}</span>
+            <span>{subtotal.toLocaleString()}đ</span>
           </div>
           {promoCode && discountAmount > 0 && (
             <div className="flex justify-between text-xs text-green-600">
-              <span>Giảm giá</span>
-              <span>-{discountAmount.toLocaleString('vi-VN')}đ</span>
+              <span>{t.miniCart.discount}</span>
+              <span>-{discountAmount.toLocaleString()}đ</span>
             </div>
           )}
           <div className="flex justify-between text-sm font-bold text-gray-900 pt-1">
-            <span>Tổng</span>
-            <span className="text-primary-600">{grandTotal.toLocaleString('vi-VN')}đ</span>
+            <span>{t.miniCart.total}</span>
+            <span className="text-primary-600">{grandTotal.toLocaleString()}đ</span>
           </div>
         </div>
       )}
@@ -122,14 +124,14 @@ export function MiniCart() {
           onClick={closeMiniCart}
           className="flex-1 text-center py-2.5 border border-primary-200 text-primary-700 text-sm font-semibold rounded-xl hover:bg-primary-50 transition-colors"
         >
-          Xem giỏ hàng
+          {t.miniCart.viewCart}
         </Link>
         <Link
           href="/thanh-toan"
           onClick={closeMiniCart}
           className="flex-1 text-center py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl transition-colors"
         >
-          Thanh toán
+          {t.miniCart.checkout}
         </Link>
       </div>
     </div>

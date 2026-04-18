@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartItem, CategoryFilter, Product, StockFilter, Toast, ToastType, UserSession } from './types'
 import type { Locale } from './i18n'
+import { getT } from './i18n'
 
 interface CartStore {
   // Cart
@@ -66,29 +67,31 @@ export const useStore = create<CartStore>()(
   closeCart: () => set({ isCartOpen: false }),
 
   addItem: (product) => {
-    const { items, addToast } = get()
+    const { items, addToast, locale } = get()
+    const msgs = getT(locale).storeMsg
     if (product.stock <= 0) {
-      addToast('Sản phẩm đã hết hàng!', 'error')
+      addToast(msgs.outOfStock, 'error')
       return
     }
     const existing = items.find((i) => i.product.id === product.id)
     if (existing) {
       if (existing.qty >= product.stock) {
-        addToast('Đã đạt số lượng tồn kho tối đa!', 'error')
+        addToast(msgs.maxQty, 'error')
         return
       }
       set({ items: items.map((i) => i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i) })
     } else {
       set({ items: [...items, { product, qty: 1 }] })
     }
-    addToast(`Đã thêm "${product.name}" vào giỏ hàng`, 'success')
+    addToast(msgs.added(product.name), 'success')
   },
 
   removeItem: (productId) =>
     set((s) => ({ items: s.items.filter((i) => i.product.id !== productId) })),
 
   updateQty: (productId, delta) => {
-    const { items, addToast } = get()
+    const { items, addToast, locale } = get()
+    const msgs = getT(locale).storeMsg
     const item = items.find((i) => i.product.id === productId)
     if (!item) return
     const next = item.qty + delta
@@ -97,15 +100,16 @@ export const useStore = create<CartStore>()(
       return
     }
     if (next > item.product.stock) {
-      addToast('Vượt quá số lượng tồn kho!', 'error')
+      addToast(msgs.exceedsStock, 'error')
       return
     }
     set({ items: items.map((i) => i.product.id === productId ? { ...i, qty: next } : i) })
   },
 
   clearCart: () => {
+    const msgs = getT(get().locale).storeMsg
     set({ items: [] })
-    get().addToast('Đã xóa toàn bộ giỏ hàng', 'info')
+    get().addToast(msgs.cartCleared, 'info')
   },
 
   totalItems: () => get().items.reduce((s, i) => s + i.qty, 0),

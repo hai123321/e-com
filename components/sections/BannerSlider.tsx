@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { apiUrl } from '@/lib/api'
+import { useT } from '@/lib/hooks/useT'
 
 interface Banner {
   id: number
@@ -20,6 +21,11 @@ export function BannerSlider() {
   const [active, setActive]   = useState(0)
   const [loading, setLoading] = useState(true)
   const [paused, setPaused]   = useState(false)
+  const t = useT()
+
+  // Swipe tracking
+  const touchStartX = useRef<number | null>(null)
+  const SWIPE_THRESHOLD = 50
 
   useEffect(() => {
     fetch(apiUrl('/banners'))
@@ -37,6 +43,21 @@ export function BannerSlider() {
     return () => clearInterval(id)
   }, [banners.length, paused, next])
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+    setPaused(true)
+  }, [])
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current === null) return
+    const delta = touchStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(delta) >= SWIPE_THRESHOLD) {
+      delta > 0 ? next() : prev()
+    }
+    touchStartX.current = null
+    setPaused(false)
+  }, [next, prev])
+
   /* ── Placeholder while loading / no banners ── */
   if (loading || banners.length === 0) {
     return (
@@ -46,7 +67,7 @@ export function BannerSlider() {
           <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
             <span className="text-white/60 text-2xl font-extrabold">M</span>
           </div>
-          <p className="text-white/50 text-sm">Miu Shop — Tài khoản số uy tín</p>
+          <p className="text-white/50 text-sm">{t.banner.tagline}</p>
         </div>
       </div>
     )
@@ -58,6 +79,8 @@ export function BannerSlider() {
       style={{ aspectRatio: '16/9' }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Slides */}
       {banners.map((b, i) => (
@@ -124,7 +147,7 @@ export function BannerSlider() {
         </>
       )}
 
-      {/* Dot indicators — bigger, easy to tap */}
+      {/* Dot indicators */}
       {banners.length > 1 && (
         <div className="absolute bottom-3 right-4 z-20 flex items-center gap-2">
           {banners.map((_, i) => (

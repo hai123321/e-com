@@ -8,6 +8,7 @@ import { apiUrl } from '@/lib/api'
 import { formatCurrency, getStockStatus } from '@/lib/utils'
 import { StockBadge } from '@/components/ui/Badge'
 import { getServiceConfig } from '@/lib/service-config'
+import { useT } from '@/lib/hooks/useT'
 import type { Product } from '@/lib/types'
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
 
 export function ProductPickerModal({ groupKey, groupName, onClose }: Props) {
   const { addItem, items } = useStore()
+  const t = useT()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading]   = useState(true)
   const [addedId, setAddedId]   = useState<string | null>(null)
@@ -70,7 +72,7 @@ export function ProductPickerModal({ groupKey, groupName, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-2 pb-4 border-b border-gray-100">
           <div>
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">Chọn gói</p>
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">{t.picker.title}</p>
             <h3 className="font-bold text-gray-900 text-base leading-tight line-clamp-1">{groupName}</h3>
           </div>
           <button
@@ -90,7 +92,7 @@ export function ProductPickerModal({ groupKey, groupName, onClose }: Props) {
           ) : products.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
               <Package className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm">Không có sản phẩm nào</p>
+              <p className="text-sm">{t.picker.empty}</p>
             </div>
           ) : (
             products.map(product => {
@@ -138,18 +140,18 @@ export function ProductPickerModal({ groupKey, groupName, onClose }: Props) {
                       <span className="font-extrabold text-primary-700 text-sm">
                         {formatCurrency(product.price)}
                       </span>
-                      <span className="text-[10px] text-gray-400">/ tài khoản</span>
+                      <span className="text-[10px] text-gray-400">{t.picker.unit}</span>
                       {(product.soldCount ?? 0) > 0 && (
                         <span className="hidden sm:flex items-center gap-0.5 text-[10px] text-orange-500 font-medium">
                           <TrendingUp className="w-3 h-3" />
-                          {product.soldCount} đã bán
+                          {t.picker.sold(product.soldCount!)}
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <StockBadge status={status} />
                       {!isOut && (
-                        <span className="text-[10px] text-gray-400">Còn {product.stock}</span>
+                        <span className="text-[10px] text-gray-400">{t.picker.remaining(product.stock)}</span>
                       )}
                     </div>
                   </div>
@@ -171,7 +173,7 @@ export function ProductPickerModal({ groupKey, groupName, onClose }: Props) {
                     {added ? (
                       <>
                         <Check className="w-3.5 h-3.5" />
-                        Đã thêm
+                        {t.picker.added}
                       </>
                     ) : inCart ? (
                       <>
@@ -181,7 +183,7 @@ export function ProductPickerModal({ groupKey, groupName, onClose }: Props) {
                     ) : (
                       <>
                         <ShoppingCart className="w-3.5 h-3.5" />
-                        Thêm
+                        {t.picker.add}
                       </>
                     )}
                   </button>
@@ -193,9 +195,7 @@ export function ProductPickerModal({ groupKey, groupName, onClose }: Props) {
 
         {/* Footer hint */}
         <div className="px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-3xl sm:rounded-b-2xl">
-          <p className="text-xs text-gray-400 text-center">
-            Ấn vào sản phẩm để xem chi tiết · Thêm nhiều gói vào giỏ cùng lúc
-          </p>
+          <p className="text-xs text-gray-400 text-center">{t.picker.hint}</p>
         </div>
       </div>
     </div>

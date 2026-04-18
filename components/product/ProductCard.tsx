@@ -99,7 +99,7 @@ export function ProductCard({ product }: Props) {
         )}
         {!onSale && product.stock > 50 && (
           <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white z-10">
-            Mới
+            {t.card.newBadge}
           </span>
         )}
 
@@ -142,7 +142,7 @@ export function ProductCard({ product }: Props) {
               <div>
                 <div className="text-sm sm:text-xl font-extrabold text-primary-700 leading-tight">
                   {product.groupKey && (
-                    <span className="text-[10px] sm:text-xs text-gray-400 mr-0.5">Từ</span>
+                    <span className="text-[10px] sm:text-xs text-gray-400 mr-0.5">{t.card.from}</span>
                   )}
                   {formatCurrency(product.price)}
                 </div>
@@ -160,7 +160,7 @@ export function ProductCard({ product }: Props) {
                 key={cartAnimKey}
                 className={`w-3 h-3 ${isAdding ? 'animate-cart-bounce' : ''}`}
               />
-              <span>{isOut ? '—' : inCart ? `+${inCart.qty}` : 'Thêm'}</span>
+              <span>{isOut ? '—' : inCart ? `+${inCart.qty}` : t.card.inCart}</span>
             </button>
           </div>
 
@@ -181,7 +181,7 @@ export function ProductCard({ product }: Props) {
         {/* Flash sale countdown */}
         {onSale && (
           <div className="hidden sm:flex items-center gap-1.5 mt-1.5 bg-red-50 border border-red-100 rounded-lg px-2.5 py-1">
-            <span className="text-[10px] text-red-500 font-medium">⚡ Kết thúc sau:</span>
+            <span className="text-[10px] text-red-500 font-medium">{t.card.flashEnd}</span>
             <Countdown
               endsAt={product.saleEndsAt!}
               className="text-[10px] text-red-600 font-bold"
@@ -194,24 +194,24 @@ export function ProductCard({ product }: Props) {
           <div className="flex items-center gap-1">
             <Box className="w-3 h-3 text-gray-400" />
             <span className="text-xs text-gray-400">
-              Còn: <strong className="text-gray-600">{product.stock}</strong>
+              {t.card.remaining} <strong className="text-gray-600">{product.stock}</strong>
             </span>
           </div>
           {(product.soldCount ?? 0) > 0 && (
             <div className="flex items-center gap-1">
               <TrendingUp className="w-3 h-3 text-orange-400" />
-              <span className="text-xs text-orange-500 font-medium">{product.soldCount} đã bán</span>
+              <span className="text-xs text-orange-500 font-medium">{t.card.sold(soldCount)}</span>
             </div>
           )}
           {detailHref && !product.soldCount && (
-            <span className="text-xs text-primary-400 font-medium">Xem các gói →</span>
+            <span className="text-xs text-primary-400 font-medium">{t.card.viewPackages}</span>
           )}
         </div>
 
         {/* Mobile: stock remaining */}
         <div className="sm:hidden mt-1 text-[10px] text-gray-400">
-          Còn: <strong className="text-gray-600">{product.stock}</strong>
-          {detailHref && <span className="ml-1 text-primary-400">Xem →</span>}
+          {t.card.remaining} <strong className="text-gray-600">{product.stock}</strong>
+          {detailHref && <span className="ml-1 text-primary-400">→</span>}
         </div>
       </div>
     </>

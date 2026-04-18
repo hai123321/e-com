@@ -114,20 +114,20 @@ export function Header() {
                       href="/tai-khoan"
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
                     >
-                      Tài khoản của tôi
+                      {t.header.myAccount}
                     </Link>
                     <Link
                       href="/tai-khoan?tab=orders"
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
                     >
-                      Lịch sử đơn hàng
+                      {t.header.orderHistory}
                     </Link>
                     <div className="border-t border-gray-100" />
                     <button
                       onClick={() => { clearUser(); setUserOpen(false) }}
                       className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     >
-                      Đăng xuất
+                      {t.header.logout}
                     </button>
                   </div>
                 )}
@@ -137,7 +137,7 @@ export function Header() {
                 href="/dang-nhap"
                 className="hidden sm:flex items-center gap-1.5 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl px-3 py-2 text-sm font-semibold transition-all"
               >
-                Đăng nhập
+                {t.header.login}
               </Link>
             )}
 
