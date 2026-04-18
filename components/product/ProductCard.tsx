@@ -10,6 +10,7 @@ import { useT } from '@/lib/hooks/useT'
 import { StockBadge } from '@/components/ui/Badge'
 import { FlashSaleBadge } from '@/components/product/FlashSaleBadge'
 import { Countdown } from '@/components/ui/Countdown'
+import { StarRating } from '@/components/review/StarRating'
 import { formatCurrency, getStockStatus } from '@/lib/utils'
 import { getServiceConfig } from '@/lib/service-config'
 
@@ -109,6 +110,12 @@ export function ProductCard({ product }: Props) {
           {t.card.label}
         </span>
         <h3 className="font-bold text-gray-900 text-base leading-snug mb-1">{product.name}</h3>
+        {(product.reviewCount ?? 0) > 0 && (
+          <div className="flex items-center gap-1.5 mb-1">
+            <StarRating value={product.avgRating ?? 0} size="sm" />
+            <span className="text-xs text-gray-400">({product.reviewCount})</span>
+          </div>
+        )}
         <p className="text-xs text-gray-400 leading-relaxed flex-1 mb-4 line-clamp-2">
           {product.description}
         </p>
