@@ -55,8 +55,8 @@ export function ProductCard({ product }: Props) {
   const cardContent = (
     <>
       {/* Image / branded fallback */}
-      <div className="relative h-48 overflow-hidden bg-white">
-        <div className={`w-full h-full bg-gradient-to-br ${svc.bg} flex flex-col items-center justify-center gap-2 group-hover:scale-105 transition-transform duration-500`}>
+      <div className="relative h-32 sm:h-48 overflow-hidden bg-white">
+        <div className={`w-full h-full bg-gradient-to-br ${svc.bg} flex flex-col items-center justify-center gap-1 sm:gap-2 group-hover:scale-105 transition-transform duration-500`}>
           {showImage ? (
             <Image
               src={product.image!}
@@ -64,64 +64,62 @@ export function ProductCard({ product }: Props) {
               width={96}
               height={96}
               unoptimized
-              className="object-contain w-24 h-24 rounded-xl bg-white/10 p-2"
+              className="object-contain w-16 h-16 sm:w-24 sm:h-24 rounded-xl bg-white/10 p-2"
               onError={() => setImgError(true)}
             />
           ) : (
             <>
-              <span className="text-5xl select-none">{svc.icon}</span>
-              <span className="text-white/60 text-xs font-medium uppercase tracking-wider">
+              <span className="text-3xl sm:text-5xl select-none">{svc.icon}</span>
+              <span className="text-white/60 text-[10px] sm:text-xs font-medium uppercase tracking-wider hidden sm:block">
                 {product.category ?? 'Premium'}
               </span>
             </>
           )}
         </div>
+
         {/* Flash sale badge */}
         {onSale && (
-          <span className="absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-bold bg-red-600 text-white z-10 animate-pulse">
+          <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-600 text-white z-10 animate-pulse">
             ⚡ FLASH
           </span>
         )}
-        {/* HOT / NEW badge — top-left */}
+        {/* HOT / NEW badge */}
         {!onSale && product.stock <= 5 && status !== 'out' && (
-          <span className="absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white z-10">
+          <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white z-10">
             🔥 Hot
           </span>
         )}
         {!onSale && product.stock > 50 && (
-          <span className="absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-white z-10">
+          <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white z-10">
             Mới
           </span>
         )}
 
-        <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
-          {onSale && (
-            <span className="bg-red-500 text-white text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full animate-pulse">
-              FLASH
-            </span>
-          )}
+        <div className="absolute top-2 right-2">
           <StockBadge status={status} />
         </div>
       </div>
 
       {/* Body */}
-      <div className="flex flex-col flex-1 p-5">
-        <span className="text-xs font-semibold text-primary-600 uppercase tracking-wider mb-1.5">
+      <div className="flex flex-col flex-1 p-3 sm:p-5">
+        <span className="text-[10px] sm:text-xs font-semibold text-primary-600 uppercase tracking-wider mb-1">
           {t.card.label}
         </span>
-        <h3 className="font-bold text-gray-900 text-base leading-snug mb-1">{product.name}</h3>
+        <h3 className="font-bold text-gray-900 text-xs sm:text-base leading-snug mb-1 line-clamp-2">
+          {product.name}
+        </h3>
         {(product.reviewCount ?? 0) > 0 && (
-          <div className="flex items-center gap-1.5 mb-1">
+          <div className="hidden sm:flex items-center gap-1.5 mb-1">
             <StarRating value={product.avgRating ?? 0} size="sm" />
             <span className="text-xs text-gray-400">({product.reviewCount})</span>
           </div>
         )}
-        <p className="text-xs text-gray-400 leading-relaxed flex-1 mb-4 line-clamp-2">
+        <p className="hidden sm:block text-xs text-gray-400 leading-relaxed flex-1 mb-4 line-clamp-2">
           {product.description}
         </p>
 
         {/* Price + CTA */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-1 sm:gap-3 mt-auto pt-2 sm:pt-0">
           {onSale ? (
             <FlashSaleBadge
               originalPrice={product.price}
@@ -131,37 +129,37 @@ export function ProductCard({ product }: Props) {
             />
           ) : (
             <div>
-              <div className="text-xl font-extrabold text-primary-700">
+              <div className="text-sm sm:text-xl font-extrabold text-primary-700 leading-tight">
                 {product.groupKey && (
-                  <span className="text-xs text-gray-400 mr-0.5">Từ</span>
+                  <span className="text-[10px] sm:text-xs text-gray-400 mr-0.5">Từ</span>
                 )}
                 {formatCurrency(product.price)}
               </div>
-              <div className="text-xs text-gray-400">{t.card.unit}</div>
-              {soldCount > 0 && (
-                <div className="text-xs text-gray-400 mt-0.5">
-                  {soldCount.toLocaleString('vi-VN')} đã mua
-                </div>
-              )}
+              <div className="text-[10px] sm:text-xs text-gray-400">{t.card.unit}</div>
             </div>
           )}
 
           <button
             onClick={handleAddToCart}
             disabled={isOut || isAdding}
-            className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white text-xs font-bold rounded-xl px-4 py-2.5 transition-all hover:shadow-lg hover:shadow-primary-200 disabled:cursor-not-allowed whitespace-nowrap"
+            className="flex items-center justify-center gap-1 sm:gap-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white text-[10px] sm:text-xs font-bold rounded-lg sm:rounded-xl px-2 sm:px-4 py-2 sm:py-2.5 transition-all hover:shadow-lg hover:shadow-primary-200 disabled:cursor-not-allowed shrink-0"
           >
             <ShoppingCart
               key={cartAnimKey}
-              className={`w-3.5 h-3.5 ${isAdding ? 'animate-cart-bounce' : ''}`}
+              className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isAdding ? 'animate-cart-bounce' : ''}`}
             />
-            {isOut ? t.card.outOfStock ?? '—' : inCart ? `${t.card.inCart} (${inCart.qty})` : t.card.add}
+            <span className="hidden sm:inline">
+              {isOut ? t.card.outOfStock ?? '—' : inCart ? `${t.card.inCart} (${inCart.qty})` : t.card.add}
+            </span>
+            <span className="sm:hidden">
+              {isOut ? '—' : inCart ? `+${inCart.qty}` : 'Thêm'}
+            </span>
           </button>
         </div>
 
         {/* Flash sale countdown */}
         {onSale && (
-          <div className="flex items-center gap-1.5 mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
+          <div className="hidden sm:flex items-center gap-1.5 mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
             <span className="text-[11px] text-red-500 font-medium">⚡ Kết thúc sau:</span>
             <Countdown
               endsAt={product.saleEndsAt!}
@@ -170,8 +168,8 @@ export function ProductCard({ product }: Props) {
           </div>
         )}
 
-        {/* Stock + sold count */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+        {/* Stock + sold count — desktop only */}
+        <div className="hidden sm:flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
           <div className="flex items-center gap-1.5">
             <Box className="w-3 h-3 text-gray-400" />
             <span className="text-xs text-gray-400">
@@ -189,6 +187,12 @@ export function ProductCard({ product }: Props) {
           {detailHref && !product.soldCount && (
             <span className="text-xs text-primary-400 font-medium">Xem các gói →</span>
           )}
+        </div>
+
+        {/* Mobile: stock remaining */}
+        <div className="sm:hidden mt-1.5 text-[10px] text-gray-400">
+          Còn lại: <strong className="text-gray-600">{product.stock}</strong> sản phẩm
+          {detailHref && <span className="ml-1 text-primary-400">Xem cả →</span>}
         </div>
       </div>
     </>
