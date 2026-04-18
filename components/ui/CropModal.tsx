@@ -3,60 +3,84 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Check, X } from 'lucide-react'
 
-const CONTAINER = 360   // px — display box
+const CONTAINER = 360   // display box px
 const HANDLE    = 14    // corner handle size px
-const MIN_FRAME = 60    // minimum crop frame size px
+const MIN_W     = 60    // minimum frame width px
 
 type DragMode = 'move' | 'tl' | 'tr' | 'bl' | 'br'
 
-interface Frame { x: number; y: number; size: number }
+interface Frame { x: number; y: number; w: number; h: number }
 interface Rect  { x: number; y: number; w: number; h: number }
 
 interface Props {
   src: string
   title?: string
-  outputSize?: number           // canvas output px (default 400)
+  /** Output canvas width px (default 400) */
+  outputWidth?: number
+  /** Output canvas height px (default same as outputWidth → square) */
+  outputHeight?: number
+  /** Aspect ratio w/h (default 1 = square). Use e.g. 3 for a 3:1 banner */
+  aspectRatio?: number
   /** Called with base64 JPEG data-URL on confirm */
   onConfirm: (dataUrl: string) => void
   onClose: () => void
 }
 
-export function CropModal({ src, title, outputSize = 400, onConfirm, onClose }: Props) {
-  const containerRef  = useRef<HTMLDivElement>(null)
-  const imgRef        = useRef<HTMLImageElement>(null)
-  const [natural, setNatural]   = useState({ w: 1, h: 1 })
-  const [frame, setFrame]       = useState<Frame>({ x: 60, y: 60, size: 240 })
+export function CropModal({
+  src,
+  title,
+  outputWidth = 400,
+  outputHeight,
+  aspectRatio = 1,
+  onConfirm,
+  onClose,
+}: Props) {
+  const outW = outputWidth
+  const outH = outputHeight ?? Math.round(outputWidth / aspectRatio)
+
+  // Container width is fixed; height scales to keep aspect ratio visible
+  const containerW = CONTAINER
+  const containerH = Math.round(CONTAINER / aspectRatio)
+
+  const imgRef       = useRef<HTMLImageElement>(null)
+  const [natural, setNatural] = useState({ w: 1, h: 1 })
+  const [frame, setFrame]     = useState<Frame>({ x: 0, y: 0, w: containerW * 0.8, h: containerH * 0.8 })
   const dragRef = useRef<{ mode: DragMode; mx0: number; my0: number; f0: Frame } | null>(null)
 
-  // Compute where the image actually renders inside the container (object-contain logic)
+  // Compute image display rect inside container (object-contain logic)
   const imgRect = useCallback((): Rect => {
-    const scale = Math.min(CONTAINER / natural.w, CONTAINER / natural.h)
+    const scale = Math.min(containerW / natural.w, containerH / natural.h)
     const w = natural.w * scale
     const h = natural.h * scale
-    return { x: (CONTAINER - w) / 2, y: (CONTAINER - h) / 2, w, h }
-  }, [natural])
+    return { x: (containerW - w) / 2, y: (containerH - h) / 2, w, h }
+  }, [natural, containerW, containerH])
 
-  // Clamp frame so it stays inside the image display rect
+  // Clamp frame inside image display rect, enforcing aspect ratio
   const clampFrame = useCallback((f: Frame, rect: Rect): Frame => {
-    const maxSize = Math.min(rect.w, rect.h, CONTAINER)
-    const size    = Math.max(MIN_FRAME, Math.min(f.size, maxSize))
-    const x = Math.max(rect.x, Math.min(f.x, rect.x + rect.w - size))
-    const y = Math.max(rect.y, Math.min(f.y, rect.y + rect.h - size))
-    return { x, y, size }
-  }, [])
+    const maxW  = rect.w
+    const maxH  = rect.h
+    // Fit within both axes while keeping aspect ratio
+    let w = Math.max(MIN_W, Math.min(f.w, maxW))
+    let h = w / aspectRatio
+    if (h > maxH) { h = maxH; w = h * aspectRatio }
+    const x = Math.max(rect.x, Math.min(f.x, rect.x + rect.w - w))
+    const y = Math.max(rect.y, Math.min(f.y, rect.y + rect.h - h))
+    return { x, y, w, h }
+  }, [aspectRatio])
 
   // Re-center frame when image loads
   useEffect(() => {
     if (natural.w === 1) return
-    const r    = imgRect()
-    const size = Math.round(Math.min(r.w, r.h) * 0.8)
-    setFrame({ x: r.x + (r.w - size) / 2, y: r.y + (r.h - size) / 2, size })
-  }, [natural, imgRect])
+    const r  = imgRect()
+    let w    = r.w * 0.9
+    let h    = w / aspectRatio
+    if (h > r.h * 0.9) { h = r.h * 0.9; w = h * aspectRatio }
+    setFrame({ x: r.x + (r.w - w) / 2, y: r.y + (r.h - h) / 2, w, h })
+  }, [natural, imgRect, aspectRatio])
 
-  // ── Drag handlers ──────────────────────────────────────────────────────────
+  // ── Drag ─────────────────────────────────────────────────────────────────
   const startDrag = (mode: DragMode, e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault(); e.stopPropagation()
     dragRef.current = { mode, mx0: e.clientX, my0: e.clientY, f0: { ...frame } }
   }
 
@@ -72,40 +96,33 @@ export function CropModal({ src, title, outputSize = 400, onConfirm, onClose }: 
     if (d.mode === 'move') {
       next = { ...f0, x: f0.x + dx, y: f0.y + dy }
     } else {
-      // Resize: keep opposite corner fixed, move the dragged corner
-      let { x, y, size } = f0
-      const x2 = x + size   // right edge
-      const y2 = y + size   // bottom edge
+      const x2 = f0.x + f0.w
+      const y2 = f0.y + f0.h
 
-      if (d.mode === 'tl') {
-        const newX = Math.min(x2 - MIN_FRAME, x + dx)
-        const newY = Math.min(y2 - MIN_FRAME, y + dy)
-        const newSize = Math.min(x2 - newX, y2 - newY) // keep square by taking minimum change
-        // Use the dimension that changed less to keep square
-        const sizeByX = x2 - (x + dx)
-        const sizeByY = y2 - (y + dy)
-        const s = Math.max(MIN_FRAME, Math.min(sizeByX, sizeByY))
-        next = { x: x2 - s, y: y2 - s, size: s }
-        void newX; void newY; void newSize
-      } else if (d.mode === 'tr') {
-        const sizeByX = size + dx
-        const sizeByY = y2 - (y + dy)
-        const s = Math.max(MIN_FRAME, Math.min(sizeByX, sizeByY))
-        next = { x, y: y2 - s, size: s }
+      if (d.mode === 'br') {
+        const wByX = f0.w + dx
+        const wByY = (f0.h + dy) * aspectRatio
+        const w    = Math.max(MIN_W, Math.min(wByX, wByY))
+        next = { x: f0.x, y: f0.y, w, h: w / aspectRatio }
       } else if (d.mode === 'bl') {
-        const sizeByX = x2 - (x + dx)
-        const sizeByY = size + dy
-        const s = Math.max(MIN_FRAME, Math.min(sizeByX, sizeByY))
-        next = { x: x2 - s, y, size: s }
-      } else { // br
-        const sizeByX = size + dx
-        const sizeByY = size + dy
-        const s = Math.max(MIN_FRAME, Math.min(sizeByX, sizeByY))
-        next = { x, y, size: s }
+        const wByX = f0.w - dx
+        const wByY = (f0.h + dy) * aspectRatio
+        const w    = Math.max(MIN_W, Math.min(wByX, wByY))
+        next = { x: x2 - w, y: f0.y, w, h: w / aspectRatio }
+      } else if (d.mode === 'tr') {
+        const wByX = f0.w + dx
+        const wByY = (f0.h - dy) * aspectRatio
+        const w    = Math.max(MIN_W, Math.min(wByX, wByY))
+        next = { x: f0.x, y: y2 - w / aspectRatio, w, h: w / aspectRatio }
+      } else { // tl
+        const wByX = f0.w - dx
+        const wByY = (f0.h - dy) * aspectRatio
+        const w    = Math.max(MIN_W, Math.min(wByX, wByY))
+        next = { x: x2 - w, y: y2 - w / aspectRatio, w, h: w / aspectRatio }
       }
     }
     setFrame(clampFrame(next, rect))
-  }, [imgRect, clampFrame])
+  }, [imgRect, clampFrame, aspectRatio])
 
   const stopDrag = useCallback(() => { dragRef.current = null }, [])
 
@@ -118,7 +135,7 @@ export function CropModal({ src, title, outputSize = 400, onConfirm, onClose }: 
     }
   }, [onMouseMove, stopDrag])
 
-  // ── Touch support ──────────────────────────────────────────────────────────
+  // ── Touch ─────────────────────────────────────────────────────────────────
   const startTouch = (mode: DragMode, e: React.TouchEvent) => {
     e.stopPropagation()
     const t = e.touches[0]
@@ -129,8 +146,7 @@ export function CropModal({ src, title, outputSize = 400, onConfirm, onClose }: 
     const d = dragRef.current
     if (!d) return
     const t = e.touches[0]
-    const synth = { clientX: t.clientX, clientY: t.clientY } as MouseEvent
-    onMouseMove(synth)
+    onMouseMove({ clientX: t.clientX, clientY: t.clientY } as MouseEvent)
   }, [onMouseMove])
 
   useEffect(() => {
@@ -142,29 +158,30 @@ export function CropModal({ src, title, outputSize = 400, onConfirm, onClose }: 
     }
   }, [onTouchMove, stopDrag])
 
-  // ── Confirm: draw canvas crop ──────────────────────────────────────────────
+  // ── Confirm ───────────────────────────────────────────────────────────────
   const handleConfirm = () => {
     const img = imgRef.current
     if (!img) return
-    const r     = imgRect()
-    const scale = r.w / natural.w  // px per natural px
-    const natX  = (frame.x - r.x) / scale
-    const natY  = (frame.y - r.y) / scale
-    const natSz = frame.size / scale
+    const r      = imgRect()
+    const scaleX = r.w / natural.w
+    const scaleY = r.h / natural.h
+    const natX   = (frame.x - r.x) / scaleX
+    const natY   = (frame.y - r.y) / scaleY
+    const natW   = frame.w / scaleX
+    const natH   = frame.h / scaleY
 
     const canvas = document.createElement('canvas')
-    canvas.width  = outputSize
-    canvas.height = outputSize
-    const ctx = canvas.getContext('2d')!
-    ctx.drawImage(img, natX, natY, natSz, natSz, 0, 0, outputSize, outputSize)
-    onConfirm(canvas.toDataURL('image/jpeg', 0.85))
+    canvas.width  = outW
+    canvas.height = outH
+    canvas.getContext('2d')!.drawImage(img, natX, natY, natW, natH, 0, 0, outW, outH)
+    onConfirm(canvas.toDataURL('image/jpeg', 0.90))
   }
 
-  const { x, y, size } = frame
+  const { x, y, w, h } = frame
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md">
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
           <h3 className="text-white font-semibold text-sm">{title ?? 'Cắt ảnh'}</h3>
@@ -174,14 +191,12 @@ export function CropModal({ src, title, outputSize = 400, onConfirm, onClose }: 
         </div>
 
         <div className="p-5 space-y-4">
-          {/* ── Crop canvas ── */}
+          {/* Crop canvas */}
           <div className="flex justify-center select-none">
             <div
-              ref={containerRef}
               className="relative overflow-hidden rounded-xl bg-black"
-              style={{ width: CONTAINER, height: CONTAINER }}
+              style={{ width: containerW, height: containerH }}
             >
-              {/* Image */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 ref={imgRef}
@@ -193,30 +208,26 @@ export function CropModal({ src, title, outputSize = 400, onConfirm, onClose }: 
                   setNatural({ w: img.naturalWidth, h: img.naturalHeight })
                 }}
                 style={{
-                  position:   'absolute',
-                  left:       imgRect().x,
-                  top:        imgRect().y,
-                  width:      imgRect().w,
-                  height:     imgRect().h,
+                  position: 'absolute',
+                  left: imgRect().x,
+                  top:  imgRect().y,
+                  width:  imgRect().w,
+                  height: imgRect().h,
                   userSelect: 'none',
                   pointerEvents: 'none',
                 }}
               />
 
               {/* Dim overlay — 4 sides */}
-              {/* Top */}
-              <div className="absolute bg-black/60 pointer-events-none" style={{ left: 0, top: 0, width: CONTAINER, height: y }} />
-              {/* Bottom */}
-              <div className="absolute bg-black/60 pointer-events-none" style={{ left: 0, top: y + size, width: CONTAINER, height: CONTAINER - y - size }} />
-              {/* Left */}
-              <div className="absolute bg-black/60 pointer-events-none" style={{ left: 0, top: y, width: x, height: size }} />
-              {/* Right */}
-              <div className="absolute bg-black/60 pointer-events-none" style={{ left: x + size, top: y, width: CONTAINER - x - size, height: size }} />
+              <div className="absolute bg-black/60 pointer-events-none" style={{ left: 0, top: 0, width: containerW, height: y }} />
+              <div className="absolute bg-black/60 pointer-events-none" style={{ left: 0, top: y + h, width: containerW, height: containerH - y - h }} />
+              <div className="absolute bg-black/60 pointer-events-none" style={{ left: 0, top: y, width: x, height: h }} />
+              <div className="absolute bg-black/60 pointer-events-none" style={{ left: x + w, top: y, width: containerW - x - w, height: h }} />
 
-              {/* Crop frame border */}
+              {/* Crop frame */}
               <div
                 className="absolute border-2 border-white cursor-move"
-                style={{ left: x, top: y, width: size, height: size }}
+                style={{ left: x, top: y, width: w, height: h }}
                 onMouseDown={e => startDrag('move', e)}
                 onTouchStart={e => startTouch('move', e)}
               >
@@ -231,9 +242,9 @@ export function CropModal({ src, title, outputSize = 400, onConfirm, onClose }: 
 
               {/* Corner handles */}
               {(['tl','tr','bl','br'] as DragMode[]).map(corner => {
-                const isLeft   = corner.includes('l')
-                const isTop    = corner.startsWith('t')
-                const cursor   = corner === 'tl' || corner === 'br' ? 'nwse-resize' : 'nesw-resize'
+                const isLeft = corner.includes('l')
+                const isTop  = corner.startsWith('t')
+                const cursor = corner === 'tl' || corner === 'br' ? 'nwse-resize' : 'nesw-resize'
                 return (
                   <div
                     key={corner}
@@ -241,8 +252,8 @@ export function CropModal({ src, title, outputSize = 400, onConfirm, onClose }: 
                     style={{
                       width:  HANDLE,
                       height: HANDLE,
-                      left:   isLeft ? x - HANDLE / 2 : x + size - HANDLE / 2,
-                      top:    isTop  ? y - HANDLE / 2 : y + size - HANDLE / 2,
+                      left:   isLeft ? x - HANDLE / 2 : x + w - HANDLE / 2,
+                      top:    isTop  ? y - HANDLE / 2 : y + h - HANDLE / 2,
                       cursor,
                     }}
                     onMouseDown={e => startDrag(corner, e)}
@@ -254,7 +265,7 @@ export function CropModal({ src, title, outputSize = 400, onConfirm, onClose }: 
           </div>
 
           <p className="text-gray-600 text-xs text-center">
-            Kéo frame để di chuyển · Kéo góc để thay đổi kích thước · Lưu ra {outputSize}×{outputSize} JPEG
+            Kéo frame để di chuyển · Kéo góc để thay đổi kích thước · Lưu ra {outW}×{outH} JPEG
           </p>
 
           <div className="flex gap-3 pt-1">

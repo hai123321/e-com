@@ -317,7 +317,7 @@ function TaiKhoanContent() {
                   <CropModal
                     src={cropSrc}
                     title="Cắt ảnh đại diện"
-                    outputSize={400}
+                    outputWidth={400}
                     onClose={() => setCropSrc(null)}
                     onConfirm={async (dataUrl) => {
                       if (!user) return

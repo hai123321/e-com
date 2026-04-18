@@ -1,8 +1,10 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { adminApi } from '@/lib/admin-api'
 import { GroupImagesTab } from './GroupImagesTab'
+import { CropModal } from '@/components/ui/CropModal'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 interface Order {
@@ -771,27 +773,54 @@ function PromotionsTab() {
 }
 
 // ─── Banners Tab ─────────────────────────────────────────────────────────────
+// Banner output size: 1200×400 (3:1 landscape)
+const BANNER_W = 1200
+const BANNER_H = 400
+const BANNER_RATIO = BANNER_W / BANNER_H   // 3
+
 function BannersTab() {
-  const [banners, setBanners] = useState<Banner[]>([])
+  const [banners, setBanners]   = useState<Banner[]>([])
   const [creating, setCreating] = useState(false)
-  const [editing, setEditing] = useState<Banner | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [editing, setEditing]   = useState<Banner | null>(null)
+  const [loading, setLoading]   = useState(true)
+  const [saving, setSaving]     = useState(false)
+
+  // Image upload state
+  const [cropSrc, setCropSrc]         = useState<string | null>(null)
+  const [uploadingImg, setUploadingImg] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
   const empty: Omit<Banner, 'id'> = { title: '', subtitle: '', image: '', href: '/#products', priority: 0, isActive: true }
   const [form, setForm] = useState<Omit<Banner, 'id'>>(empty)
+
+  // Stable banner id for upload filename (new banners use a temp key)
+  const bannerIdForUpload = editing?.id ?? `new-${Date.now()}`
 
   useEffect(() => {
     adminApi.getBanners().then(r => { setBanners(r.data ?? []); setLoading(false) })
   }, [])
 
+  const openForm = (banner?: Banner) => {
+    setForm(banner ?? empty)
+    if (banner) setEditing(banner)
+    else setCreating(true)
+  }
+
+  const closeForm = () => { setEditing(null); setCreating(false); setCropSrc(null) }
+
   const save = async () => {
-    if (editing) {
-      const r = await adminApi.updateBanner(editing.id, form)
-      setBanners(prev => prev.map(b => b.id === editing.id ? r.data : b))
-      setEditing(null)
-    } else {
-      const r = await adminApi.createBanner(form)
-      setBanners(prev => [r.data, ...prev])
-      setCreating(false)
+    setSaving(true)
+    try {
+      if (editing) {
+        const r = await adminApi.updateBanner(editing.id, form)
+        setBanners(prev => prev.map(b => b.id === editing.id ? r.data : b))
+      } else {
+        const r = await adminApi.createBanner(form)
+        setBanners(prev => [r.data, ...prev])
+      }
+      closeForm()
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -804,25 +833,140 @@ function BannersTab() {
   const f = (key: keyof typeof form) => (v: string) =>
     setForm(prev => ({ ...prev, [key]: key === 'priority' ? parseInt(v) || 0 : v }))
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => setCropSrc(ev.target?.result as string)
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  const handleCropConfirm = async (dataUrl: string) => {
+    setUploadingImg(true)
+    setCropSrc(null)
+    try {
+      const token = localStorage.getItem('admin_token') ?? ''
+      const res   = await fetch('/api/upload-banner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ bannerId: bannerIdForUpload, imageData: dataUrl }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Upload thất bại')
+      setForm(prev => ({ ...prev, image: json.data.path }))
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Lỗi upload ảnh')
+    } finally {
+      setUploadingImg(false)
+    }
+  }
+
   const bannerFormJsx = (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* ── Banner image upload ── */}
+      <div>
+        <p className="text-gray-400 text-xs font-medium mb-2 uppercase tracking-wider">
+          Ảnh banner <span className="text-gray-600 normal-case">({BANNER_W}×{BANNER_H} px · tỉ lệ 3:1)</span>
+        </p>
+
+        {/* Preview area — 3:1 aspect ratio */}
+        <div className="relative w-full rounded-xl overflow-hidden bg-gray-800 border-2 border-dashed border-gray-700 group"
+          style={{ paddingTop: `${(1 / BANNER_RATIO) * 100}%` }}>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            {form.image ? (
+              <>
+                <Image
+                  src={form.image}
+                  alt="banner preview"
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+                {/* Overlay on hover */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    className="bg-white text-gray-900 text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors"
+                  >
+                    Thay ảnh
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploadingImg}
+                className="flex flex-col items-center gap-2 text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                {uploadingImg ? (
+                  <div className="w-8 h-8 border-4 border-gray-600 border-t-primary-500 rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-sm font-medium">Click để chọn ảnh banner</span>
+                    <span className="text-xs text-gray-600">JPG, PNG, WebP · Tối đa 10MB</span>
+                    <span className="text-xs text-gray-700">Khuyến nghị: 1200×400 px trở lên</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+
+        {form.image && (
+          <div className="flex items-center justify-between mt-1.5">
+            <span className="text-xs text-gray-600 font-mono truncate max-w-xs">{form.image}</span>
+            <button
+              type="button"
+              onClick={() => setForm(p => ({ ...p, image: '' }))}
+              className="text-xs text-red-500 hover:text-red-400 ml-2 shrink-0"
+            >
+              Xóa ảnh
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Text fields ── */}
       <div className="grid grid-cols-2 gap-4">
         <Input label="Tiêu đề" value={form.title} onChange={f('title')} required />
         <Input label="Phụ đề" value={form.subtitle} onChange={f('subtitle')} placeholder="Mô tả ngắn" />
-        <Input label="Ảnh (URL)" value={form.image} onChange={f('image')} placeholder="/api/logos/netflix.jpg" />
         <Input label="Liên kết (href)" value={form.href} onChange={f('href')} placeholder="/san-pham/netflix" />
-        <Input label="Độ ưu tiên (số lớn = hiển thị trước)" value={form.priority} onChange={f('priority')} type="number" />
+        <Input label="Độ ưu tiên (số lớn hiển thị trước)" value={form.priority} onChange={f('priority')} type="number" />
       </div>
+
       <div className="flex items-center gap-2">
         <input type="checkbox" id="bannerIsActive" checked={form.isActive}
           onChange={e => setForm(p => ({ ...p, isActive: e.target.checked }))}
           className="rounded" />
         <label htmlFor="bannerIsActive" className="text-gray-400 text-sm">Đang hiển thị</label>
       </div>
+
       <div className="flex gap-3 pt-2">
-        <Btn onClick={save}>Lưu</Btn>
-        <Btn variant="ghost" onClick={() => { setEditing(null); setCreating(false) }}>Hủy</Btn>
+        <Btn onClick={save} disabled={saving}>{saving ? 'Đang lưu...' : 'Lưu'}</Btn>
+        <Btn variant="ghost" onClick={closeForm}>Hủy</Btn>
       </div>
+
+      {/* Crop modal */}
+      {cropSrc && (
+        <CropModal
+          src={cropSrc}
+          title="Cắt ảnh banner (3:1)"
+          aspectRatio={BANNER_RATIO}
+          outputWidth={BANNER_W}
+          outputHeight={BANNER_H}
+          onConfirm={handleCropConfirm}
+          onClose={() => setCropSrc(null)}
+        />
+      )}
     </div>
   )
 
@@ -830,47 +974,54 @@ function BannersTab() {
 
   return (
     <>
-      <div className="flex justify-end mb-4">
-        <Btn onClick={() => { setForm(empty); setCreating(true) }}>+ Thêm banner</Btn>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-gray-500 text-xs">
+          {banners.length} banner · Ảnh lưu tại <code className="text-gray-400">/banners/&#123;id&#125;.jpg</code> · {BANNER_W}×{BANNER_H}
+        </p>
+        <Btn onClick={() => openForm()}>+ Thêm banner</Btn>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-800">
-              {['Tiêu đề', 'Phụ đề', 'Ảnh', 'Liên kết', 'Ưu tiên', 'Trạng thái', ''].map(h => (
-                <th key={h} className="text-left text-gray-500 font-medium py-3 px-3 text-xs">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {banners.length === 0 && (
-              <tr><td colSpan={7} className="text-center text-gray-600 py-8 text-sm">Chưa có banner nào</td></tr>
-            )}
-            {banners.map(b => (
-              <tr key={b.id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
-                <td className="py-3 px-3 text-white font-medium">{b.title}</td>
-                <td className="py-3 px-3 text-gray-400 text-xs">{b.subtitle || '—'}</td>
-                <td className="py-3 px-3 text-gray-500 text-xs font-mono truncate max-w-[120px]">{b.image || '—'}</td>
-                <td className="py-3 px-3 text-gray-500 text-xs font-mono truncate max-w-[120px]">{b.href}</td>
-                <td className="py-3 px-3 text-gray-400">{b.priority}</td>
-                <td className="py-3 px-3">
-                  <span className={`text-xs px-2 py-1 rounded-lg border ${b.isActive ? 'bg-green-900/40 text-green-400 border-green-800' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
-                    {b.isActive ? 'Hiển thị' : 'Ẩn'}
-                  </span>
-                </td>
-                <td className="py-3 px-3">
-                  <div className="flex gap-2">
-                    <Btn size="sm" variant="ghost" onClick={() => { setForm(b); setEditing(b) }}>Sửa</Btn>
-                    <Btn size="sm" variant="danger" onClick={() => del(b.id)}>Xóa</Btn>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+      {/* Banner grid preview */}
+      <div className="space-y-3 mb-6">
+        {banners.length === 0 && (
+          <p className="text-gray-600 text-sm text-center py-8">Chưa có banner nào</p>
+        )}
+        {banners.map(b => (
+          <div key={b.id} className="flex items-center gap-4 bg-gray-800/50 border border-gray-700 rounded-xl p-3">
+            {/* Thumbnail */}
+            <div className="relative shrink-0 w-40 rounded-lg overflow-hidden bg-gray-900 border border-gray-700" style={{ aspectRatio: `${BANNER_RATIO}` }}>
+              {b.image ? (
+                <Image src={b.image} alt={b.title} fill unoptimized className="object-cover" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-gray-700 text-xs">No image</div>
+              )}
+            </div>
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-semibold text-sm truncate">{b.title || '—'}</p>
+              <p className="text-gray-500 text-xs truncate mt-0.5">{b.subtitle || '—'}</p>
+              <p className="text-gray-600 text-xs font-mono truncate mt-0.5">{b.href}</p>
+            </div>
+            {/* Meta */}
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <span className={`text-xs px-2 py-1 rounded-lg border ${b.isActive ? 'bg-green-900/40 text-green-400 border-green-800' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
+                {b.isActive ? 'Hiển thị' : 'Ẩn'}
+              </span>
+              <span className="text-gray-600 text-xs">Ưu tiên: {b.priority}</span>
+              <div className="flex gap-2 mt-1">
+                <Btn size="sm" variant="ghost" onClick={() => openForm(b)}>Sửa</Btn>
+                <Btn size="sm" variant="danger" onClick={() => del(b.id)}>Xóa</Btn>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
+
       {(creating || editing) && (
-        <Modal title={editing ? `Sửa: ${editing.title}` : 'Thêm banner mới'} onClose={() => { setEditing(null); setCreating(false) }}>
+        <Modal
+          title={editing ? `Sửa: ${editing.title}` : 'Thêm banner mới'}
+          onClose={closeForm}
+        >
           {bannerFormJsx}
         </Modal>
       )}
