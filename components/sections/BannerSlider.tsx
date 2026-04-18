@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import Image from 'next/image'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { apiUrl } from '@/lib/api'
 
 interface Banner {
@@ -15,71 +17,126 @@ interface Banner {
 
 export function BannerSlider() {
   const [banners, setBanners] = useState<Banner[]>([])
-  const [active, setActive] = useState(0)
+  const [active, setActive]   = useState(0)
   const [loading, setLoading] = useState(true)
+  const [paused, setPaused]   = useState(false)
 
   useEffect(() => {
     fetch(apiUrl('/banners'))
       .then(r => r.json())
-      .then(json => {
-        setBanners(json.data ?? [])
-        setLoading(false)
-      })
+      .then(json => { setBanners(json.data ?? []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
 
-  useEffect(() => {
-    if (banners.length <= 1) return
-    const interval = setInterval(() => {
-      setActive(prev => (prev + 1) % banners.length)
-    }, 4000)
-    return () => clearInterval(interval)
-  }, [banners.length])
+  const prev = useCallback(() => setActive(a => (a - 1 + banners.length) % banners.length), [banners.length])
+  const next = useCallback(() => setActive(a => (a + 1) % banners.length), [banners.length])
 
+  useEffect(() => {
+    if (banners.length <= 1 || paused) return
+    const id = setInterval(next, 4000)
+    return () => clearInterval(id)
+  }, [banners.length, paused, next])
+
+  /* ── Placeholder while loading / no banners ── */
   if (loading || banners.length === 0) {
     return (
-      <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3] bg-gradient-to-br from-primary-800 to-primary-600 flex flex-col items-center justify-center gap-3 p-8 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center">
-          <span className="text-white/60 text-2xl font-bold">M</span>
+      <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-primary-800 to-primary-600"
+        style={{ aspectRatio: '16/9' }}>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+          <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
+            <span className="text-white/60 text-2xl font-extrabold">M</span>
+          </div>
+          <p className="text-white/50 text-sm">Miu Shop — Tài khoản số uy tín</p>
         </div>
-        <h3 className="text-white text-xl font-extrabold">Miu Shop</h3>
-        <p className="text-white/60 text-sm">Tài khoản số uy tín</p>
       </div>
     )
   }
 
   return (
-    <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
+    <div
+      className="relative w-full rounded-2xl overflow-hidden shadow-2xl group"
+      style={{ aspectRatio: '16/9' }}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      {/* Slides */}
       {banners.map((b, i) => (
         <a
-          href={b.href}
           key={b.id}
-          className={`absolute inset-0 transition-opacity duration-500 ${i === active ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          href={b.href}
+          aria-label={b.title}
+          className={`absolute inset-0 transition-opacity duration-500 ${
+            i === active ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+          }`}
         >
-          <div className="w-full h-full bg-gradient-to-br from-primary-800 to-primary-600 flex flex-col items-center justify-center gap-3 p-8 text-center">
-            {b.image && (
-              <img
-                src={b.image}
-                alt={b.title}
-                className="w-20 h-20 object-contain rounded-2xl bg-white/10 p-2"
-              />
-            )}
-            <h3 className="text-white text-xl font-extrabold">{b.title}</h3>
-            {b.subtitle && <p className="text-white/70 text-sm">{b.subtitle}</p>}
-            <span className="mt-2 bg-white text-primary-700 text-xs font-bold px-4 py-1.5 rounded-full">
-              Xem ngay →
-            </span>
-          </div>
+          {/* Full-cover image */}
+          {b.image ? (
+            <Image
+              src={b.image}
+              alt={b.title}
+              fill
+              unoptimized
+              className="object-cover"
+              priority={i === 0}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-800 to-primary-600" />
+          )}
+
+          {/* Gradient overlay for text legibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+
+          {/* Text overlay */}
+          {(b.title || b.subtitle) && (
+            <div className="absolute bottom-0 left-0 right-0 px-5 py-4">
+              {b.title && (
+                <p className="text-white font-bold text-base sm:text-lg leading-tight drop-shadow line-clamp-1">
+                  {b.title}
+                </p>
+              )}
+              {b.subtitle && (
+                <p className="text-white/80 text-xs sm:text-sm mt-0.5 drop-shadow line-clamp-1">
+                  {b.subtitle}
+                </p>
+              )}
+            </div>
+          )}
         </a>
       ))}
 
+      {/* Prev / Next arrows — show on hover */}
       {banners.length > 1 && (
-        <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+        <>
+          <button
+            onClick={e => { e.preventDefault(); prev() }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="Previous"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={e => { e.preventDefault(); next() }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="Next"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </>
+      )}
+
+      {/* Dot indicators — bigger, easy to tap */}
+      {banners.length > 1 && (
+        <div className="absolute bottom-3 right-4 z-20 flex items-center gap-2">
           {banners.map((_, i) => (
             <button
               key={i}
-              onClick={() => setActive(i)}
-              className={`h-2 rounded-full transition-all ${i === active ? 'bg-white w-6' : 'bg-white/40 w-2'}`}
+              onClick={e => { e.preventDefault(); setActive(i) }}
+              aria-label={`Slide ${i + 1}`}
+              className={`rounded-full transition-all duration-300 ${
+                i === active
+                  ? 'bg-white w-6 h-2.5'
+                  : 'bg-white/50 hover:bg-white/80 w-2.5 h-2.5'
+              }`}
             />
           ))}
         </div>
