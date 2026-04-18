@@ -13,6 +13,7 @@ import { Countdown } from '@/components/ui/Countdown'
 import { StarRating } from '@/components/review/StarRating'
 import { formatCurrency, getStockStatus } from '@/lib/utils'
 import { getServiceConfig } from '@/lib/service-config'
+import { ProductPickerModal } from '@/components/product/ProductPickerModal'
 
 interface Props {
   product: Product
@@ -37,6 +38,7 @@ export function ProductCard({ product }: Props) {
   const [imgError, setImgError] = React.useState(false)
   const [isAdding, setIsAdding] = React.useState(false)
   const [cartAnimKey, setCartAnimKey] = React.useState(0)
+  const [pickerOpen, setPickerOpen] = React.useState(false)
   const onSale = isFlashSaleActive(product)
 
   const showImage = product.image && !imgError
@@ -45,7 +47,13 @@ export function ProductCard({ product }: Props) {
   function handleAddToCart(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
-    if (isAdding || isOut) return
+    if (isOut) return
+    // Grouped product → show picker so user selects the right variant
+    if (product.groupKey) {
+      setPickerOpen(true)
+      return
+    }
+    if (isAdding) return
     addItem(product)
     setIsAdding(true)
     setCartAnimKey((k) => k + 1)
@@ -209,17 +217,31 @@ export function ProductCard({ product }: Props) {
     </>
   )
 
+  const pickerModal = pickerOpen && product.groupKey ? (
+    <ProductPickerModal
+      groupKey={product.groupKey}
+      groupName={product.name.split(' ').slice(0, 3).join(' ')}
+      onClose={() => setPickerOpen(false)}
+    />
+  ) : null
+
   if (detailHref) {
     return (
-      <Link href={detailHref} className="card group flex flex-col overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-primary-300 hover:-translate-y-2 hover:shadow-[0_20px_60px_rgba(139,92,246,0.3)] cursor-pointer">
-        {cardContent}
-      </Link>
+      <>
+        <Link href={detailHref} className="card group flex flex-col overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-primary-300 hover:-translate-y-2 hover:shadow-[0_20px_60px_rgba(139,92,246,0.3)] cursor-pointer">
+          {cardContent}
+        </Link>
+        {pickerModal}
+      </>
     )
   }
 
   return (
-    <article className="card group flex flex-col overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-primary-300 hover:-translate-y-2 hover:shadow-[0_20px_60px_rgba(139,92,246,0.3)]">
-      {cardContent}
-    </article>
+    <>
+      <article className="card group flex flex-col overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-primary-300 hover:-translate-y-2 hover:shadow-[0_20px_60px_rgba(139,92,246,0.3)]">
+        {cardContent}
+      </article>
+      {pickerModal}
+    </>
   )
 }
