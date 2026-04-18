@@ -37,6 +37,7 @@ export function ProductCard({ product }: Props) {
   const [isAdding, setIsAdding] = React.useState(false)
   const [cartAnimKey, setCartAnimKey] = React.useState(0)
   const onSale = isFlashSaleActive(product)
+
   const showImage = product.image && !imgError
   const soldCount = product.soldCount ?? 0
 
@@ -74,6 +75,23 @@ export function ProductCard({ product }: Props) {
             </>
           )}
         </div>
+        {/* Flash sale badge */}
+        {onSale && (
+          <span className="absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-bold bg-red-600 text-white z-10 animate-pulse">
+            ⚡ FLASH
+          </span>
+        )}
+        {/* HOT / NEW badge — top-left */}
+        {!onSale && product.stock <= 5 && status !== 'out' && (
+          <span className="absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white z-10">
+            🔥 Hot
+          </span>
+        )}
+        {!onSale && product.stock > 50 && (
+          <span className="absolute top-3 left-3 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-white z-10">
+            Mới
+          </span>
+        )}
 
         <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
           {onSale && (
@@ -107,15 +125,15 @@ export function ProductCard({ product }: Props) {
           ) : (
             <div>
               <div className="text-xl font-extrabold text-primary-700">
-                {detailHref && (
-                  <span className="text-xs text-gray-400 mr-0.5">Tu1eeb</span>
+                {product.groupKey && (
+                  <span className="text-xs text-gray-400 mr-0.5">Từ</span>
                 )}
                 {formatCurrency(product.price)}
               </div>
               <div className="text-xs text-gray-400">{t.card.unit}</div>
               {soldCount > 0 && (
                 <div className="text-xs text-gray-400 mt-0.5">
-                  {soldCount.toLocaleString('vi-VN')} u0111u00e3 mua
+                  {soldCount.toLocaleString('vi-VN')} đã mua
                 </div>
               )}
             </div>
@@ -130,14 +148,14 @@ export function ProductCard({ product }: Props) {
               key={cartAnimKey}
               className={`w-3.5 h-3.5 ${isAdding ? 'animate-cart-bounce' : ''}`}
             />
-            {isOut ? t.card.outOfStock ?? 'u2014' : inCart ? `${t.card.inCart} (${inCart.qty})` : t.card.add}
+            {isOut ? t.card.outOfStock ?? '—' : inCart ? `${t.card.inCart} (${inCart.qty})` : t.card.add}
           </button>
         </div>
 
         {/* Flash sale countdown */}
         {onSale && (
           <div className="flex items-center gap-1.5 mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
-            <span className="text-[11px] text-red-500 font-medium">u26a1 Ku1ebft thu00fac sau:</span>
+            <span className="text-[11px] text-red-500 font-medium">⚡ Kết thúc sau:</span>
             <Countdown
               endsAt={product.saleEndsAt!}
               className="text-[11px] text-red-600 font-bold"
@@ -157,12 +175,12 @@ export function ProductCard({ product }: Props) {
             <div className="flex items-center gap-1">
               <TrendingUp className="w-3 h-3 text-orange-400" />
               <span className="text-xs text-orange-500 font-medium">
-                {product.soldCount} u0111u00e3 bu00e1n
+                {product.soldCount} đã bán
               </span>
             </div>
           )}
           {detailHref && !product.soldCount && (
-            <span className="text-xs text-primary-400 font-medium">Xem cu00e1c gu00f3i u2192</span>
+            <span className="text-xs text-primary-400 font-medium">Xem các gói →</span>
           )}
         </div>
       </div>

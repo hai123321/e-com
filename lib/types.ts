@@ -11,6 +11,8 @@ export interface Product {
   salePrice?: number | null
   saleEndsAt?: string | null
   soldCount?: number
+  avgRating?: number | null
+  reviewCount?: number | null
 }
 
 export interface CartItem {
