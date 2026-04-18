@@ -85,6 +85,20 @@
       "when": 1776500000000,
       "tag": "0011_banners",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1776510000000,
+      "tag": "0012_referral_system",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1776520000000,
+      "tag": "0013_flash_sale",
+      "breakpoints": true
     }
   ]
 }
