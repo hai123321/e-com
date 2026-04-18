@@ -1,8 +1,8 @@
 // ── Bank Transfer Config ────────────────────────────────────────────────────
 // Thay đổi thông tin ngân hàng tại đây
 export const BANK = {
-  id: 'TCB',           // Techcombank — xem danh sách tại vietqr.io/danh-sach-ngan-hang
-  account: '666684',   // Số tài khoản Techcombank (kiểm tra lại số đầy đủ nếu cần)
+  id: 'TCB',                        // Techcombank
+  account: 'MS00T01275350543975',   // Virtual account (tài khoản ảo)
   name: 'TRIEU NAM HAI',
 }
 
