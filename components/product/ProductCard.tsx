@@ -118,42 +118,54 @@ export function ProductCard({ product }: Props) {
           {product.description}
         </p>
 
-        {/* Price + CTA */}
-        <div className="flex items-center justify-between gap-1 sm:gap-3 mt-auto pt-2 sm:pt-0">
-          {onSale ? (
-            <FlashSaleBadge
-              originalPrice={product.price}
-              salePrice={product.salePrice!}
-              saleEndsAt={product.saleEndsAt!}
-              compact
-            />
-          ) : (
-            <div>
-              <div className="text-sm sm:text-xl font-extrabold text-primary-700 leading-tight">
-                {product.groupKey && (
-                  <span className="text-[10px] sm:text-xs text-gray-400 mr-0.5">Từ</span>
-                )}
-                {formatCurrency(product.price)}
+        {/* Price + CTA — mobile: inline row / desktop: stacked */}
+        <div className="mt-auto pt-2">
+          {/* Price row */}
+          <div className="flex items-end justify-between sm:block mb-0 sm:mb-3">
+            {onSale ? (
+              <FlashSaleBadge
+                originalPrice={product.price}
+                salePrice={product.salePrice!}
+                saleEndsAt={product.saleEndsAt!}
+                compact
+              />
+            ) : (
+              <div>
+                <div className="text-sm sm:text-xl font-extrabold text-primary-700 leading-tight">
+                  {product.groupKey && (
+                    <span className="text-[10px] sm:text-xs text-gray-400 mr-0.5">Từ</span>
+                  )}
+                  {formatCurrency(product.price)}
+                </div>
+                <div className="text-[10px] sm:text-xs text-gray-400">{t.card.unit}</div>
               </div>
-              <div className="text-[10px] sm:text-xs text-gray-400">{t.card.unit}</div>
-            </div>
-          )}
+            )}
 
+            {/* Mobile button — icon only */}
+            <button
+              onClick={handleAddToCart}
+              disabled={isOut || isAdding}
+              className="sm:hidden flex items-center justify-center gap-1 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white text-[10px] font-bold rounded-lg px-2 py-2 transition-all disabled:cursor-not-allowed shrink-0"
+            >
+              <ShoppingCart
+                key={cartAnimKey}
+                className={`w-3 h-3 ${isAdding ? 'animate-cart-bounce' : ''}`}
+              />
+              <span>{isOut ? '—' : inCart ? `+${inCart.qty}` : 'Thêm'}</span>
+            </button>
+          </div>
+
+          {/* Desktop button — full width */}
           <button
             onClick={handleAddToCart}
             disabled={isOut || isAdding}
-            className="flex items-center justify-center gap-1 sm:gap-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white text-[10px] sm:text-xs font-bold rounded-lg sm:rounded-xl px-2 sm:px-4 py-2 sm:py-2.5 transition-all hover:shadow-lg hover:shadow-primary-200 disabled:cursor-not-allowed shrink-0"
+            className="hidden sm:flex w-full items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white text-xs font-bold rounded-xl py-2.5 transition-all hover:shadow-lg hover:shadow-primary-200 disabled:cursor-not-allowed"
           >
             <ShoppingCart
               key={cartAnimKey}
-              className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isAdding ? 'animate-cart-bounce' : ''}`}
+              className={`w-3.5 h-3.5 ${isAdding ? 'animate-cart-bounce' : ''}`}
             />
-            <span className="hidden sm:inline">
-              {isOut ? t.card.outOfStock ?? '—' : inCart ? `${t.card.inCart} (${inCart.qty})` : t.card.add}
-            </span>
-            <span className="sm:hidden">
-              {isOut ? '—' : inCart ? `+${inCart.qty}` : 'Thêm'}
-            </span>
+            {isOut ? t.card.outOfStock ?? '—' : inCart ? `${t.card.inCart} (${inCart.qty})` : t.card.add}
           </button>
         </div>
 
