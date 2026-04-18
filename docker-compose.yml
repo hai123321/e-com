@@ -55,6 +55,8 @@ services:
       API_INTERNAL_URL:    http://api:3001
     volumes:
       - ./data/logos:/app/public/logos
+      - ./data/banners:/app/public/banners
+      - ./data/avatars:/app/public/avatars
     networks:
       - internal
       - proxy-net

@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const filename = `${bannerId}.jpg`
     await writeFile(join(dir, filename), buffer)
 
-    const path = `/banners/${filename}?t=${Date.now()}`
+    const path = `/api/banners/${filename}?t=${Date.now()}`
     return NextResponse.json({ success: true, data: { path } })
   } catch (err) {
     console.error('[upload-banner]', err)

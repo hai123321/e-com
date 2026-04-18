@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const filePath = join(avatarsDir, filename)
     await writeFile(filePath, buffer)
 
-    const path = `/avatars/${filename}?t=${Date.now()}`
+    const path = `/api/avatars/${filename}?t=${Date.now()}`
     return NextResponse.json({ success: true, data: { path } })
   } catch (err) {
     console.error('[upload-avatar]', err)
