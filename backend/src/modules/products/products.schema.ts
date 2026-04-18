@@ -14,13 +14,14 @@ export const createProductSchema = z.object({
 export const updateProductSchema = createProductSchema.partial().extend({
   isActive:   z.boolean().optional(),
   salePrice:  z.number().int().positive().nullable().optional(),
-  saleEndsAt: z.string().datetime().nullable().optional()
-    .transform((v): Date | null | undefined => v != null ? new Date(v) : v),
+  saleEndsAt: z.union([z.string(), z.null(), z.undefined()])
+    .transform((v): Date | null => (v && v !== '') ? new Date(v) : null)
+    .optional(),
 })
 
 export const setFlashSaleSchema = z.object({
   salePrice:  z.number().int().positive(),
-  saleEndsAt: z.string().datetime().transform((v) => new Date(v)),
+  saleEndsAt: z.string().transform((v) => new Date(v)),
 })
 
 export const clearFlashSaleSchema = z.object({})

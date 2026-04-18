@@ -7,7 +7,9 @@ export const createPromotionSchema = z.object({
   minOrderValue: z.number().int().positive().optional().nullable(),
   maxUses: z.number().int().positive().optional().nullable(),
   isActive: z.boolean().default(true),
-  expiresAt: z.string().datetime().optional().nullable(),
+  expiresAt: z.union([z.string(), z.null(), z.undefined()])
+    .transform((v): Date | null => (v && v !== '') ? new Date(v) : null)
+    .optional(),
 })
 
 export const updatePromotionSchema = createPromotionSchema.partial()
