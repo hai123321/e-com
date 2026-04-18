@@ -773,10 +773,10 @@ function PromotionsTab() {
 }
 
 // ─── Banners Tab ─────────────────────────────────────────────────────────────
-// Banner output size: 1200×400 (3:1 landscape)
-const BANNER_W = 1200
-const BANNER_H = 400
-const BANNER_RATIO = BANNER_W / BANNER_H   // 3
+// Banner output size: 1280×720 (16:9) — must match BannerSlider aspectRatio
+const BANNER_W = 1280
+const BANNER_H = 720
+const BANNER_RATIO = BANNER_W / BANNER_H   // 16:9 ≈ 1.778
 
 function BannersTab() {
   const [banners, setBanners]   = useState<Banner[]>([])
@@ -867,10 +867,10 @@ function BannersTab() {
       {/* ── Banner image upload ── */}
       <div>
         <p className="text-gray-400 text-xs font-medium mb-2 uppercase tracking-wider">
-          Ảnh banner <span className="text-gray-600 normal-case">({BANNER_W}×{BANNER_H} px · tỉ lệ 3:1)</span>
+          Ảnh banner <span className="text-gray-600 normal-case">({BANNER_W}×{BANNER_H} px · tỉ lệ 16:9)</span>
         </p>
 
-        {/* Preview area — 3:1 aspect ratio */}
+        {/* Preview area — 16:9 aspect ratio */}
         <div className="relative w-full rounded-xl overflow-hidden bg-gray-800 border-2 border-dashed border-gray-700 group"
           style={{ paddingTop: `${(1 / BANNER_RATIO) * 100}%` }}>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
