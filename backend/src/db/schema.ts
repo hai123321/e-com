@@ -1,6 +1,6 @@
 import {
   pgTable, serial, varchar, text, integer, boolean,
-  timestamp, check, jsonb,
+  timestamp, check, jsonb, unique,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
@@ -84,9 +84,34 @@ export const users = pgTable('users', {
   passwordHash: varchar('password_hash', { length: 255 }),
   googleId:     varchar('google_id', { length: 255 }).unique(),
   isActive:     boolean('is_active').notNull().default(true),
+  referralCode: varchar('referral_code', { length: 20 }).unique(),
+  referredById: integer('referred_by_id'),
   createdAt:    timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+// ── Referrals ───────────────────────────────────────────────────────────────
+export const referrals = pgTable('referrals', {
+  id:           serial('id').primaryKey(),
+  referrerId:   integer('referrer_id').notNull().references(() => users.id),
+  referredId:   integer('referred_id').notNull().references(() => users.id),
+  creditAmount: integer('credit_amount').notNull().default(20000),
+  creditedAt:   timestamp('credited_at', { withTimezone: true }),
+  createdAt:    timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [unique().on(t.referredId)])
+export type Referral    = typeof referrals.$inferSelect
+export type NewReferral = typeof referrals.$inferInsert
+
+export const userCredits = pgTable('user_credits', {
+  id:          serial('id').primaryKey(),
+  userId:      integer('user_id').notNull().references(() => users.id),
+  amount:      integer('amount').notNull(),
+  description: text('description').notNull().default(''),
+  referralId:  integer('referral_id').references(() => referrals.id),
+  createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+export type UserCredit    = typeof userCredits.$inferSelect
+export type NewUserCredit = typeof userCredits.$inferInsert
 
 // ── Pricing Rules ───────────────────────────────────────────────────────────
 export const pricingRules = pgTable('pricing_rules', {

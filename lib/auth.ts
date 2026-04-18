@@ -65,3 +65,23 @@ export async function fetchMyOrders(token: string): Promise<UserOrder[]> {
   const json = await res.json()
   return json.data as UserOrder[]
 }
+
+export type ReferralStats = { referralCount: number; totalCredit: number }
+
+export async function fetchReferralCode(token: string): Promise<string> {
+  const res = await fetch(apiUrl('/referral/code'), {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.error ?? 'Lỗi lấy mã referral')
+  return json.data.code as string
+}
+
+export async function fetchReferralStats(token: string): Promise<ReferralStats> {
+  const res = await fetch(apiUrl('/referral/stats'), {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.error ?? 'Lỗi lấy thống kê')
+  return json.data as ReferralStats
+}
