@@ -55,22 +55,22 @@ export function ProductCard({ product }: Props) {
   const cardContent = (
     <>
       {/* Image / branded fallback */}
-      <div className="relative h-32 sm:h-48 overflow-hidden bg-white">
-        <div className={`w-full h-full bg-gradient-to-br ${svc.bg} flex flex-col items-center justify-center gap-1 sm:gap-2 group-hover:scale-105 transition-transform duration-500`}>
+      <div className="relative h-28 sm:h-36 overflow-hidden bg-white">
+        <div className={`w-full h-full bg-gradient-to-br ${svc.bg} flex flex-col items-center justify-center gap-1 group-hover:scale-105 transition-transform duration-500`}>
           {showImage ? (
             <Image
               src={product.image!}
               alt={product.name}
-              width={96}
-              height={96}
+              width={80}
+              height={80}
               unoptimized
-              className="object-contain w-16 h-16 sm:w-24 sm:h-24 rounded-xl bg-white/10 p-2"
+              className="object-contain w-14 h-14 sm:w-20 sm:h-20 rounded-xl bg-white/10 p-1.5"
               onError={() => setImgError(true)}
             />
           ) : (
             <>
-              <span className="text-3xl sm:text-5xl select-none">{svc.icon}</span>
-              <span className="text-white/60 text-[10px] sm:text-xs font-medium uppercase tracking-wider hidden sm:block">
+              <span className="text-3xl sm:text-4xl select-none">{svc.icon}</span>
+              <span className="text-white/60 text-[10px] font-medium uppercase tracking-wider hidden sm:block">
                 {product.category ?? 'Premium'}
               </span>
             </>
@@ -101,20 +101,21 @@ export function ProductCard({ product }: Props) {
       </div>
 
       {/* Body */}
-      <div className="flex flex-col flex-1 p-3 sm:p-5">
-        <span className="text-[10px] sm:text-xs font-semibold text-primary-600 uppercase tracking-wider mb-1">
+      <div className="flex flex-col flex-1 p-3 sm:p-4">
+        <span className="text-[10px] font-semibold text-primary-600 uppercase tracking-wider mb-0.5">
           {t.card.label}
         </span>
-        <h3 className="font-bold text-gray-900 text-xs sm:text-base leading-snug mb-1 line-clamp-2">
+        <h3 className="font-bold text-gray-900 text-xs sm:text-sm leading-snug mb-1 line-clamp-2">
           {product.name}
         </h3>
         {(product.reviewCount ?? 0) > 0 && (
-          <div className="hidden sm:flex items-center gap-1.5 mb-1">
+          <div className="hidden sm:flex items-center gap-1 mb-1">
             <StarRating value={product.avgRating ?? 0} size="sm" />
             <span className="text-xs text-gray-400">({product.reviewCount})</span>
           </div>
         )}
-        <p className="hidden sm:block text-xs text-gray-400 leading-relaxed flex-1 mb-4 line-clamp-2">
+        {/* Description — max 1 line, click card to read more */}
+        <p className="hidden sm:block text-xs text-gray-400 leading-relaxed line-clamp-1 mb-2">
           {product.description}
         </p>
 
@@ -171,29 +172,27 @@ export function ProductCard({ product }: Props) {
 
         {/* Flash sale countdown */}
         {onSale && (
-          <div className="hidden sm:flex items-center gap-1.5 mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
-            <span className="text-[11px] text-red-500 font-medium">⚡ Kết thúc sau:</span>
+          <div className="hidden sm:flex items-center gap-1.5 mt-1.5 bg-red-50 border border-red-100 rounded-lg px-2.5 py-1">
+            <span className="text-[10px] text-red-500 font-medium">⚡ Kết thúc sau:</span>
             <Countdown
               endsAt={product.saleEndsAt!}
-              className="text-[11px] text-red-600 font-bold"
+              className="text-[10px] text-red-600 font-bold"
             />
           </div>
         )}
 
         {/* Stock + sold count — desktop only */}
-        <div className="hidden sm:flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-          <div className="flex items-center gap-1.5">
+        <div className="hidden sm:flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-1">
             <Box className="w-3 h-3 text-gray-400" />
             <span className="text-xs text-gray-400">
-              {t.card.stock} <strong className="text-gray-600">{product.stock}</strong> {t.card.stockUnit}
+              Còn: <strong className="text-gray-600">{product.stock}</strong>
             </span>
           </div>
           {(product.soldCount ?? 0) > 0 && (
             <div className="flex items-center gap-1">
               <TrendingUp className="w-3 h-3 text-orange-400" />
-              <span className="text-xs text-orange-500 font-medium">
-                {product.soldCount} đã bán
-              </span>
+              <span className="text-xs text-orange-500 font-medium">{product.soldCount} đã bán</span>
             </div>
           )}
           {detailHref && !product.soldCount && (
@@ -202,9 +201,9 @@ export function ProductCard({ product }: Props) {
         </div>
 
         {/* Mobile: stock remaining */}
-        <div className="sm:hidden mt-1.5 text-[10px] text-gray-400">
-          Còn lại: <strong className="text-gray-600">{product.stock}</strong> sản phẩm
-          {detailHref && <span className="ml-1 text-primary-400">Xem cả →</span>}
+        <div className="sm:hidden mt-1 text-[10px] text-gray-400">
+          Còn: <strong className="text-gray-600">{product.stock}</strong>
+          {detailHref && <span className="ml-1 text-primary-400">Xem →</span>}
         </div>
       </div>
     </>
