@@ -15,6 +15,9 @@ export const products = pgTable('products', {
   groupKey:         varchar('group_key', { length: 100 }).notNull().default(''),
   featuredPriority: integer('featured_priority').notNull().default(0),
   isActive:         boolean('is_active').notNull().default(true),
+  salePrice:        integer('sale_price'),
+  saleEndsAt:       timestamp('sale_ends_at', { withTimezone: true }),
+  soldCount:        integer('sold_count').notNull().default(0),
   createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [

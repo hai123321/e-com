@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
       localStorage.setItem('admin_token', res.data.token)
       router.push('/admin')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sai tài khoản hoặc mật khẩu')
+      setError(err instanceof Error ? err.message : 'Sai tu00e0i khou1ea3n hou1eb7c mu1eadt khu1ea9u')
     } finally {
       setLoading(false)
     }
@@ -32,7 +32,7 @@ export default function AdminLoginPage() {
         {error && <p className="bg-red-900/40 text-red-400 border border-red-800 rounded-xl px-4 py-2.5 text-sm mb-4">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-gray-400 text-xs font-medium mb-1 block">Tên đăng nhập</label>
+            <label className="text-gray-400 text-xs font-medium mb-1 block">Tu00ean u0111u0103ng nhu1eadp</label>
             <input
               required value={username} onChange={e => setUsername(e.target.value)}
               className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -40,18 +40,18 @@ export default function AdminLoginPage() {
             />
           </div>
           <div>
-            <label className="text-gray-400 text-xs font-medium mb-1 block">Mật khẩu</label>
+            <label className="text-gray-400 text-xs font-medium mb-1 block">Mu1eadt khu1ea9u</label>
             <input
               type="password" required value={password} onChange={e => setPassword(e.target.value)}
               className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="••••••••"
+              placeholder="u2022u2022u2022u2022u2022u2022u2022u2022"
             />
           </div>
           <button
             type="submit" disabled={loading}
             className="w-full bg-primary-700 hover:bg-primary-600 disabled:opacity-50 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors"
           >
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+            {loading ? 'u0110ang u0111u0103ng nhu1eadp...' : 'u0110u0103ng nhu1eadp'}
           </button>
         </form>
       </div>

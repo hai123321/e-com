@@ -39,6 +39,15 @@ export const adminApi = {
   deleteProduct: (id: number) =>
     adminFetch(`/admin/products/${id}`, { method: 'DELETE' }),
 
+  // Flash sale
+  setFlashSale: (id: number, salePrice: number, saleEndsAt: string) =>
+    adminFetch(`/admin/products/${id}/flash-sale`, {
+      method: 'POST',
+      body: JSON.stringify({ salePrice, saleEndsAt }),
+    }),
+  clearFlashSale: (id: number) =>
+    adminFetch(`/admin/products/${id}/flash-sale`, { method: 'DELETE' }),
+
   // Guides
   getGuides: () => adminFetch('/admin/guides'),
   createGuide: (data: unknown) =>

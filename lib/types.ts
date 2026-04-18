@@ -8,6 +8,9 @@ export interface Product {
   category?: string
   groupKey?: string
   featuredPriority?: number
+  salePrice?: number | null
+  saleEndsAt?: string | null
+  soldCount?: number
 }
 
 export interface CartItem {

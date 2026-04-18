@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import * as service from './products.service.js'
 import {
-  createProductSchema, updateProductSchema, productQuerySchema,
+  createProductSchema, updateProductSchema, productQuerySchema, setFlashSaleSchema,
 } from './products.schema.js'
 
 export async function productRoutes(app: FastifyInstance) {
@@ -57,5 +57,28 @@ export async function productRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     await service.deleteProduct(Number(req.params.id))
     return reply.send({ success: true })
+  })
+
+  // Admin: set flash sale
+  app.post<{ Params: { id: string } }>('/admin/products/:id/flash-sale', {
+    preHandler: [app.authenticate],
+  }, async (req, reply) => {
+    const input = setFlashSaleSchema.parse(req.body)
+    const product = await service.updateProduct(Number(req.params.id), {
+      salePrice: input.salePrice,
+      saleEndsAt: input.saleEndsAt,
+    })
+    return reply.send({ success: true, data: product })
+  })
+
+  // Admin: clear flash sale
+  app.delete<{ Params: { id: string } }>('/admin/products/:id/flash-sale', {
+    preHandler: [app.authenticate],
+  }, async (req, reply) => {
+    const product = await service.updateProduct(Number(req.params.id), {
+      salePrice: null,
+      saleEndsAt: null,
+    })
+    return reply.send({ success: true, data: product })
   })
 }
