@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ToastContainer } from '@/components/ui/ToastContainer'
-import { Navbar } from '@/components/layout/Navbar'
+import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { CartSidebar } from '@/components/cart/CartSidebar'
 import { SessionHydrator } from '@/components/layout/SessionHydrator'
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="vi" className={inter.variable}>
       <body>
         <SessionHydrator />
-        <Navbar />
+        <Header />
         <PromoBar />
         {children}
         <Footer />
