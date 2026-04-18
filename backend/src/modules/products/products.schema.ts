@@ -15,7 +15,7 @@ export const updateProductSchema = createProductSchema.partial().extend({
   isActive:   z.boolean().optional(),
   salePrice:  z.number().int().positive().nullable().optional(),
   saleEndsAt: z.string().datetime().nullable().optional()
-    .transform((v) => v ? new Date(v) : v),
+    .transform((v): Date | null | undefined => v != null ? new Date(v) : v),
 })
 
 export const setFlashSaleSchema = z.object({
