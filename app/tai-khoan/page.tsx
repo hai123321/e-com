@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { User, Package, Save, ChevronDown, ChevronUp, LogOut, Wallet, Camera } from 'lucide-react'
+import { User, Package, Save, ChevronDown, ChevronUp, LogOut, Wallet, Camera, Phone, MapPin, Facebook } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { updateProfile, fetchMyOrders, type UserOrder } from '@/lib/auth'
 import { vietQrUrl } from '@/lib/payment'
@@ -37,24 +37,27 @@ function TaiKhoanContent() {
   const [topupAmount, setTopupAmount] = useState(0)
 
   // Profile state
-  const [name, setName] = useState('')
-  const [avatar, setAvatar] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [saveMsg, setSaveMsg] = useState('')
+  const [name, setName]             = useState('')
+  const [avatar, setAvatar]         = useState('')
+  const [phone, setPhone]           = useState('')
+  const [address, setAddress]       = useState('')
+  const [facebookUrl, setFacebookUrl] = useState('')
+  const [saving, setSaving]         = useState(false)
+  const [saveMsg, setSaveMsg]       = useState('')
+
   // Avatar upload
-  const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const [cropSrc, setCropSrc]           = useState<string | null>(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
   // Orders state
-  const [orders, setOrders] = useState<UserOrder[]>([])
+  const [orders, setOrders]           = useState<UserOrder[]>([])
   const [loadingOrders, setLoadingOrders] = useState(false)
   const [expandedOrder, setExpandedOrder] = useState<number | null>(null)
 
-  // Redirect if not logged in — wait for hydration first so we don't
-  // redirect before localStorage token is restored
+  // Redirect if not logged in — wait for hydration first
   useEffect(() => {
-    if (!sessionHydrated) return  // still loading
+    if (!sessionHydrated) return
     if (!user) router.replace('/dang-nhap')
   }, [sessionHydrated, user, router])
 
@@ -63,6 +66,9 @@ function TaiKhoanContent() {
     if (user) {
       setName(user.name ?? '')
       setAvatar(user.avatar ?? '')
+      setPhone(user.phone ?? '')
+      setAddress(user.address ?? '')
+      setFacebookUrl(user.facebookUrl ?? '')
     }
   }, [user])
 
@@ -83,11 +89,14 @@ function TaiKhoanContent() {
     setSaveMsg('')
     try {
       const updated = await updateProfile(userToken, {
-        name: name.trim() || undefined,
-        avatar: avatar.trim() || null,
+        name:        name.trim() || undefined,
+        avatar:      avatar.trim() || null,
+        phone:       phone.trim() || null,
+        address:     address.trim() || null,
+        facebookUrl: facebookUrl.trim() || null,
       })
       if (updated) {
-        setUser(updated, userToken)
+        setUser(updated as Parameters<typeof setUser>[0], userToken)
         setSaveMsg('Đã lưu thành công!')
       }
     } catch {
@@ -98,7 +107,6 @@ function TaiKhoanContent() {
     }
   }
 
-  // While waiting for session hydration, show a neutral loading state
   if (!sessionHydrated || !user) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
@@ -106,18 +114,21 @@ function TaiKhoanContent() {
   )
 
   const initials = (user.name ?? '').charAt(0).toUpperCase() || '?'
+  // Use local avatar state so header updates immediately after upload
+  const displayAvatar = avatar || user.avatar || ''
 
   return (
     <main className="min-h-screen bg-primary-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-800 to-primary-600 text-white py-10">
         <div className="section-container flex items-center gap-5">
-          {user.avatar ? (
+          {displayAvatar ? (
             <Image
-              src={user.avatar}
+              src={displayAvatar}
               alt={user.name}
               width={64}
               height={64}
+              unoptimized
               className="w-16 h-16 rounded-full object-cover ring-2 ring-white/30"
             />
           ) : (
@@ -168,6 +179,7 @@ function TaiKhoanContent() {
             <div className="card p-8">
               <h2 className="font-bold text-lg text-gray-900 mb-6">Cập nhật thông tin</h2>
               <form onSubmit={handleSave} className="space-y-5">
+
                 {/* Email (readonly) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -195,6 +207,51 @@ function TaiKhoanContent() {
                   />
                 </div>
 
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-gray-400" />
+                    Số điện thoại
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={e => setPhone(e.target.value)}
+                    placeholder="0912 345 678"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                  />
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                    Địa chỉ
+                  </label>
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={e => setAddress(e.target.value)}
+                    placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                  />
+                </div>
+
+                {/* Facebook */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5">
+                    <Facebook className="w-3.5 h-3.5 text-gray-400" />
+                    Link Facebook
+                  </label>
+                  <input
+                    type="url"
+                    value={facebookUrl}
+                    onChange={e => setFacebookUrl(e.target.value)}
+                    placeholder="https://facebook.com/your.profile"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                  />
+                </div>
+
                 {/* Avatar upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -215,11 +272,10 @@ function TaiKhoanContent() {
                     }}
                   />
                   <div className="flex items-center gap-4">
-                    {/* Current avatar */}
                     <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100 shrink-0">
-                      {avatar ? (
+                      {displayAvatar ? (
                         <Image
-                          src={avatar}
+                          src={displayAvatar}
                           alt="avatar"
                           fill
                           className="object-cover"
@@ -232,7 +288,6 @@ function TaiKhoanContent() {
                         </div>
                       )}
                     </div>
-                    {/* Upload button */}
                     <div className="flex flex-col gap-2">
                       <button
                         type="button"
@@ -243,7 +298,7 @@ function TaiKhoanContent() {
                         <Camera className="w-4 h-4" />
                         {uploadingAvatar ? 'Đang tải...' : 'Chọn ảnh mới'}
                       </button>
-                      {avatar && (
+                      {displayAvatar && (
                         <button
                           type="button"
                           onClick={() => setAvatar('')}
@@ -408,7 +463,6 @@ function TaiKhoanContent() {
                 Chuyển khoản theo thông tin bên dưới. Số dư sẽ được cập nhật sau khi xác nhận.
               </p>
 
-              {/* Amount input */}
               <div className="mb-5 text-left">
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Số tiền nạp (VNĐ)</label>
                 <input
@@ -437,7 +491,6 @@ function TaiKhoanContent() {
                 </div>
               </div>
 
-              {/* QR code */}
               <div className="flex justify-center mb-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -449,7 +502,6 @@ function TaiKhoanContent() {
                 />
               </div>
 
-              {/* Transfer content */}
               <div className="bg-primary-50 border border-primary-200 rounded-xl px-4 py-3 mb-4">
                 <p className="text-xs text-gray-500 mb-1">Nội dung chuyển khoản</p>
                 <code className="font-bold text-primary-800 text-sm">

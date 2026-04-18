@@ -6,8 +6,11 @@ import { findOrdersByEmail } from '../orders/orders.repository.js'
 import { config } from '../../config.js'
 
 const updateProfileSchema = z.object({
-  name:   z.string().min(1).max(255).optional(),
-  avatar: z.string().url().max(512).optional().nullable(),
+  name:        z.string().min(1).max(255).optional(),
+  avatar:      z.string().url().max(512).optional().nullable(),
+  phone:       z.string().max(20).optional().nullable(),
+  address:     z.string().max(512).optional().nullable(),
+  facebookUrl: z.string().url().max(512).optional().nullable(),
 })
 
 export async function userAuthRoutes(app: FastifyInstance) {

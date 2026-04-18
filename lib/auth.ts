@@ -1,6 +1,6 @@
 import { apiUrl } from './api'
 
-export type UserProfile = { id: number; email: string; name: string; avatar?: string | null }
+export type UserProfile = { id: number; email: string; name: string; avatar?: string | null; phone?: string | null; address?: string | null; facebookUrl?: string | null }
 export type OrderItem   = { id: number; productName: string; productPrice: number; quantity: number }
 export type UserOrder   = {
   id: number; customerName: string; customerEmail: string | null
@@ -45,7 +45,7 @@ export async function fetchMe(token: string): Promise<UserProfile | null> {
 
 export async function updateProfile(
   token: string,
-  data: { name?: string; avatar?: string | null },
+  data: { name?: string; avatar?: string | null; phone?: string | null; address?: string | null; facebookUrl?: string | null },
 ): Promise<UserProfile | null> {
   const res = await fetch(apiUrl('/auth/user/profile'), {
     method: 'PUT',

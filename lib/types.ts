@@ -36,6 +36,9 @@ export interface UserSession {
   email: string
   name: string
   avatar?: string | null
+  phone?: string | null
+  address?: string | null
+  facebookUrl?: string | null
 }
 
 export interface PricingRule {
