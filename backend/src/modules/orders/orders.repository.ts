@@ -83,11 +83,38 @@ export async function findOrderById(id: number) {
 }
 
 export async function updateOrderStatus(id: number, status: string) {
-  const [row] = await db.update(orders)
-    .set({ status, updatedAt: new Date() })
-    .where(eq(orders.id, id))
-    .returning()
-  return row ?? null
+  return db.transaction(async (tx) => {
+    const [row] = await tx.update(orders)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(orders.id, id))
+      .returning()
+    if (!row) return null
+
+    if (status === 'delivered') {
+      const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, id))
+      for (const item of items) {
+        await tx.update(products)
+          .set({ soldCount: sql`${products.soldCount} + ${item.quantity}` })
+          .where(eq(products.id, item.productId))
+      }
+    }
+
+    return row
+  })
+}
+
+export async function findOrdersByPhone(phone: string) {
+  const rows = await db.select().from(orders)
+    .where(eq(orders.customerPhone, phone))
+    .orderBy(desc(orders.createdAt))
+    .limit(50)
+
+  return Promise.all(
+    rows.map(async (order) => {
+      const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id))
+      return { ...order, items }
+    }),
+  )
 }
 
 export async function findOrdersByEmail(email: string) {

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import * as service from './orders.service.js'
+import * as repo from './orders.repository.js'
 import { createOrderSchema, orderQuerySchema, updateOrderStatusSchema } from './orders.schema.js'
 
 export async function orderRoutes(app: FastifyInstance) {
@@ -34,6 +35,16 @@ export async function orderRoutes(app: FastifyInstance) {
     const input = updateOrderStatusSchema.parse(req.body)
     const order = await service.updateOrderStatus(Number(req.params.id), input)
     return reply.send({ success: true, data: order })
+  })
+
+  // Public: user order history by phone
+  app.get('/user/orders', async (req, reply) => {
+    const { phone } = req.query as { phone?: string }
+    if (!phone || phone.trim().length < 9) {
+      return reply.status(400).send({ success: false, error: 'phone query param required' })
+    }
+    const orders = await repo.findOrdersByPhone(phone.trim())
+    return reply.send({ success: true, data: orders })
   })
 
   // Admin: dashboard stats

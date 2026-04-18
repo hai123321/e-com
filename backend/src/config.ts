@@ -8,6 +8,8 @@ const envSchema = z.object({
   JWT_SECRET:    z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   CORS_ORIGIN:   z.string().default('http://localhost:3000'),
   ADMIN_PASSWORD:       z.string().min(8, 'ADMIN_PASSWORD must be at least 8 characters').optional(),
+  RESEND_API_KEY:       z.string().default(''),
+  RESEND_FROM:          z.string().default('MiuShop <no-reply@miushop.io.vn>'),
   GOOGLE_CLIENT_ID:     z.string().default(''),
   GOOGLE_CLIENT_SECRET: z.string().default(''),
   GOOGLE_CALLBACK_URL:  z.string().default(''),

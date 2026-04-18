@@ -3,13 +3,13 @@
 import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingCart, Box } from 'lucide-react'
+import { ShoppingCart, Box, TrendingUp } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useStore } from '@/lib/store'
 import { useT } from '@/lib/hooks/useT'
 import { StockBadge } from '@/components/ui/Badge'
-import { formatCurrency, getStockStatus } from '@/lib/utils'
 import { Countdown } from '@/components/ui/Countdown'
+import { formatCurrency, getStockStatus } from '@/lib/utils'
 import { getServiceConfig } from '@/lib/service-config'
 
 interface Props {
@@ -79,7 +79,12 @@ export function ProductCard({ product }: Props) {
           </span>
         )}
 
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
+          {onSale && (
+            <span className="bg-red-500 text-white text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full animate-pulse">
+              FLASH
+            </span>
+          )}
           <StockBadge status={status} />
         </div>
       </div>
@@ -125,22 +130,37 @@ export function ProductCard({ product }: Props) {
           </button>
         </div>
 
-        {/* Stock */}
-        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
-          <Box className="w-3 h-3 text-gray-400" />
-          <span className="text-xs text-gray-400">
-            {t.card.stock} <strong className="text-gray-600">{product.stock}</strong> {t.card.stockUnit}
-          </span>
-          {detailHref && (
-            <span className="ml-auto text-xs text-primary-400 font-medium">Xem các gói →</span>
-          )}
-        </div>
+        {/* Flash sale countdown */}
         {onSale && (
           <div className="flex items-center gap-1.5 mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
             <span className="text-[11px] text-red-500 font-medium">⚡ Kết thúc sau:</span>
-            <Countdown endsAt={product.saleEndsAt!} className="text-[11px] text-red-600 font-bold" />
+            <Countdown
+              endsAt={product.saleEndsAt!}
+              className="text-[11px] text-red-600 font-bold"
+            />
           </div>
         )}
+
+        {/* Stock + sold count */}
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+          <div className="flex items-center gap-1.5">
+            <Box className="w-3 h-3 text-gray-400" />
+            <span className="text-xs text-gray-400">
+              {t.card.stock} <strong className="text-gray-600">{product.stock}</strong> {t.card.stockUnit}
+            </span>
+          </div>
+          {(product.soldCount ?? 0) > 0 && (
+            <div className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 text-orange-400" />
+              <span className="text-xs text-orange-500 font-medium">
+                {product.soldCount} đã bán
+              </span>
+            </div>
+          )}
+          {detailHref && !product.soldCount && (
+            <span className="text-xs text-primary-400 font-medium">Xem các gói →</span>
+          )}
+        </div>
       </div>
     </>
   )
