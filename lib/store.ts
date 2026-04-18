@@ -1,6 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { CartItem, CategoryFilter, Product, StockFilter, Toast, ToastType, UserSession } from './types'
 import type { Locale } from './i18n'
 
@@ -16,6 +17,17 @@ interface CartStore {
   clearCart: () => void
   totalItems: () => number
   totalPrice: () => number
+
+  // Mini-cart
+  isMiniCartOpen: boolean
+  openMiniCart: () => void
+  closeMiniCart: () => void
+
+  // Promo
+  promoCode: string | null
+  promoDiscount: number
+  applyPromo: (code: string, discount: number) => void
+  clearPromo: () => void
 
   // Filters
   searchQuery: string
@@ -43,7 +55,9 @@ interface CartStore {
   setSessionHydrated: () => void
 }
 
-export const useStore = create<CartStore>((set, get) => ({
+export const useStore = create<CartStore>()(
+  persist(
+    (set, get) => ({
   // ── Cart ──────────────────────────────────────────
   items: [],
   isCartOpen: false,
@@ -97,6 +111,17 @@ export const useStore = create<CartStore>((set, get) => ({
   totalItems: () => get().items.reduce((s, i) => s + i.qty, 0),
   totalPrice: () => get().items.reduce((s, i) => s + i.product.price * i.qty, 0),
 
+  // ── Mini-cart ─────────────────────────────────
+  isMiniCartOpen: false,
+  openMiniCart: () => set({ isMiniCartOpen: true }),
+  closeMiniCart: () => set({ isMiniCartOpen: false }),
+
+  // ── Promo ──────────────────────────────────────
+  promoCode: null,
+  promoDiscount: 0,
+  applyPromo: (code, discount) => set({ promoCode: code, promoDiscount: discount }),
+  clearPromo: () => set({ promoCode: null, promoDiscount: 0 }),
+
   // ── Filters ───────────────────────────────────────
   searchQuery: '',
   stockFilter: 'all',
@@ -132,4 +157,10 @@ export const useStore = create<CartStore>((set, get) => ({
     if (typeof window !== 'undefined') localStorage.removeItem('user_token')
   },
   setSessionHydrated: () => set({ sessionHydrated: true }),
-}))
+    }),
+    {
+      name: 'miu-cart',
+      partialize: (s) => ({ items: s.items, promoCode: s.promoCode, promoDiscount: s.promoDiscount }),
+    },
+  ),
+)
