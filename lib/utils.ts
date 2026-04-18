@@ -30,6 +30,17 @@ export function getStockLabel(status: StockStatus): string {
   return labels[status]
 }
 
+export function getProductBadge(
+  stock: number,
+  soldCount?: number,
+): 'hot' | 'low' | 'out' | null {
+  const status = getStockStatus(stock)
+  if (status === 'out') return 'out'
+  if (status === 'low') return 'low'
+  if ((soldCount ?? 0) >= 50) return 'hot'
+  return null
+}
+
 export function filterProducts(
   products: Product[],
   query: string,

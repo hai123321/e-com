@@ -35,6 +35,7 @@ const config: Config = {
         'slide-out-right': 'slideOutRight 0.35s cubic-bezier(0.4,0,0.2,1)',
         'fade-in': 'fadeIn 0.2s ease',
         'toast-in': 'toastIn 0.35s cubic-bezier(0.4,0,0.2,1)',
+        'cart-bounce': 'cartBounce 0.4s cubic-bezier(0.36,0.07,0.19,0.97)',
       },
       keyframes: {
         slideInRight: {
@@ -52,6 +53,11 @@ const config: Config = {
         toastIn: {
           from: { transform: 'translateX(120%)', opacity: '0' },
           to:   { transform: 'translateX(0)', opacity: '1' },
+        },
+        cartBounce: {
+          '0%, 100%': { transform: 'scale(1)' },
+          '40%':      { transform: 'scale(1.25)' },
+          '70%':      { transform: 'scale(0.9)' },
         },
       },
     },
