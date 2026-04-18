@@ -85,13 +85,4 @@ export const adminApi = {
     adminFetch(`/admin/banners/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteBanner: (id: number) =>
     adminFetch(`/admin/banners/${id}`, { method: 'DELETE' }),
-
-  // Flash sale
-  setFlashSale: (id: number, salePrice: number, saleEndsAt: string) =>
-    adminFetch(`/admin/products/${id}/flash-sale`, {
-      method: 'POST',
-      body: JSON.stringify({ salePrice, saleEndsAt }),
-    }),
-  clearFlashSale: (id: number) =>
-    adminFetch(`/admin/products/${id}/flash-sale`, { method: 'DELETE' }),
 }

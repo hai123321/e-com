@@ -9,7 +9,7 @@ import type { Promotion } from '@/lib/types'
 
 const EMPTY_FORM = {
   code: '',
-  discountType: 'percent' as const,
+  discountType: 'percent' as 'percent' | 'fixed',
   discountValue: '',
   minOrderValue: '',
   maxUses: '',
