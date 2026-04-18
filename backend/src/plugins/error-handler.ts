@@ -13,8 +13,9 @@ export default fp(async (app) => {
       })
     }
 
-    const statusCode = (error as { statusCode?: number }).statusCode ?? 500
-    const message = statusCode < 500 ? error.message : 'Internal server error'
+    const err = error as { statusCode?: number; message?: string }
+    const statusCode = err.statusCode ?? 500
+    const message = statusCode < 500 ? (err.message ?? 'Bad request') : 'Internal server error'
 
     return reply.status(statusCode).send({ success: false, error: message })
   })

@@ -1,4 +1,5 @@
 import Fastify from 'fastify'
+import oauth2Plugin from '@fastify/oauth2'
 import { config } from './config.js'
 import { checkDbConnection } from './db/client.js'
 import corsPlugin from './plugins/cors.js'
@@ -7,6 +8,11 @@ import errorHandler from './plugins/error-handler.js'
 import { productRoutes } from './modules/products/products.routes.js'
 import { orderRoutes } from './modules/orders/orders.routes.js'
 import { authRoutes } from './modules/auth/auth.routes.js'
+import { guideRoutes } from './modules/guides/guides.routes.js'
+import { userAuthRoutes } from './modules/user-auth/user-auth.routes.js'
+import { pricingRoutes } from './modules/pricing/pricing.routes.js'
+import { promotionRoutes } from './modules/promotions/promotions.routes.js'
+import { bannerRoutes } from './modules/banners/banners.routes.js'
 
 const app = Fastify({
   logger: {
@@ -22,6 +28,30 @@ await app.register(corsPlugin)
 await app.register(jwtPlugin)
 await app.register(errorHandler)
 
+// Google OAuth2 (only register when credentials are configured)
+if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
+  const callbackUri = config.GOOGLE_CALLBACK_URL || 'https://api.miushop.io.vn/api/v1/auth/google/callback'
+  await app.register(oauth2Plugin, {
+    name: 'googleOAuth2',
+    scope: ['profile', 'email'],
+    credentials: {
+      client: {
+        id: config.GOOGLE_CLIENT_ID,
+        secret: config.GOOGLE_CLIENT_SECRET,
+      },
+      auth: {
+        authorizeHost: 'https://accounts.google.com',
+        authorizePath: '/o/oauth2/v2/auth',
+        tokenHost: 'https://oauth2.googleapis.com',
+        tokenPath: '/token',
+      },
+    },
+    startRedirectPath: '/api/v1/auth/google',
+    callbackUri,
+  })
+  app.log.info('✅ Google OAuth2 registered')
+}
+
 // Health check
 app.get('/api/v1/health', async (_req, reply) => {
   try {
@@ -33,9 +63,14 @@ app.get('/api/v1/health', async (_req, reply) => {
 })
 
 // Routes
-await app.register(productRoutes, { prefix: '/api/v1' })
-await app.register(orderRoutes,   { prefix: '/api/v1' })
-await app.register(authRoutes,    { prefix: '/api/v1' })
+await app.register(productRoutes,  { prefix: '/api/v1' })
+await app.register(orderRoutes,    { prefix: '/api/v1' })
+await app.register(authRoutes,     { prefix: '/api/v1' })
+await app.register(guideRoutes,    { prefix: '/api/v1' })
+await app.register(userAuthRoutes, { prefix: '/api/v1' })
+await app.register(pricingRoutes,   { prefix: '/api/v1' })
+await app.register(promotionRoutes, { prefix: '/api/v1' })
+await app.register(bannerRoutes,    { prefix: '/api/v1' })
 
 // Start
 try {

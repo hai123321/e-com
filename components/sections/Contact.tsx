@@ -5,10 +5,29 @@ import { Button } from '@/components/ui/Button'
 import { useStore } from '@/lib/store'
 
 const contactInfo = [
-  { Icon: MapPin,         label: 'Địa chỉ',    value: '123 Đường ABC, Q.XYZ, TP.HCM' },
-  { Icon: Phone,          label: 'Điện thoại', value: '0123 456 789'                  },
-  { Icon: Mail,           label: 'Email',       value: 'info@miushop.com'              },
-  { Icon: MessageCircle,  label: 'Telegram',    value: '@miushop'                      },
+  {
+    Icon: MapPin,
+    label: 'Địa chỉ',
+    value: 'Vinhomes Smart City Tây Mỗ, Nam Từ Liêm, Hà Nội',
+  },
+  {
+    Icon: Phone,
+    label: 'Điện thoại',
+    value: '038.357.4189',
+    href: 'tel:0383574189',
+  },
+  {
+    Icon: Mail,
+    label: 'Email',
+    value: 'namhai.lsc.ftu@gmail.com',
+    href: 'mailto:namhai.lsc.ftu@gmail.com',
+  },
+  {
+    Icon: MessageCircle,
+    label: 'Telegram',
+    value: '@haitn12',
+    href: 'https://t.me/haitn12',
+  },
 ]
 
 export function Contact() {
@@ -40,22 +59,55 @@ export function Contact() {
           <div className="card p-8">
             <h3 className="font-bold text-lg text-gray-900 mb-6">Thông tin liên hệ</h3>
             <ul className="space-y-4 mb-8">
-              {contactInfo.map(({ Icon, label, value }) => (
+              {contactInfo.map(({ Icon, label, value, href }) => (
                 <li key={label} className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center shrink-0">
                     <Icon className="w-5 h-5 text-primary-600" />
                   </div>
                   <div>
                     <div className="text-xs text-gray-400 mb-0.5">{label}</div>
-                    <div className="text-sm font-semibold text-gray-800">{value}</div>
+                    {href ? (
+                      <a
+                        href={href}
+                        target={href.startsWith('http') ? '_blank' : undefined}
+                        rel="noopener noreferrer"
+                        className="text-sm font-semibold text-primary-700 hover:underline"
+                      >
+                        {value}
+                      </a>
+                    ) : (
+                      <div className="text-sm font-semibold text-gray-800">{value}</div>
+                    )}
                   </div>
                 </li>
               ))}
             </ul>
 
+            {/* Zalo QR */}
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center gap-4">
+              <div className="shrink-0">
+                {/* Zalo icon */}
+                <div className="w-12 h-12 rounded-xl bg-[#0068FF] flex items-center justify-center text-white font-extrabold text-sm tracking-tight">
+                  Zalo
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-800 mb-1">Kết bạn Zalo</p>
+                <p className="text-xs text-gray-500 mb-2">Quét mã QR hoặc nhấn để mở Zalo</p>
+                <a
+                  href="https://zalo.me/0383574189"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 bg-[#0068FF] text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Nhắn tin Zalo →
+                </a>
+              </div>
+            </div>
+
             <div className="p-4 bg-primary-600 rounded-2xl text-white text-center">
               <p className="text-sm font-semibold mb-1">Hỗ trợ trực tuyến 24/7</p>
-              <p className="text-xs text-white/70">Phản hồi nhanh qua Telegram @miushop</p>
+              <p className="text-xs text-white/70">Phản hồi nhanh qua Zalo, Telegram</p>
             </div>
           </div>
 

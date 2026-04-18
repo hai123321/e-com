@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy to VPS
 
 on:
   push:
@@ -11,10 +11,58 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy với Docker Compose
+      - name: Create .env file
         run: |
-          docker compose down
-          docker compose up -d --build
+          cat > .env <<EOF
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+          NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+          API_INTERNAL_URL=http://api:3001
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}
+          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          EOF
 
-      - name: Xoá image cũ
+      - name: Tạo thư mục logos
+        run: mkdir -p data/logos && chmod 777 data/logos
+
+      - name: Build và deploy
+        run: docker compose up -d --build
+
+      - name: Chờ api container healthy
+        run: |
+          echo "Waiting for api to be healthy..."
+          for i in $(seq 1 30); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' $(docker compose ps -q api) 2>/dev/null || echo "unknown")
+            echo "  attempt $i: $STATUS"
+            if [ "$STATUS" = "healthy" ]; then
+              echo "✅ api is healthy"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Timeout waiting for api"
+              docker compose logs api --tail=50
+              exit 1
+            fi
+            sleep 3
+          done
+
+      - name: Migrate + Seed database
+        run: docker compose exec -T -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} api npm run seed
+
+      - name: Generate product descriptions
+        run: docker compose exec -T api npm run gen-desc
+
+      - name: Show logs nếu seed thất bại
+        if: failure()
+        run: docker compose logs api --tail=80
+
+      - name: Xóa image cũ
         run: docker image prune -f
+
+      - name: Kiểm tra trạng thái
+        run: docker compose ps

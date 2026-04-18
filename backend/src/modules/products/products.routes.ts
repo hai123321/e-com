@@ -12,6 +12,12 @@ export async function productRoutes(app: FastifyInstance) {
     return reply.send({ success: true, ...result })
   })
 
+  // Public: products by group key
+  app.get<{ Params: { key: string } }>('/products/group/:key', async (req, reply) => {
+    const rows = await service.listProductsByGroup(req.params.key)
+    return reply.send({ success: true, data: rows })
+  })
+
   // Public: single product
   app.get<{ Params: { id: string } }>('/products/:id', async (req, reply) => {
     const product = await service.getProduct(Number(req.params.id))

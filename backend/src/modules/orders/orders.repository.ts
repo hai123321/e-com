@@ -1,4 +1,4 @@
-import { eq, and, count, sql } from 'drizzle-orm'
+import { eq, and, count, sql, desc } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { orders, orderItems, products } from '../../db/schema.js'
 import type { CreateOrderInput, OrderQuery } from './orders.schema.js'
@@ -88,6 +88,23 @@ export async function updateOrderStatus(id: number, status: string) {
     .where(eq(orders.id, id))
     .returning()
   return row ?? null
+}
+
+export async function findOrdersByEmail(email: string) {
+  const rows = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.customerEmail, email))
+    .orderBy(desc(orders.createdAt))
+    .limit(50)
+
+  const withItems = await Promise.all(
+    rows.map(async (order) => {
+      const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id))
+      return { ...order, items }
+    }),
+  )
+  return withItems
 }
 
 export async function getDashboardStats() {

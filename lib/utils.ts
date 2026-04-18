@@ -34,17 +34,19 @@ export function filterProducts(
   products: Product[],
   query: string,
   stockFilter: string,
+  categoryFilter: string = 'all',
 ): Product[] {
   const q = query.toLowerCase().trim()
   return products.filter((p) => {
     const matchSearch =
       !q || p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
     const status = getStockStatus(p.stock)
-    const matchFilter =
+    const matchStock =
       stockFilter === 'all' ||
       (stockFilter === 'high' && status === 'high') ||
       (stockFilter === 'medium' && status === 'medium') ||
       (stockFilter === 'low' && (status === 'low' || status === 'out'))
-    return matchSearch && matchFilter
+    const matchCategory = categoryFilter === 'all' || p.category === categoryFilter
+    return matchSearch && matchStock && matchCategory
   })
 }
