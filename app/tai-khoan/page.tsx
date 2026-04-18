@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { User, Package, Save, ChevronDown, ChevronUp, LogOut, Wallet } from 'lucide-react'
+import { User, Package, Save, ChevronDown, ChevronUp, LogOut, Wallet, Camera } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { updateProfile, fetchMyOrders, type UserOrder } from '@/lib/auth'
 import { vietQrUrl } from '@/lib/payment'
+import { CropModal } from '@/components/ui/CropModal'
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   pending:   { label: 'Chờ xác nhận', cls: 'bg-yellow-100 text-yellow-700' },
@@ -40,6 +41,10 @@ function TaiKhoanContent() {
   const [avatar, setAvatar] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
+  // Avatar upload
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   // Orders state
   const [orders, setOrders] = useState<UserOrder[]>([])
@@ -190,32 +195,96 @@ function TaiKhoanContent() {
                   />
                 </div>
 
-                {/* Avatar URL */}
+                {/* Avatar upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    URL ảnh đại diện
+                    Ảnh đại diện
                   </label>
                   <input
-                    type="url"
-                    value={avatar}
-                    onChange={e => setAvatar(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const reader = new FileReader()
+                      reader.onload = ev => setCropSrc(ev.target?.result as string)
+                      reader.readAsDataURL(file)
+                      e.target.value = ''
+                    }}
                   />
-                  {avatar && (
-                    <div className="mt-3 flex items-center gap-3">
-                      <Image
-                        src={avatar}
-                        alt="preview"
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 rounded-full object-cover border border-gray-200"
-                        onError={() => setAvatar('')}
-                      />
-                      <span className="text-xs text-gray-400">Xem trước</span>
+                  <div className="flex items-center gap-4">
+                    {/* Current avatar */}
+                    <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100 shrink-0">
+                      {avatar ? (
+                        <Image
+                          src={avatar}
+                          alt="avatar"
+                          fill
+                          className="object-cover"
+                          unoptimized
+                          onError={() => setAvatar('')}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-primary-100 text-primary-600 text-2xl font-extrabold">
+                          {(user.name ?? '?').charAt(0).toUpperCase()}
+                        </div>
+                      )}
                     </div>
-                  )}
+                    {/* Upload button */}
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        disabled={uploadingAvatar}
+                        onClick={() => avatarInputRef.current?.click()}
+                        className="flex items-center gap-2 bg-primary-50 hover:bg-primary-100 border border-primary-200 text-primary-700 font-medium rounded-xl px-4 py-2 text-sm transition-colors disabled:opacity-60"
+                      >
+                        <Camera className="w-4 h-4" />
+                        {uploadingAvatar ? 'Đang tải...' : 'Chọn ảnh mới'}
+                      </button>
+                      {avatar && (
+                        <button
+                          type="button"
+                          onClick={() => setAvatar('')}
+                          className="text-xs text-gray-400 hover:text-red-500 transition-colors text-left"
+                        >
+                          Xóa ảnh đại diện
+                        </button>
+                      )}
+                      <p className="text-xs text-gray-400">JPG, PNG · Tối đa 5MB</p>
+                    </div>
+                  </div>
                 </div>
+
+                {/* CropModal for avatar */}
+                {cropSrc && (
+                  <CropModal
+                    src={cropSrc}
+                    title="Cắt ảnh đại diện"
+                    outputSize={400}
+                    onClose={() => setCropSrc(null)}
+                    onConfirm={async (dataUrl) => {
+                      if (!user) return
+                      setUploadingAvatar(true)
+                      setCropSrc(null)
+                      try {
+                        const res = await fetch('/api/upload-avatar', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ userId: user.id, imageData: dataUrl }),
+                        })
+                        const json = await res.json()
+                        if (!res.ok) throw new Error(json.error ?? 'Upload thất bại')
+                        setAvatar(json.data.path)
+                      } catch (err) {
+                        setSaveMsg(err instanceof Error ? err.message : 'Upload thất bại')
+                      } finally {
+                        setUploadingAvatar(false)
+                      }
+                    }}
+                  />
+                )}
 
                 {saveMsg && (
                   <p className={`text-sm font-medium ${saveMsg.includes('thất bại') ? 'text-red-600' : 'text-green-600'}`}>
