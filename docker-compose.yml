@@ -56,7 +56,6 @@ services:
     volumes:
       - ./data/banners:/app/public/banners
       - ./data/avatars:/app/public/avatars
-      - ./data/logos:/app/public/logos
     networks:
       - internal
       - proxy-net
