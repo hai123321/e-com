@@ -9,7 +9,7 @@ import { useStore } from '@/lib/store'
 import { StockBadge } from '@/components/ui/Badge'
 import { formatCurrency, getStockStatus } from '@/lib/utils'
 import { getServiceConfig } from '@/lib/service-config'
-import { apiUrl } from '@/lib/api'
+import { apiUrl, logoUrl } from '@/lib/api'
 import { GROUP_META } from './group-meta'
 
 function extractDurationDays(name: string, description: string): number {
@@ -104,7 +104,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
     )
   }
 
-  const heroImage = products[0]?.image
+  const heroImage = logoUrl(products[0]?.image)
   const selectedStatus = selected ? getStockStatus(selected.stock) : 'out'
   const inCart = selected ? items.find((i) => i.product.id === selected.id) : null
 

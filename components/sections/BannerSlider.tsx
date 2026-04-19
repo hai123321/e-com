@@ -21,6 +21,8 @@ export function BannerSlider() {
   const [active, setActive]   = useState(0)
   const [loading, setLoading] = useState(true)
   const [paused, setPaused]   = useState(false)
+  // Track which banner images failed to load so we can fall back to gradient
+  const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({})
   const t = useT()
 
   // Swipe tracking
@@ -92,8 +94,8 @@ export function BannerSlider() {
             i === active ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
           }`}
         >
-          {/* Full-cover image */}
-          {b.image ? (
+          {/* Full-cover image — falls back to gradient if file missing */}
+          {b.image && !imgErrors[b.id] ? (
             <Image
               src={b.image}
               alt={b.title}
@@ -101,6 +103,7 @@ export function BannerSlider() {
               unoptimized
               className="object-cover"
               priority={i === 0}
+              onError={() => setImgErrors(prev => ({ ...prev, [b.id]: true }))}
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-primary-800 to-primary-600" />

@@ -7,7 +7,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import pg from 'pg'
 import { eq } from 'drizzle-orm'
 import 'dotenv/config'
-import { products, admins, guides } from '../src/db/schema.js'
+import { products, admins, guides, banners } from '../src/db/schema.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -349,6 +349,41 @@ https://adobe.hdsd.net/huong-dan
   console.log('✅ Inserted 8 guides')
 } else {
   console.log('⏭  Guides already seeded, skipping')
+}
+
+// ── Seed banners ────────────────────────────────────────────────────────────
+const [existingBanner] = await db.select().from(banners).limit(1)
+if (!existingBanner) {
+  console.log('🌱 Seeding default banners...')
+  await db.insert(banners).values([
+    {
+      title:    'Tài khoản Premium chính hãng',
+      subtitle: 'Netflix · Spotify · ChatGPT · Adobe và hơn 90 dịch vụ',
+      image:    '',
+      href:     '/#products',
+      priority: 3,
+      isActive: true,
+    },
+    {
+      title:    'Bảo hành 100% đúng thời hạn',
+      subtitle: 'Hỗ trợ 24/7 · Đổi mới miễn phí · Cam kết uy tín',
+      image:    '',
+      href:     '/#products',
+      priority: 2,
+      isActive: true,
+    },
+    {
+      title:    'Giá tốt nhất thị trường',
+      subtitle: 'Tiết kiệm đến 80% so với mua trực tiếp',
+      image:    '',
+      href:     '/#products',
+      priority: 1,
+      isActive: true,
+    },
+  ])
+  console.log('✅ Inserted 3 default banners')
+} else {
+  console.log('⏭  Banners already seeded, skipping')
 }
 
 await pool.end()
