@@ -133,16 +133,26 @@ export async function GET(
       },
     })
   } catch {
-    // File not found locally → redirect to Clearbit
-    const stem   = key.replace(/\.[^.]+$/, '')          // strip extension
+    // File not found locally → proxy from Google favicon service
+    // (Clearbit logo CDN is permanently down as of 2025)
+    const stem   = key.replace(/\.[^.]+$/, '')
     const domain = CLEARBIT[stem]
 
     if (domain) {
-      return NextResponse.redirect(
-        `https://logo.clearbit.com/${domain}`,
-        { status: 302,
-          headers: { 'Cache-Control': 'public, max-age=3600' } }
-      )
+      try {
+        const url = `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON` +
+                    `&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`
+        const upstream = await fetch(url, { next: { revalidate: 86400 } })
+        if (upstream.ok) {
+          const buf = await upstream.arrayBuffer()
+          return new NextResponse(buf, {
+            headers: {
+              'Content-Type':  upstream.headers.get('content-type') ?? 'image/png',
+              'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+            },
+          })
+        }
+      } catch { /* ignore, fall through to 404 */ }
     }
 
     return new NextResponse('Not found', {
