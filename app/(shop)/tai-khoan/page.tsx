@@ -56,6 +56,8 @@ function TaiKhoanContent() {
   const [loadingSubs, setLoadingSubs]       = useState(false)
   const [showSubModal, setShowSubModal]     = useState(false)
   const [editingSub, setEditingSub]         = useState<Subscription | null>(null)
+  // Track whether we've already fetched to prevent infinite loop when list is empty
+  const subsFetchedRef = useRef(false)
 
   // Profile state
   const [name, setName]             = useState('')
@@ -109,21 +111,22 @@ function TaiKhoanContent() {
     }
   }, [tab, userToken, orders.length])
 
-  // Load subscriptions when tab switches
+  // Load subscriptions when tab switches — use a ref to avoid infinite loop
+  // when the list is empty (subscriptions.length === 0 would always re-trigger)
   useEffect(() => {
-    if (tab === 'subscriptions' && userToken && subscriptions.length === 0 && !loadingSubs) {
-      setLoadingSubs(true)
-      Promise.all([
-        fetchSubscriptions(userToken),
-        fetchSubscriptionSummary(userToken),
-      ])
-        .then(([subs, summary]) => {
-          setSubscriptions(subs)
-          setSubSummary(summary)
-        })
-        .finally(() => setLoadingSubs(false))
-    }
-  }, [tab, userToken, subscriptions.length, loadingSubs])
+    if (tab !== 'subscriptions' || !userToken || subsFetchedRef.current) return
+    subsFetchedRef.current = true
+    setLoadingSubs(true)
+    Promise.all([
+      fetchSubscriptions(userToken),
+      fetchSubscriptionSummary(userToken),
+    ])
+      .then(([subs, summary]) => {
+        setSubscriptions(subs)
+        setSubSummary(summary)
+      })
+      .finally(() => setLoadingSubs(false))
+  }, [tab, userToken])
 
   const refreshSubscriptions = async () => {
     if (!userToken) return
@@ -133,6 +136,8 @@ function TaiKhoanContent() {
     ])
     setSubscriptions(subs)
     setSubSummary(summary)
+    // Keep ref true so auto-effect doesn't double-fetch on re-render
+    subsFetchedRef.current = true
   }
 
   const handleDeleteSub = async (id: number) => {
