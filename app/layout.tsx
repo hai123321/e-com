@@ -2,12 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ToastContainer } from '@/components/ui/ToastContainer'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
-import { CartSidebar } from '@/components/cart/CartSidebar'
 import { SessionHydrator } from '@/components/layout/SessionHydrator'
-import { PromoBar } from '@/components/layout/PromoBar'
-import { FloatingContact } from '@/components/layout/FloatingContact'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -27,13 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="vi" className={inter.variable}>
       <body>
         <SessionHydrator />
-        <Header />
-        <PromoBar />
         {children}
-        <Footer />
-        <CartSidebar />
         <ToastContainer />
-        <FloatingContact />
       </body>
     </html>
   )
