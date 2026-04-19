@@ -89,6 +89,9 @@ export const users = pgTable('users', {
   isActive:     boolean('is_active').notNull().default(true),
   referralCode: varchar('referral_code', { length: 20 }).unique(),
   referredById: integer('referred_by_id'),
+  age:          integer('age'),
+  gender:       varchar('gender', { length: 10 }),
+  occupation:   varchar('occupation', { length: 100 }),
   createdAt:    timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -161,3 +164,23 @@ export const banners = pgTable('banners', {
 })
 export type Banner    = typeof banners.$inferSelect
 export type NewBanner = typeof banners.$inferInsert
+
+// ── User Subscriptions ─────────────────────────────────────────────────────
+export const userSubscriptions = pgTable('user_subscriptions', {
+  id:                    serial('id').primaryKey(),
+  userId:                integer('user_id').notNull().references(() => users.id),
+  serviceName:           varchar('service_name', { length: 255 }).notNull(),
+  logoUrl:               varchar('logo_url', { length: 512 }),
+  monthlyPrice:          integer('monthly_price').notNull(),
+  billingCycle:          varchar('billing_cycle', { length: 10 }).notNull().default('monthly'),
+  expiresAt:             timestamp('expires_at', { withTimezone: true }),
+  source:                varchar('source', { length: 20 }).notNull().default('manual'),
+  miushopOrderId:        integer('miushop_order_id').references(() => orders.id),
+  miushopProductId:      integer('miushop_product_id').references(() => products.id),
+  miuSuggestedProductId: integer('miu_suggested_product_id').references(() => products.id),
+  isActive:              boolean('is_active').notNull().default(true),
+  createdAt:             timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:             timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+export type UserSubscription    = typeof userSubscriptions.$inferSelect
+export type NewUserSubscription = typeof userSubscriptions.$inferInsert
