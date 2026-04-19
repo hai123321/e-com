@@ -76,7 +76,7 @@ export async function findOrCreateGoogleUser(
 
 export async function updateProfile(
   userId: number,
-  input: { name?: string; avatar?: string | null; phone?: string | null; address?: string | null; facebookUrl?: string | null }
+  input: { name?: string; avatar?: string | null; phone?: string | null; address?: string | null; facebookUrl?: string | null; age?: number | null; gender?: string | null; occupation?: string | null }
 ): Promise<Omit<User, 'passwordHash'> | null> {
   const user = await updateUser(userId, input)
   if (!user) return null
