@@ -14,7 +14,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     body === null ||
     typeof (body as Record<string, unknown>).userId !== 'number' ||
     !Number.isInteger((body as Record<string, unknown>).userId) ||
-    (body as Record<string, unknown>).userId as number <= 0
+    ((body as Record<string, unknown>).userId as number) <= 0
   ) {
     return NextResponse.json({ error: 'userId must be a positive integer' }, { status: 400 })
   }
