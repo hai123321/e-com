@@ -108,7 +108,7 @@ export const useStore = create<CartStore>()(
 
   clearCart: () => {
     const msgs = getT(get().locale).storeMsg
-    set({ items: [] })
+    set({ items: [], promoCode: null, promoDiscount: 0 })
     get().addToast(msgs.cartCleared, 'info')
   },
 
