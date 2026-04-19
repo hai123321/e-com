@@ -113,6 +113,20 @@
       "when": 1776540000000,
       "tag": "0015_pricing_scope_group",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1776550000000,
+      "tag": "0016_user_subscriptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1776560000000,
+      "tag": "0017_user_profile_fields",
+      "breakpoints": true
     }
   ]
 }
