@@ -3,11 +3,24 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { User, Package, Save, ChevronDown, ChevronUp, LogOut, Wallet, Camera, Phone, MapPin, Facebook } from 'lucide-react'
+import { User, Package, Save, ChevronDown, ChevronUp, LogOut, Wallet, Camera, Phone, MapPin, Facebook, Star, Plus } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { updateProfile, fetchMyOrders, type UserOrder } from '@/lib/auth'
 import { vietQrUrl } from '@/lib/payment'
 import { CropModal } from '@/components/ui/CropModal'
+import { SubscriptionSummary } from '@/components/subscription/SubscriptionSummary'
+import { SubscriptionCard } from '@/components/subscription/SubscriptionCard'
+import { AddSubscriptionModal } from '@/components/subscription/AddSubscriptionModal'
+import {
+  fetchSubscriptions,
+  fetchSubscriptionSummary,
+  createSubscription,
+  updateSubscription,
+  deleteSubscription,
+  importFromOrders,
+  type Subscription,
+  type SubscriptionSummaryData,
+} from '@/lib/subscriptions'
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   pending:   { label: 'Chờ xác nhận', cls: 'bg-yellow-100 text-yellow-700' },
@@ -28,13 +41,21 @@ function TaiKhoanContent() {
   const searchParams = useSearchParams()
   const { user, userToken, setUser, clearUser, sessionHydrated } = useStore()
 
-  const [tab, setTab] = useState<'profile' | 'orders' | 'topup'>(() => {
+  const [tab, setTab] = useState<'profile' | 'orders' | 'topup' | 'subscriptions'>(() => {
     const p = searchParams.get('tab')
-    if (p === 'orders') return 'orders'
-    if (p === 'topup')  return 'topup'
+    if (p === 'orders')        return 'orders'
+    if (p === 'topup')         return 'topup'
+    if (p === 'subscriptions') return 'subscriptions'
     return 'profile'
   })
   const [topupAmount, setTopupAmount] = useState(0)
+
+  // Subscriptions state
+  const [subscriptions, setSubscriptions]   = useState<Subscription[]>([])
+  const [subSummary, setSubSummary]         = useState<SubscriptionSummaryData | null>(null)
+  const [loadingSubs, setLoadingSubs]       = useState(false)
+  const [showSubModal, setShowSubModal]     = useState(false)
+  const [editingSub, setEditingSub]         = useState<Subscription | null>(null)
 
   // Profile state
   const [name, setName]             = useState('')
@@ -81,6 +102,38 @@ function TaiKhoanContent() {
         .finally(() => setLoadingOrders(false))
     }
   }, [tab, userToken, orders.length])
+
+  // Load subscriptions when tab switches
+  useEffect(() => {
+    if (tab === 'subscriptions' && userToken && subscriptions.length === 0 && !loadingSubs) {
+      setLoadingSubs(true)
+      Promise.all([
+        fetchSubscriptions(userToken),
+        fetchSubscriptionSummary(userToken),
+      ])
+        .then(([subs, summary]) => {
+          setSubscriptions(subs)
+          setSubSummary(summary)
+        })
+        .finally(() => setLoadingSubs(false))
+    }
+  }, [tab, userToken, subscriptions.length, loadingSubs])
+
+  const refreshSubscriptions = async () => {
+    if (!userToken) return
+    const [subs, summary] = await Promise.all([
+      fetchSubscriptions(userToken),
+      fetchSubscriptionSummary(userToken),
+    ])
+    setSubscriptions(subs)
+    setSubSummary(summary)
+  }
+
+  const handleDeleteSub = async (id: number) => {
+    if (!userToken || !confirm('X\u00f3a g\u00f3i n\u00e0y?')) return
+    await deleteSubscription(userToken, id)
+    await refreshSubscriptions()
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -154,9 +207,10 @@ function TaiKhoanContent() {
         {/* Tabs */}
         <div className="flex gap-1 mb-8 bg-white rounded-2xl p-1.5 border border-gray-200 w-fit shadow-sm">
           {([
-            { key: 'profile', label: 'Thông tin cá nhân', Icon: User },
-            { key: 'orders',  label: 'Lịch sử đơn hàng', Icon: Package },
-            { key: 'topup',   label: 'Nạp tiền',          Icon: Wallet },
+            { key: 'profile',       label: 'Thông tin cá nhân', Icon: User    },
+            { key: 'orders',        label: 'Lịch sử đơn hàng',  Icon: Package },
+            { key: 'topup',         label: 'Nạp tiền',           Icon: Wallet  },
+            { key: 'subscriptions', label: 'Gói đăng ký',        Icon: Star    },
           ] as const).map(({ key, label, Icon }) => (
             <button
               key={key}
@@ -518,6 +572,73 @@ function TaiKhoanContent() {
                 </p>
               </div>
             </div>
+          </div>
+        )}
+        {/* Subscriptions Tab */}
+        {tab === 'subscriptions' && (
+          <div className="max-w-2xl">
+            {loadingSubs ? (
+              <div className="flex items-center justify-center py-20 text-gray-400">
+                <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+              </div>
+            ) : (
+              <>
+                {subSummary && subSummary.count > 0 && (
+                  <SubscriptionSummary summary={subSummary} />
+                )}
+
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm text-gray-500">{subscriptions.length} gu00f3i u0111u0103ng ku00fd</p>
+                  <button
+                    onClick={() => { setEditingSub(null); setShowSubModal(true) }}
+                    className="flex items-center gap-1.5 bg-primary-700 hover:bg-primary-800 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Thu00eam gu00f3i
+                  </button>
+                </div>
+
+                {subscriptions.length === 0 ? (
+                  <div className="card p-12 text-center text-gray-400">
+                    <Star className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p className="font-semibold">Chu01b0a cu00f3 gu00f3i u0111u0103ng ku00fd nu00e0o</p>
+                    <p className="text-sm mt-1">Thu00eam gu00f3i thu1ee7 cu00f4ng hou1eb7c import tu1eeb lu1ecbch su1eed mua</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {subscriptions.map(sub => (
+                      <SubscriptionCard
+                        key={sub.id}
+                        subscription={sub}
+                        onEdit={s => { setEditingSub(s); setShowSubModal(true) }}
+                        onDelete={handleDeleteSub}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {showSubModal && (
+              <AddSubscriptionModal
+                onClose={() => { setShowSubModal(false); setEditingSub(null) }}
+                editTarget={editingSub}
+                onSave={async (data) => {
+                  if (!userToken) return
+                  if (editingSub) {
+                    await updateSubscription(userToken, editingSub.id, data)
+                  } else {
+                    await createSubscription(userToken, data)
+                  }
+                  await refreshSubscriptions()
+                }}
+                onImport={async () => {
+                  if (!userToken) return
+                  await importFromOrders(userToken)
+                  await refreshSubscriptions()
+                }}
+              />
+            )}
           </div>
         )}
       </div>
