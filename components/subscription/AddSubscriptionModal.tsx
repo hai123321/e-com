@@ -22,9 +22,9 @@ export function AddSubscriptionModal({ onClose, onSave, onImport, editTarget }: 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!serviceName.trim()) { setError('Vui lu00f2ng nhu1eadp tu00een du1ecbch vu1ee5'); return }
+    if (!serviceName.trim()) { setError('Vui lòng nhập tên dịch vụ'); return }
     const priceNum = parseInt(price, 10)
-    if (!priceNum || priceNum <= 0) { setError('Giu00e1 khu00f4ng hu1ee3p lu1ec7'); return }
+    if (!priceNum || priceNum <= 0) { setError('Giá không hợp lệ'); return }
     setSaving(true)
     setError('')
     try {
@@ -36,7 +36,7 @@ export function AddSubscriptionModal({ onClose, onSave, onImport, editTarget }: 
       })
       onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lu01b0u thu1ea5t bu1ea1i')
+      setError(err instanceof Error ? err.message : 'Lưu thất bại')
     } finally {
       setSaving(false)
     }
@@ -49,7 +49,7 @@ export function AddSubscriptionModal({ onClose, onSave, onImport, editTarget }: 
       await onImport()
       onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Import thu1ea5t bu1ea1i')
+      setError(err instanceof Error ? err.message : 'Import thất bại')
     } finally {
       setImporting(false)
     }
@@ -61,7 +61,7 @@ export function AddSubscriptionModal({ onClose, onSave, onImport, editTarget }: 
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
           <h2 className="font-bold text-gray-900">
-            {editTarget ? 'Chu1ec9nh su1eeda gu00f3i' : 'Thu00eam gu00f3i u0111u0103ng ku00fd'}
+            {editTarget ? 'Chỉnh sửa gói' : 'Thêm gói đăng ký'}
           </h2>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
             <X className="w-4 h-4" />
@@ -70,7 +70,7 @@ export function AddSubscriptionModal({ onClose, onSave, onImport, editTarget }: 
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Tu00een du1ecbch vu1ee5 *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Tên dịch vụ *</label>
             <input
               type="text"
               value={serviceName}
@@ -82,7 +82,7 @@ export function AddSubscriptionModal({ onClose, onSave, onImport, editTarget }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Giu00e1 (VND) *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Giá (VND) *</label>
             <input
               type="number"
               value={price}
@@ -94,7 +94,7 @@ export function AddSubscriptionModal({ onClose, onSave, onImport, editTarget }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Chu ku1ef3 thanh tou00e1n</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Chu kỳ thanh toán</label>
             <div className="flex gap-2">
               {(['monthly', 'yearly'] as const).map(cycle => (
                 <button
@@ -107,14 +107,14 @@ export function AddSubscriptionModal({ onClose, onSave, onImport, editTarget }: 
                       : 'border-gray-300 text-gray-600 hover:border-primary-400'
                   }`}
                 >
-                  {cycle === 'monthly' ? 'Hu00e0ng thu00e1ng' : 'Hu00e0ng nu0103m'}
+                  {cycle === 'monthly' ? 'Hàng tháng' : 'Hàng năm'}
                 </button>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Ngu00e0y hu1ebft hu1ea1n</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Ngày hết hạn</label>
             <input
               type="date"
               value={expiresAt}
@@ -131,7 +131,7 @@ export function AddSubscriptionModal({ onClose, onSave, onImport, editTarget }: 
               disabled={saving}
               className="w-full bg-primary-700 hover:bg-primary-800 disabled:opacity-60 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors"
             >
-              {saving ? 'u0110ang lu01b0u...' : (editTarget ? 'Lu01b0u thay u0111u1ed5i' : 'Thu00eam gu00f3i')}
+              {saving ? 'Đang lưu...' : (editTarget ? 'Lưu thay đổi' : 'Thêm gói')}
             </button>
 
             {!editTarget && (
@@ -142,7 +142,7 @@ export function AddSubscriptionModal({ onClose, onSave, onImport, editTarget }: 
                 className="w-full flex items-center justify-center gap-2 border border-primary-300 text-primary-700 hover:bg-primary-50 disabled:opacity-60 font-semibold rounded-xl py-2.5 text-sm transition-colors"
               >
                 <Download className="w-4 h-4" />
-                {importing ? 'u0110ang import...' : 'Nhu1eadp tu1eeb lu1ecbch su1eed mua MiuShop'}
+                {importing ? 'Đang import...' : 'Nhập từ lịch sử mua MiuShop'}
               </button>
             )}
           </div>

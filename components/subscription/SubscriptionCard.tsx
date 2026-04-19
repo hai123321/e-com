@@ -51,28 +51,28 @@ export function SubscriptionCard({ subscription, onEdit, onDelete }: Subscriptio
           {expiringSoon && (
             <span className="flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">
               <Clock className="w-3 h-3" />
-              Su1eafp hu1ebft hu1ea1n
+              Sắp hết hạn
             </span>
           )}
         </div>
 
         <p className="text-primary-700 font-bold text-sm mt-0.5">
-          {formatPrice(displayPrice)}<span className="text-gray-400 font-normal">/thu00e1ng</span>
+          {formatPrice(displayPrice)}<span className="text-gray-400 font-normal">/tháng</span>
           {billingCycle === 'yearly' && (
-            <span className="text-xs text-gray-400 ml-1">(thanh tou00e1n nu0103m)</span>
+            <span className="text-xs text-gray-400 ml-1">(thanh toán năm)</span>
           )}
         </p>
 
         {expiresAt && (
           <p className="text-xs text-gray-400 mt-1">
-            Hu1ebft hu1ea1n: {formatDate(expiresAt)}
+            Hết hạn: {formatDate(expiresAt)}
             {daysLeft !== null && daysLeft > 0 && (
               <span className={`ml-1.5 font-medium ${ daysLeft <= 7 ? 'text-red-500' : 'text-gray-500' }`}>
-                (cu00f2n {daysLeft} ngu00e0y)
+                (còn {daysLeft} ngày)
               </span>
             )}
             {daysLeft !== null && daysLeft <= 0 && (
-              <span className="ml-1.5 font-medium text-red-600">(u0111u00e3 hu1ebft hu1ea1n)</span>
+              <span className="ml-1.5 font-medium text-red-600">(đã hết hạn)</span>
             )}
           </p>
         )}
@@ -84,7 +84,7 @@ export function SubscriptionCard({ subscription, onEdit, onDelete }: Subscriptio
             className="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-accent-600 bg-accent-50 border border-accent-200 px-2.5 py-1 rounded-full hover:bg-accent-100 transition-colors"
           >
             <ExternalLink className="w-3 h-3" />
-            MiuShop cu00f3 thu1ec3 tiu1ebft kiu1ec7m {savingsPercent}%
+            MiuShop có thể tiết kiệm {savingsPercent}%
           </a>
         )}
       </div>
@@ -94,14 +94,14 @@ export function SubscriptionCard({ subscription, onEdit, onDelete }: Subscriptio
         <button
           onClick={() => onEdit(subscription)}
           className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-primary-700 hover:bg-primary-50 transition-colors"
-          title="Chu1ec9nh su1eeda"
+          title="Chỉnh sửa"
         >
           <Pencil className="w-4 h-4" />
         </button>
         <button
           onClick={() => onDelete(subscription.id)}
           className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-          title="Xu00f3a"
+          title="Xóa"
         >
           <Trash2 className="w-4 h-4" />
         </button>

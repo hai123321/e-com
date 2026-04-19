@@ -19,9 +19,9 @@ export function SubscriptionSummary({ summary }: SubscriptionSummaryProps) {
           <CreditCard className="w-6 h-6" />
         </div>
         <div>
-          <p className="text-white/70 text-sm">Bu1ea1n u0111ang chi</p>
-          <p className="text-2xl font-extrabold">{formatPrice(totalMonthly)}<span className="text-base font-normal text-white/70">/thu00e1ng</span></p>
-          <p className="text-white/70 text-xs mt-0.5">cho {count} gu00f3i du1ecbch vu1ee5</p>
+          <p className="text-white/70 text-sm">Bạn đang chi</p>
+          <p className="text-2xl font-extrabold">{formatPrice(totalMonthly)}<span className="text-base font-normal text-white/70">/tháng</span></p>
+          <p className="text-white/70 text-xs mt-0.5">cho {count} gói dịch vụ</p>
         </div>
       </div>
 
@@ -29,9 +29,9 @@ export function SubscriptionSummary({ summary }: SubscriptionSummaryProps) {
         <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-3">
           <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-red-700">Gu00f3i su1eafp hu1ebft hu1ea1n</p>
+            <p className="text-sm font-semibold text-red-700">Gói sắp hết hạn</p>
             <p className="text-xs text-red-600 mt-0.5">
-              {expiringSoon.map(s => s.serviceName).join(', ')} — hu00e3y gia hu1ea1n su1edbm
+              {expiringSoon.map(s => s.serviceName).join(', ')} — hãy gia hạn sớm
             </p>
           </div>
         </div>

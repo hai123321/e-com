@@ -650,21 +650,21 @@ function TaiKhoanContent() {
                 )}
 
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm text-gray-500">{subscriptions.length} gu00f3i u0111u0103ng ku00fd</p>
+                  <p className="text-sm text-gray-500">{subscriptions.length} gói đăng ký</p>
                   <button
                     onClick={() => { setEditingSub(null); setShowSubModal(true) }}
                     className="flex items-center gap-1.5 bg-primary-700 hover:bg-primary-800 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
                   >
                     <Plus className="w-4 h-4" />
-                    Thu00eam gu00f3i
+                    Thêm gói
                   </button>
                 </div>
 
                 {subscriptions.length === 0 ? (
                   <div className="card p-12 text-center text-gray-400">
                     <Star className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="font-semibold">Chu01b0a cu00f3 gu00f3i u0111u0103ng ku00fd nu00e0o</p>
-                    <p className="text-sm mt-1">Thu00eam gu00f3i thu1ee7 cu00f4ng hou1eb7c import tu1eeb lu1ecbch su1eed mua</p>
+                    <p className="font-semibold">Chưa có gói đăng ký nào</p>
+                    <p className="text-sm mt-1">Thêm gói thủ công hoặc import từ lịch sử mua</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
