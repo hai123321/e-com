@@ -20,7 +20,7 @@ export const createRuleSchema = z.object({
   description: z.string().default(''),
   ruleType:    z.enum(['multiplier', 'fixed_add', 'stock_based', 'time_based', 'manual_override']),
   params:      paramsSchema,
-  scopeType:   z.enum(['global', 'category', 'product']).default('global'),
+  scopeType:   z.enum(['global', 'category', 'product', 'group']).default('global'),
   scopeValue:  z.string().optional(),
   priority:    z.number().int().default(0),
   isActive:    z.boolean().default(true),
