@@ -8,7 +8,7 @@ import { MediaTab } from './MediaTab'
 // ─── Types ─────────────────────────────────────────────────────────────────
 interface Order {
   id: number; customerName: string; customerEmail: string; status: string
-  totalAmount: number; createdAt: string
+  total: number; createdAt: string
   items?: { productName: string; qty: number; price: number }[]
 }
 interface Product {
@@ -141,7 +141,7 @@ function OrdersTab() {
                   <p className="text-gray-500 text-xs">{o.customerEmail}</p>
                 </td>
                 <td className="py-3 px-3 text-green-400 font-semibold">
-                  {o.totalAmount.toLocaleString('vi-VN')}đ
+                  {o.total.toLocaleString('vi-VN')}đ
                 </td>
                 <td className="py-3 px-3">
                   <span className={`border rounded-lg px-2 py-1 text-xs font-medium ${STATUS_COLORS[o.status] ?? 'bg-gray-800 text-gray-400 border-gray-700'}`}>
@@ -165,7 +165,7 @@ function OrdersTab() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div><p className="text-gray-500 text-xs">Khách hàng</p><p className="text-white">{selected.customerName}</p></div>
               <div><p className="text-gray-500 text-xs">Email</p><p className="text-white">{selected.customerEmail}</p></div>
-              <div><p className="text-gray-500 text-xs">Tổng tiền</p><p className="text-green-400 font-semibold">{selected.totalAmount.toLocaleString('vi-VN')}đ</p></div>
+              <div><p className="text-gray-500 text-xs">Tổng tiền</p><p className="text-green-400 font-semibold">{selected.total.toLocaleString('vi-VN')}đ</p></div>
               <div>
                 <p className="text-gray-500 text-xs mb-1">Trạng thái</p>
                 <select
