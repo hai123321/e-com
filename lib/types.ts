@@ -39,6 +39,9 @@ export interface UserSession {
   phone?: string | null
   address?: string | null
   facebookUrl?: string | null
+  age?: number | null
+  gender?: string | null
+  occupation?: string | null
 }
 
 export interface PricingRule {
