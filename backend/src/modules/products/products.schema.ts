@@ -9,6 +9,7 @@ export const createProductSchema = z.object({
   category:         z.string().default('Streaming'),
   groupKey:         z.string().max(100).default(''),
   featuredPriority: z.number().int().min(0).max(100).default(0),
+  durationMonths:   z.number().int().refine(v => [1, 3, 6, 12].includes(v)).default(1),
 })
 
 export const updateProductSchema = createProductSchema.partial().extend({

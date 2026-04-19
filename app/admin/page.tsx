@@ -14,7 +14,7 @@ interface Order {
 interface Product {
   id: number; name: string; price: number; stock: number; category: string
   description: string; image: string; groupKey: string; isActive: boolean
-  featuredPriority: number
+  featuredPriority: number; durationMonths: number
 }
 interface Guide {
   id: number; sortOrder: number; type: string
@@ -192,7 +192,7 @@ function ProductsTab() {
   const [editing, setEditing] = useState<Product | null>(null)
   const [creating, setCreating] = useState(false)
   const [loading, setLoading] = useState(true)
-  const emptyForm = { name: '', price: 0, stock: 0, category: 'AI', description: '', image: '', groupKey: '', isActive: true, featuredPriority: 0 }
+  const emptyForm = { name: '', price: 0, stock: 0, category: 'AI', description: '', image: '', groupKey: '', isActive: true, featuredPriority: 0, durationMonths: 1 }
   const [form, setForm] = useState<Omit<Product, 'id'>>(emptyForm)
 
   useEffect(() => {
@@ -225,7 +225,7 @@ function ProductsTab() {
   )
 
   const f = (key: keyof typeof form) => (v: string) =>
-    setForm(prev => ({ ...prev, [key]: ['price', 'stock', 'featuredPriority'].includes(key) ? parseInt(v) || 0 : v }))
+    setForm(prev => ({ ...prev, [key]: ['price', 'stock', 'featuredPriority', 'durationMonths'].includes(key) ? parseInt(v) || 0 : v }))
 
   const productFormJsx = (
     <div className="space-y-4">
@@ -237,6 +237,16 @@ function ProductsTab() {
         <Input label="Danh mục" value={form.category} onChange={f('category')} placeholder="AI" />
         <Input label="Ảnh (URL)" value={form.image} onChange={f('image')} placeholder="/api/logos/netflix.jpg" />
         <Input label="Ưu tiên trang chủ (0=ẩn, 1-10=hiện)" value={form.featuredPriority} onChange={f('featuredPriority')} type="number" />
+        <div>
+          <label className="text-gray-400 text-xs font-medium mb-1 block">Thời hạn (tháng)</label>
+          <select value={form.durationMonths} onChange={e => setForm(p => ({ ...p, durationMonths: parseInt(e.target.value) }))}
+            className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <option value={1}>1 tháng</option>
+            <option value={3}>3 tháng</option>
+            <option value={6}>6 tháng</option>
+            <option value={12}>12 tháng</option>
+          </select>
+        </div>
       </div>
       <Input label="Mô tả" value={form.description} onChange={f('description')} rows={3} />
       <div className="flex items-center gap-2">

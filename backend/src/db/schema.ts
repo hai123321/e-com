@@ -15,6 +15,7 @@ export const products = pgTable('products', {
   groupKey:         varchar('group_key', { length: 100 }).notNull().default(''),
   featuredPriority: integer('featured_priority').notNull().default(0),
   isActive:         boolean('is_active').notNull().default(true),
+  durationMonths:   integer('duration_months').notNull().default(1),
   salePrice:        integer('sale_price'),
   saleEndsAt:       timestamp('sale_ends_at', { withTimezone: true }),
   soldCount:        integer('sold_count').notNull().default(0),
@@ -26,11 +27,13 @@ export const products = pgTable('products', {
 
 export const orders = pgTable('orders', {
   id:            serial('id').primaryKey(),
+  userId:        integer('user_id'),  // FK to users.id — defined in migration
   customerName:  varchar('customer_name', { length: 255 }).notNull(),
   customerPhone: varchar('customer_phone', { length: 20 }).notNull(),
   customerEmail: varchar('customer_email', { length: 255 }),
   status:        varchar('status', { length: 50 }).notNull().default('pending'),
   total:         integer('total').notNull(),
+  promoCode:     varchar('promo_code', { length: 50 }),
   note:          text('note'),
   createdAt:     timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:     timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

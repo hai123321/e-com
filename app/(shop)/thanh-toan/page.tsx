@@ -132,7 +132,7 @@ function SuccessScreen({ order }: { order: OrderResult }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function ThanhToanPage() {
-  const { items, clearCart, user, promoDiscount, sessionHydrated } = useStore()
+  const { items, clearCart, user, promoDiscount, promoCode: appliedPromoCode, sessionHydrated } = useStore()
 
   // Form state — used for both logged-in (phone/note only) and guest (full form)
   const [name, setName]   = useState('')
@@ -190,7 +190,9 @@ export default function ThanhToanPage() {
           customerName,
           customerPhone: phone.trim(),
           customerEmail,
-          note: note.trim() || undefined,
+          note:      note.trim() || undefined,
+          userId:    user?.id ?? undefined,
+          promoCode: appliedPromoCode || undefined,
           items: items.map(i => ({ productId: Number(i.product.id), quantity: i.qty })),
         }),
       })

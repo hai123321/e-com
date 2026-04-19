@@ -1,6 +1,6 @@
 import { eq, and, inArray, count, sql, desc } from 'drizzle-orm'
 import { db } from '../../db/client.js'
-import { orders, orderItems, products } from '../../db/schema.js'
+import { orders, orderItems, products, promotions, userSubscriptions } from '../../db/schema.js'
 import type { CreateOrderInput, OrderQuery } from './orders.schema.js'
 import { listAllRules } from '../pricing/pricing.repository.js'
 import { applyRules } from '../pricing/pricing.engine.js'
@@ -77,16 +77,44 @@ export async function createOrder(input: CreateOrderInput) {
       return sum + effectivePrice * item.quantity
     }, 0)
 
-    // 3. Insert order
+    // 3. Validate and apply promo code if provided
+    let finalTotal = total
+    if (input.promoCode) {
+      const [promo] = await tx.select().from(promotions)
+        .where(and(
+          eq(promotions.code, input.promoCode.toUpperCase()),
+          eq(promotions.isActive, true),
+        ))
+      if (promo) {
+        const now = new Date()
+        const notExpired = !promo.expiresAt || promo.expiresAt > now
+        const hasUses = promo.maxUses == null || promo.usedCount < promo.maxUses
+        const meetsMin = promo.minOrderValue == null || total >= promo.minOrderValue
+        if (notExpired && hasUses && meetsMin) {
+          const discount = promo.discountType === 'percent'
+            ? Math.round(total * promo.discountValue / 100)
+            : promo.discountValue
+          finalTotal = Math.max(0, total - discount)
+          // Increment usedCount
+          await tx.update(promotions)
+            .set({ usedCount: sql`${promotions.usedCount} + 1`, updatedAt: new Date() })
+            .where(eq(promotions.id, promo.id))
+        }
+      }
+    }
+
+    // 4. Insert order
     const [order] = await tx.insert(orders).values({
       customerName:  input.customerName,
       customerPhone: input.customerPhone,
       customerEmail: input.customerEmail,
       note:          input.note,
-      total,
+      total:         finalTotal,
+      userId:        input.userId ?? null,
+      promoCode:     input.promoCode?.toUpperCase() ?? null,
     }).returning()
 
-    // 4. Insert order items (store effective price) + decrement stock
+    // 5. Insert order items (store effective price) + decrement stock
     await tx.insert(orderItems).values(
       input.items.map((item) => {
         const p = rows.find((r) => r.id === item.productId)!
@@ -145,6 +173,35 @@ export async function updateOrderStatus(id: number, status: string) {
         await tx.update(products)
           .set({ soldCount: sql`${products.soldCount} + ${item.quantity}` })
           .where(eq(products.id, item.productId))
+      }
+
+      // Auto-create user subscriptions if the order belongs to a user
+      if (row.userId) {
+        const productIds = items.map(i => i.productId)
+        const productRows = await tx.select().from(products)
+          .where(inArray(products.id, productIds))
+
+        for (const item of items) {
+          const product = productRows.find(p => p.id === item.productId)
+          if (!product) continue
+
+          const durationMonths = product.durationMonths ?? 1
+          const expiresAt = new Date()
+          expiresAt.setMonth(expiresAt.getMonth() + durationMonths * item.quantity)
+
+          await tx.insert(userSubscriptions).values({
+            userId:           row.userId,
+            serviceName:      product.name,
+            logoUrl:          product.image || null,
+            monthlyPrice:     Math.round(product.price / durationMonths),
+            billingCycle:     durationMonths === 1 ? 'monthly' : 'yearly',
+            expiresAt,
+            source:           'miushop',
+            miushopOrderId:   row.id,
+            miushopProductId: product.id,
+            isActive:         true,
+          })
+        }
       }
     }
 

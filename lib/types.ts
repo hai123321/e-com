@@ -8,6 +8,7 @@ export interface Product {
   category?: string
   groupKey?: string
   featuredPriority?: number
+  durationMonths?: number
   salePrice?: number | null
   saleEndsAt?: string | null
   soldCount?: number

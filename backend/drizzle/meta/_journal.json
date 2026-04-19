@@ -134,6 +134,13 @@
       "when": 1776601800000,
       "tag": "0018_user_profile_fields_safe",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1776610000000,
+      "tag": "0019_order_promo_duration",
+      "breakpoints": true
     }
   ]
 }

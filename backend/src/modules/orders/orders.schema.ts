@@ -5,6 +5,8 @@ export const createOrderSchema = z.object({
   customerPhone: z.string().min(9).max(20),
   customerEmail: z.string().email().optional(),
   note:          z.string().max(1000).optional(),
+  userId:        z.number().int().positive().optional(),
+  promoCode:     z.string().max(50).optional(),
   items: z.array(z.object({
     productId: z.number().int().positive(),
     quantity:  z.number().int().positive(),
