@@ -54,7 +54,6 @@ services:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.miushop.io.vn}
       API_INTERNAL_URL:    http://api:3001
     volumes:
-      - ./data/logos:/app/public/logos
       - ./data/banners:/app/public/banners
       - ./data/avatars:/app/public/avatars
     networks:
