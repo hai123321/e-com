@@ -42,6 +42,9 @@ function TaiKhoanContent() {
   const [phone, setPhone]           = useState('')
   const [address, setAddress]       = useState('')
   const [facebookUrl, setFacebookUrl] = useState('')
+  const [age, setAge]               = useState<string>('')
+  const [gender, setGender]         = useState<string>('')
+  const [occupation, setOccupation] = useState<string>('')
   const [saving, setSaving]         = useState(false)
   const [saveMsg, setSaveMsg]       = useState('')
 
@@ -69,6 +72,9 @@ function TaiKhoanContent() {
       setPhone(user.phone ?? '')
       setAddress(user.address ?? '')
       setFacebookUrl(user.facebookUrl ?? '')
+      setAge(user.age != null ? String(user.age) : '')
+      setGender(user.gender ?? '')
+      setOccupation(user.occupation ?? '')
     }
   }, [user])
 
@@ -88,12 +94,16 @@ function TaiKhoanContent() {
     setSaving(true)
     setSaveMsg('')
     try {
+      const parsedAge = age.trim() ? parseInt(age.trim(), 10) : null
       const updated = await updateProfile(userToken, {
         name:        name.trim() || undefined,
         avatar:      avatar.trim() || null,
         phone:       phone.trim() || null,
         address:     address.trim() || null,
         facebookUrl: facebookUrl.trim() || null,
+        age:         parsedAge,
+        gender:      gender || null,
+        occupation:  occupation.trim() || null,
       })
       if (updated) {
         setUser(updated as Parameters<typeof setUser>[0], userToken)
@@ -248,6 +258,53 @@ function TaiKhoanContent() {
                     value={facebookUrl}
                     onChange={e => setFacebookUrl(e.target.value)}
                     placeholder="https://facebook.com/your.profile"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                  />
+                </div>
+
+                {/* Age */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Tuổi
+                  </label>
+                  <input
+                    type="number"
+                    min={10}
+                    max={100}
+                    value={age}
+                    onChange={e => setAge(e.target.value)}
+                    placeholder="Nhập tuổi của bạn"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                  />
+                </div>
+
+                {/* Gender */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Giới tính
+                  </label>
+                  <select
+                    value={gender}
+                    onChange={e => setGender(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition bg-white"
+                  >
+                    <option value="">-- Chọn giới tính --</option>
+                    <option value="Nam">Nam</option>
+                    <option value="Nu">Nữ</option>
+                    <option value="Khac">Khác</option>
+                  </select>
+                </div>
+
+                {/* Occupation */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Nghề nghiệp
+                  </label>
+                  <input
+                    type="text"
+                    value={occupation}
+                    onChange={e => setOccupation(e.target.value)}
+                    placeholder="VD: Kỹ sư phần mềm, Giáo viên..."
                     className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                   />
                 </div>
