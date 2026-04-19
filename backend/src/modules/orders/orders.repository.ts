@@ -1,4 +1,4 @@
-import { eq, and, count, sql, desc } from 'drizzle-orm'
+import { eq, and, inArray, count, sql, desc } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { orders, orderItems, products } from '../../db/schema.js'
 import type { CreateOrderInput, OrderQuery } from './orders.schema.js'
@@ -9,7 +9,10 @@ export async function createOrder(input: CreateOrderInput) {
     const productIds = input.items.map((i) => i.productId)
     const rows = await tx.select()
       .from(products)
-      .where(sql`${products.id} = ANY(${productIds}) AND ${products.isActive} = true`)
+      .where(and(
+        inArray(products.id, productIds),
+        eq(products.isActive, true),
+      ))
 
     for (const item of input.items) {
       const product = rows.find((p) => p.id === item.productId)
