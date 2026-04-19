@@ -394,10 +394,15 @@ function PricingRulesTab() {
   const [loading, setLoading] = useState(true)
   const [groups, setGroups] = useState<Array<{ key: string; count: number; category: string }>>([])
   const [groupSearch, setGroupSearch] = useState('')
+  // Multi-select: internal array, joined to comma string on save
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([])
 
   const emptyForm = { name: '', description: '', ruleType: 'multiplier', params: { factor: 1.2 }, scopeType: 'global', scopeValue: '', priority: 0, isActive: true, startsAt: '', endsAt: '' }
   const [form, setForm] = useState<Omit<PricingRule, 'id'>>(emptyForm as unknown as Omit<PricingRule, 'id'>)
   const [paramsText, setParamsText] = useState('{"factor": 1.2}')
+
+  const toggleGroup = (key: string) =>
+    setSelectedGroups(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
 
   useEffect(() => {
     adminApi.getPricingRules().then(r => { setRules(r.data ?? []); setLoading(false) })
@@ -436,7 +441,13 @@ function PricingRulesTab() {
   const save = async () => {
     let params: Record<string, unknown>
     try { params = JSON.parse(paramsText) } catch { alert('Params JSON không hợp lệ'); return }
-    const data = { ...form, params }
+    const scopeValue = form.scopeType === 'group'
+      ? selectedGroups.join(',')
+      : form.scopeValue
+    if (form.scopeType === 'group' && selectedGroups.length === 0) {
+      alert('Vui lòng chọn ít nhất một nhóm sản phẩm'); return
+    }
+    const data = { ...form, scopeValue, params }
     if (editing) {
       const r = await adminApi.updatePricingRule(editing.id, data)
       setRules(prev => prev.map(rl => rl.id === editing.id ? r.data : rl))
@@ -457,12 +468,18 @@ function PricingRulesTab() {
   const openEdit = (r: PricingRule) => {
     setForm(r)
     setParamsText(JSON.stringify(r.params, null, 2))
+    setSelectedGroups(
+      r.scopeType === 'group' && r.scopeValue
+        ? r.scopeValue.split(',').map(k => k.trim()).filter(Boolean)
+        : []
+    )
     setEditing(r)
   }
 
   const openCreate = () => {
     setForm(emptyForm as unknown as Omit<PricingRule, 'id'>)
     setParamsText(RULE_EXAMPLES.multiplier)
+    setSelectedGroups([])
     setCreating(true)
   }
 
@@ -482,7 +499,7 @@ function PricingRulesTab() {
         <div>
           <label className="text-gray-400 text-xs font-medium mb-1 block">Phạm vi áp dụng</label>
           <select value={form.scopeType}
-            onChange={e => { f('scopeType')(e.target.value); f('scopeValue')(''); setGroupSearch('') }}
+            onChange={e => { f('scopeType')(e.target.value); f('scopeValue')(''); setGroupSearch(''); setSelectedGroups([]) }}
             className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm">
             <option value="global">🌐 Toàn bộ sản phẩm</option>
             <option value="category">📂 Theo danh mục</option>
@@ -506,14 +523,32 @@ function PricingRulesTab() {
           </div>
         )}
 
-        {/* Group key dropdown with search */}
+        {/* Group key multi-select */}
         {form.scopeType === 'group' && (
           <div className="col-span-2">
-            <label className="text-gray-400 text-xs font-medium mb-1 block">
+            <label className="text-gray-400 text-xs font-medium mb-2 block">
               Nhóm sản phẩm (group_key)<span className="text-red-500 ml-0.5">*</span>
-              <span className="ml-2 text-gray-600 font-normal">({groups.length} nhóm)</span>
+              <span className="ml-2 text-gray-600 font-normal">
+                {selectedGroups.length > 0
+                  ? <span className="text-primary-400">{selectedGroups.length} đã chọn</span>
+                  : `${groups.length} nhóm`}
+              </span>
             </label>
-            {/* Search filter */}
+
+            {/* Selected tags */}
+            {selectedGroups.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {selectedGroups.map(k => (
+                  <span key={k} className="inline-flex items-center gap-1 bg-primary-900/50 border border-primary-700 text-primary-300 text-xs font-mono px-2 py-0.5 rounded-lg">
+                    {k}
+                    <button type="button" onClick={() => toggleGroup(k)} className="hover:text-red-400 ml-0.5">✕</button>
+                  </span>
+                ))}
+                <button type="button" onClick={() => setSelectedGroups([])} className="text-[10px] text-gray-600 hover:text-red-400 px-1">Bỏ tất cả</button>
+              </div>
+            )}
+
+            {/* Search */}
             <input
               type="text"
               value={groupSearch}
@@ -521,37 +556,33 @@ function PricingRulesTab() {
               placeholder="🔍 Tìm nhóm... (netflix, chatgpt, ...)"
               className="w-full bg-gray-900 border border-gray-700 text-gray-300 rounded-xl px-3 py-2 text-sm mb-2 placeholder:text-gray-600"
             />
-            {/* Selected value display */}
-            {form.scopeValue && (
-              <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-primary-900/40 border border-primary-800 rounded-lg">
-                <span className="text-primary-400 text-xs font-mono">{form.scopeValue}</span>
-                <button onClick={() => f('scopeValue')('')} className="ml-auto text-gray-500 hover:text-red-400 text-xs">✕ Bỏ chọn</button>
-              </div>
-            )}
-            {/* Scrollable group list */}
+
+            {/* Scrollable checkbox list */}
             <div className="bg-gray-900 border border-gray-700 rounded-xl overflow-y-auto max-h-52">
               {groups
                 .filter(g => !groupSearch || g.key.includes(groupSearch.toLowerCase()) || g.category.toLowerCase().includes(groupSearch.toLowerCase()))
-                .map(g => (
-                  <button
-                    key={g.key}
-                    type="button"
-                    onClick={() => { f('scopeValue')(g.key); setGroupSearch('') }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-800 transition-colors border-b border-gray-800/50 last:border-0 ${
-                      form.scopeValue === g.key ? 'bg-primary-900/50 text-primary-300' : 'text-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {form.scopeValue === g.key && <span className="text-primary-400">✓</span>}
-                      <span className="font-mono text-xs text-gray-400">{g.key}</span>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded">{g.category}</span>
-                      <span className="text-[10px] text-gray-600">{g.count} SP</span>
-                    </div>
-                  </button>
-                ))}
-              {groups.filter(g => !groupSearch || g.key.includes(groupSearch.toLowerCase())).length === 0 && (
+                .map(g => {
+                  const checked = selectedGroups.includes(g.key)
+                  return (
+                    <label
+                      key={g.key}
+                      className={`w-full flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-gray-800 transition-colors border-b border-gray-800/50 last:border-0 ${
+                        checked ? 'bg-primary-900/30' : ''
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleGroup(g.key)}
+                        className="accent-primary-500 w-3.5 h-3.5 shrink-0"
+                      />
+                      <span className={`font-mono text-xs flex-1 ${checked ? 'text-primary-300' : 'text-gray-400'}`}>{g.key}</span>
+                      <span className="text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded shrink-0">{g.category}</span>
+                      <span className="text-[10px] text-gray-600 shrink-0">{g.count} SP</span>
+                    </label>
+                  )
+                })}
+              {groups.filter(g => !groupSearch || g.key.includes(groupSearch.toLowerCase()) || g.category.toLowerCase().includes(groupSearch.toLowerCase())).length === 0 && (
                 <p className="text-center text-gray-600 text-xs py-4">Không tìm thấy nhóm nào</p>
               )}
             </div>
@@ -613,8 +644,15 @@ function PricingRulesTab() {
                   Phạm vi:{' '}
                   {r.scopeType === 'global'   ? '🌐 Tất cả sản phẩm' :
                    r.scopeType === 'category' ? `📂 Danh mục: ${r.scopeValue}` :
-                   r.scopeType === 'group'    ? <span>📦 Nhóm: <span className="font-mono text-primary-400">{r.scopeValue}</span></span> :
-                                               `🎯 Sản phẩm ID: ${r.scopeValue}`}
+                   r.scopeType === 'group'    ? (
+                     <span className="inline-flex items-center gap-1 flex-wrap">
+                       📦
+                       {(r.scopeValue ?? '').split(',').filter(Boolean).map(k => (
+                         <span key={k} className="font-mono text-primary-400 bg-primary-900/30 px-1.5 py-0.5 rounded text-[11px]">{k.trim()}</span>
+                       ))}
+                     </span>
+                   ) :
+                   `🎯 Sản phẩm ID: ${r.scopeValue}`}
                   {' '}· Ưu tiên: {r.priority}
                 </p>
                 <p className="text-gray-600 text-xs font-mono mt-1">{JSON.stringify(r.params)}</p>

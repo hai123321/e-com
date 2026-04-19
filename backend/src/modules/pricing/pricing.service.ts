@@ -27,7 +27,7 @@ export async function deletePricingRule(id: number) {
 export async function previewEffectivePrice(productId: number) {
   const [product] = await db.select().from(products).where(eq(products.id, productId)).limit(1)
   if (!product) throw Object.assign(new Error('Product not found'), { statusCode: 404 })
-  const rules = await listActiveRulesForProduct(productId, product.category)
+  const rules = await listActiveRulesForProduct(productId, product.category, product.groupKey ?? '')
   const rulesForEngine = rules.map(r => ({
     ...r,
     params: (r.params ?? {}) as Record<string, unknown>,

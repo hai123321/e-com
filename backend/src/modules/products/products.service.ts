@@ -26,19 +26,26 @@ async function getActiveRules(): Promise<RuleWithName[]> {
 function rulesForProduct(
   rules: RuleWithName[],
   productId: number,
-  category: string
+  category: string,
+  groupKey: string
 ): RuleWithName[] {
-  return rules.filter(r =>
-    r.scopeType === 'global' ||
-    (r.scopeType === 'category' && r.scopeValue === category) ||
-    (r.scopeType === 'product'  && r.scopeValue === String(productId))
-  )
+  return rules.filter(r => {
+    if (r.scopeType === 'global') return true
+    if (r.scopeType === 'category') return r.scopeValue === category
+    if (r.scopeType === 'product')  return r.scopeValue === String(productId)
+    if (r.scopeType === 'group') {
+      // scopeValue may hold a single key or a comma-separated list (multi-select)
+      const keys = (r.scopeValue ?? '').split(',').map(k => k.trim()).filter(Boolean)
+      return keys.includes(groupKey)
+    }
+    return false
+  })
 }
 
-type AnyProduct = { id: number | string; price: number; stock: number; category: string }
+type AnyProduct = { id: number | string; price: number; stock: number; category: string; groupKey?: string }
 
 function applyToProduct<T extends AnyProduct>(product: T, rules: RuleWithName[]): T {
-  const relevant = rulesForProduct(rules, Number(product.id), product.category ?? '')
+  const relevant = rulesForProduct(rules, Number(product.id), product.category ?? '', product.groupKey ?? '')
   if (relevant.length === 0) return product
   const { finalPrice } = applyRules(product.price, relevant as Parameters<typeof applyRules>[1], {
     stock: product.stock,

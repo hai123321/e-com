@@ -11,18 +11,22 @@ export async function listAllRules(): Promise<PricingRule[]> {
 
 export async function listActiveRulesForProduct(
   productId: number,
-  categoryName: string
+  categoryName: string,
+  groupKey = ''
 ): Promise<PricingRule[]> {
-  return db.select().from(pricingRules).where(
-    and(
-      eq(pricingRules.isActive, true),
-      or(
-        eq(pricingRules.scopeType, 'global'),
-        and(eq(pricingRules.scopeType, 'category'), eq(pricingRules.scopeValue, categoryName)),
-        and(eq(pricingRules.scopeType, 'product'), eq(pricingRules.scopeValue, String(productId)))
-      )
-    )
-  )
+  // Fetch all active rules and filter in memory so we can handle the
+  // comma-separated multi-group scopeValue without a DB-level string split.
+  const all = await db.select().from(pricingRules).where(eq(pricingRules.isActive, true))
+  return all.filter(r => {
+    if (r.scopeType === 'global') return true
+    if (r.scopeType === 'category') return r.scopeValue === categoryName
+    if (r.scopeType === 'product')  return r.scopeValue === String(productId)
+    if (r.scopeType === 'group') {
+      const keys = (r.scopeValue ?? '').split(',').map(k => k.trim()).filter(Boolean)
+      return keys.includes(groupKey)
+    }
+    return false
+  })
 }
 
 export async function getRuleById(id: number): Promise<PricingRule | null> {
