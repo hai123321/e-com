@@ -2,10 +2,55 @@ import { eq, and, inArray, count, sql, desc } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { orders, orderItems, products } from '../../db/schema.js'
 import type { CreateOrderInput, OrderQuery } from './orders.schema.js'
+import { listAllRules } from '../pricing/pricing.repository.js'
+import { applyRules } from '../pricing/pricing.engine.js'
+
+// ── Pricing helpers (mirrors products.service logic) ─────────────────────────
+
+type ActiveRule = Awaited<ReturnType<typeof listAllRules>>[number]
+
+async function loadActiveRules(): Promise<ActiveRule[]> {
+  const all = await listAllRules()
+  const now = new Date()
+  return all.filter(r => {
+    if (!r.isActive) return false
+    if (r.startsAt && r.startsAt > now) return false
+    if (r.endsAt   && r.endsAt   < now) return false
+    return true
+  })
+}
+
+function computeEffectivePrice(
+  product: { id: number; price: number; stock: number; category: string; groupKey: string | null },
+  rules: ActiveRule[],
+): number {
+  const relevant = rules.filter(r => {
+    if (r.scopeType === 'global')   return true
+    if (r.scopeType === 'category') return r.scopeValue === product.category
+    if (r.scopeType === 'product')  return r.scopeValue === String(product.id)
+    if (r.scopeType === 'group') {
+      const keys = (r.scopeValue ?? '').split(',').map(k => k.trim()).filter(Boolean)
+      return keys.includes(product.groupKey ?? '')
+    }
+    return false
+  })
+  if (relevant.length === 0) return product.price
+  const { finalPrice } = applyRules(
+    product.price,
+    relevant as Parameters<typeof applyRules>[1],
+    { stock: product.stock, categoryName: product.category, productId: product.id },
+  )
+  return finalPrice
+}
+
+// ── Order CRUD ────────────────────────────────────────────────────────────────
 
 export async function createOrder(input: CreateOrderInput) {
+  // Load pricing rules BEFORE entering the transaction (read-only, no need to lock)
+  const activeRules = await loadActiveRules()
+
   return db.transaction(async (tx) => {
-    // 1. Lock rows and validate stock for all items
+    // 1. Fetch product rows and validate stock
     const productIds = input.items.map((i) => i.productId)
     const rows = await tx.select()
       .from(products)
@@ -25,10 +70,11 @@ export async function createOrder(input: CreateOrderInput) {
       }
     }
 
-    // 2. Calculate total
+    // 2. Calculate total with pricing rules applied
     const total = input.items.reduce((sum, item) => {
       const p = rows.find((r) => r.id === item.productId)!
-      return sum + p.price * item.quantity
+      const effectivePrice = computeEffectivePrice(p, activeRules)
+      return sum + effectivePrice * item.quantity
     }, 0)
 
     // 3. Insert order
@@ -40,7 +86,7 @@ export async function createOrder(input: CreateOrderInput) {
       total,
     }).returning()
 
-    // 4. Insert order items + decrement stock
+    // 4. Insert order items (store effective price) + decrement stock
     await tx.insert(orderItems).values(
       input.items.map((item) => {
         const p = rows.find((r) => r.id === item.productId)!
@@ -48,7 +94,7 @@ export async function createOrder(input: CreateOrderInput) {
           orderId:      order.id,
           productId:    item.productId,
           productName:  p.name,
-          productPrice: p.price,
+          productPrice: computeEffectivePrice(p, activeRules),
           quantity:     item.quantity,
         }
       }),
