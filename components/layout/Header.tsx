@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { ShoppingCart, Store, Menu, X, Globe } from 'lucide-react'
 import { useStore } from '@/lib/store'
@@ -22,6 +22,8 @@ export function Header() {
   const { locale, setLocale, user, clearUser, openMiniCart, closeMiniCart, isMiniCartOpen } = useStore()
   const { itemCount } = useCart()
   const t = useT()
+  const userDropdownRef = useRef<HTMLDivElement>(null)
+  const langDropdownRef = useRef<HTMLDivElement>(null)
 
   const navLinks = [
     { href: '/', label: t.nav.home },
@@ -31,6 +33,20 @@ export function Header() {
   ]
 
   const currentLocale = LOCALES.find((l) => l.value === locale) ?? LOCALES[0]
+
+  // Close dropdowns when clicking outside (desktop)
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(e.target as Node)) {
+        setUserOpen(false)
+      }
+      if (langDropdownRef.current && !langDropdownRef.current.contains(e.target as Node)) {
+        setLangOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <header className="sticky top-0 z-50 bg-gradient-to-r from-primary-800 to-primary-600 shadow-lg shadow-primary-900/30">
@@ -58,9 +74,9 @@ export function Header() {
           </ul>
 
           {/* Right side */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Language switcher */}
-            <div className="relative">
+            <div className="relative" ref={langDropdownRef}>
               <button
                 onClick={() => setLangOpen((o) => !o)}
                 className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl px-3 py-2 text-sm font-semibold transition-all"
@@ -86,27 +102,31 @@ export function Header() {
               )}
             </div>
 
-            {/* User auth */}
+            {/* User auth — visible on ALL screen sizes */}
             {user ? (
-              <div className="relative hidden sm:block">
+              <div className="relative" ref={userDropdownRef}>
                 <button
                   onClick={() => setUserOpen((o) => !o)}
-                  className="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+                  className="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl px-2.5 py-2 sm:px-3 text-sm font-semibold transition-all"
                 >
                   {user.avatar ? (
                     <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-accent-400 flex items-center justify-center text-xs font-bold">
+                    <div className="w-6 h-6 rounded-full bg-accent-400 flex items-center justify-center text-xs font-bold shrink-0">
                       {(user.name ?? '').charAt(0).toUpperCase() || '?'}
                     </div>
                   )}
                   <span className="hidden sm:inline max-w-[80px] truncate">{user.name}</span>
                 </button>
+
                 {userOpen && (
                   <>
-                    {/* Backdrop to close on outside click */}
-                    <div className="fixed inset-0 z-40" onClick={() => setUserOpen(false)} />
-                    <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 min-w-[180px]">
+                    {/* Backdrop for mobile tap-outside-to-close */}
+                    <div
+                      className="fixed inset-0 z-40 md:hidden"
+                      onClick={() => setUserOpen(false)}
+                    />
+                    <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 min-w-[200px]">
                       <div className="px-4 py-3 border-b border-gray-100">
                         <p className="text-xs font-semibold text-gray-900 truncate">{user.name}</p>
                         <p className="text-xs text-gray-500 truncate">{user.email}</p>
@@ -137,11 +157,13 @@ export function Header() {
                 )}
               </div>
             ) : (
+              /* Login button — visible on ALL screen sizes */
               <Link
                 href="/dang-nhap"
-                className="hidden sm:flex items-center gap-1.5 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+                className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl px-2.5 py-2 sm:px-3 text-sm font-semibold transition-all"
               >
-                {t.header.login}
+                <span className="hidden sm:inline">{t.header.login}</span>
+                <span className="sm:hidden text-base leading-none">👤</span>
               </Link>
             )}
 
@@ -149,7 +171,7 @@ export function Header() {
             <div className="relative">
               <button
                 onClick={() => isMiniCartOpen ? closeMiniCart() : openMiniCart()}
-                className="relative flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl px-4 py-2 text-sm font-semibold transition-all"
+                className="relative flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl px-3 py-2 sm:px-4 text-sm font-semibold transition-all"
               >
                 <ShoppingCart className="w-4 h-4" />
                 <span className="hidden sm:inline">{t.nav.cart}</span>
@@ -162,9 +184,11 @@ export function Header() {
               <MiniCart />
             </div>
 
+            {/* Hamburger — mobile only, nav links only */}
             <button
-              className="md:hidden text-white"
+              className="md:hidden text-white p-1"
               onClick={() => setMenuOpen((o) => !o)}
+              aria-label="Toggle navigation menu"
             >
               {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -172,7 +196,7 @@ export function Header() {
         </div>
       </nav>
 
-      {/* Mobile menu */}
+      {/* Mobile nav menu — nav links only, no auth */}
       {menuOpen && (
         <div className="md:hidden bg-primary-800/95 backdrop-blur-sm border-t border-white/10 animate-fade-in">
           <ul className="section-container py-4 flex flex-col gap-1">
@@ -187,69 +211,6 @@ export function Header() {
                 </Link>
               </li>
             ))}
-            <li>
-              <Link
-                href="/gio-hang"
-                onClick={() => setMenuOpen(false)}
-                className="block text-white/80 hover:text-white text-sm font-medium py-3 px-2 rounded-lg hover:bg-white/10 transition-colors"
-              >
-                {t.nav.cart}
-                {itemCount > 0 && (
-                  <span className="ml-2 bg-accent-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5">
-                    {itemCount}
-                  </span>
-                )}
-              </Link>
-            </li>
-
-            {/* Mobile auth */}
-            <li className="border-t border-white/10 mt-2 pt-2">
-              {user ? (
-                <>
-                  <div className="flex items-center gap-3 px-2 py-2 mb-1">
-                    {user.avatar ? (
-                      <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-accent-400 flex items-center justify-center text-sm font-bold shrink-0">
-                        {(user.name ?? '').charAt(0).toUpperCase() || '?'}
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-white text-sm font-semibold truncate">{user.name}</p>
-                      <p className="text-white/50 text-xs truncate">{user.email}</p>
-                    </div>
-                  </div>
-                  <Link
-                    href="/tai-khoan"
-                    onClick={() => setMenuOpen(false)}
-                    className="block text-white/80 hover:text-white text-sm font-medium py-3 px-2 rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    {t.header.myAccount}
-                  </Link>
-                  <Link
-                    href="/tai-khoan?tab=orders"
-                    onClick={() => setMenuOpen(false)}
-                    className="block text-white/80 hover:text-white text-sm font-medium py-3 px-2 rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    {t.header.orderHistory}
-                  </Link>
-                  <button
-                    onClick={() => { clearUser(); setMenuOpen(false) }}
-                    className="w-full text-left text-red-300 hover:text-red-200 text-sm font-medium py-3 px-2 rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    {t.header.logout}
-                  </button>
-                </>
-              ) : (
-                <Link
-                  href="/dang-nhap"
-                  onClick={() => setMenuOpen(false)}
-                  className="block text-center bg-white/15 hover:bg-white/25 border border-white/30 text-white text-sm font-semibold py-3 px-2 rounded-xl transition-colors"
-                >
-                  {t.header.login}
-                </Link>
-              )}
-            </li>
           </ul>
         </div>
       )}
