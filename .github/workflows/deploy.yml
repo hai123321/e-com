@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          clean: false   # Preserve data/banners, data/logos etc. across deploys
 
       - name: Create .env file
         run: |
