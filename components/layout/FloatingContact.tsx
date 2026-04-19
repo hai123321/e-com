@@ -25,8 +25,23 @@ export function FloatingContact() {
         style={{ backgroundColor: '#0068FF' }}
       />
 
-      {/* Zalo icon mark */}
-      <span className="relative z-10 font-extrabold text-base leading-none">Z</span>
+      {/* Zalo icon — clean speech-bubble silhouette */}
+      <svg
+        className="relative z-10 shrink-0"
+        width="24" height="24" viewBox="0 0 24 24"
+        fill="none" xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        {/* Bubble body: rounded rect */}
+        <path
+          d="M2 5.5A3.5 3.5 0 0 1 5.5 2h13A3.5 3.5 0 0 1 22 5.5v9A3.5 3.5 0 0 1 18.5 18H9l-5 4 1.5-4H5.5A3.5 3.5 0 0 1 2 14.5v-9Z"
+          fill="white"
+        />
+        {/* Three dots — chat activity indicator */}
+        <circle cx="8"  cy="12" r="1.3" fill="#0068FF"/>
+        <circle cx="12" cy="12" r="1.3" fill="#0068FF"/>
+        <circle cx="16" cy="12" r="1.3" fill="#0068FF"/>
+      </svg>
 
       {/* Expand label */}
       <span
