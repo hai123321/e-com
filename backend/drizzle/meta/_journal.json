@@ -115,6 +115,13 @@
       "breakpoints": true
     },
     {
+      "idx": 16,
+      "version": "7",
+      "when": 1776550000000,
+      "tag": "0016_user_subscriptions",
+      "breakpoints": true
+    },
+    {
       "idx": 17,
       "version": "7",
       "when": 1745049600000,
