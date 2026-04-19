@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Upload } from 'lucide-react'
 import { adminApi } from '@/lib/admin-api'
 import { CropModal } from '@/components/ui/CropModal'
+import { logoUrl } from '@/lib/api'
 
 interface Group {
   groupKey: string
@@ -91,7 +92,7 @@ export function GroupImagesTab() {
           <div key={g.groupKey} className="bg-gray-800/60 border border-gray-700 rounded-xl overflow-hidden group">
             <div className="aspect-square bg-gray-900 relative">
               {g.image ? (
-                <Image src={g.image} alt={g.groupKey} fill className="object-contain p-2" sizes="160px" unoptimized />
+                <Image src={logoUrl(g.image)} alt={g.groupKey} fill className="object-contain p-2" sizes="160px" unoptimized />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-gray-700 text-3xl font-bold">
                   {g.groupKey.charAt(0).toUpperCase()}

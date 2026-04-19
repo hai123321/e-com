@@ -8,7 +8,7 @@ import { useStore } from '@/lib/store'
 import { formatCurrency } from '@/lib/utils'
 import { getServiceConfig } from '@/lib/service-config'
 import { vietQrUrl } from '@/lib/payment'
-import { apiUrl } from '@/lib/api'
+import { apiUrl, logoUrl } from '@/lib/api'
 import { PromoCodeInput } from '@/components/cart/PromoCodeInput'
 
 interface OrderResult { id: number; total: number }
@@ -31,7 +31,7 @@ function OrderSummary() {
               <div key={product.id} className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl overflow-hidden bg-primary-50 shrink-0">
                   {product.image ? (
-                    <Image src={product.image} alt={product.name} width={48} height={48}
+                    <Image src={logoUrl(product.image)} alt={product.name} width={48} height={48}
                       className="w-full h-full object-cover" unoptimized />
                   ) : (
                     <div className={`w-full h-full bg-gradient-to-br ${svc.bg} flex items-center justify-center text-xl`}>

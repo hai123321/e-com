@@ -8,7 +8,7 @@ import { useT } from '@/lib/hooks/useT'
 import { formatCurrency } from '@/lib/utils'
 import { getServiceConfig } from '@/lib/service-config'
 import { vietQrUrl } from '@/lib/payment'
-import { apiUrl } from '@/lib/api'
+import { apiUrl, logoUrl } from '@/lib/api'
 import type { Product } from '@/lib/types'
 
 type Step = 'cart' | 'form' | 'payment'
@@ -37,7 +37,7 @@ function CartItem({ product, qty, onUpdateQty, onRemove }: CartItemProps) {
       <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-primary-50 shrink-0">
         {showImage ? (
           <Image
-            src={product.image!}
+            src={logoUrl(product.image)}
             alt={product.name}
             fill
             className="object-cover"

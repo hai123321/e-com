@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ShoppingBag, Trash2, Minus, Plus, ArrowLeft, Shield, Clock, RotateCcw } from 'lucide-react'
 import { useCart } from '@/hooks/useCart'
 import { PromoCodeInput } from '@/components/cart/PromoCodeInput'
+import { logoUrl } from '@/lib/api'
 
 export default function GioHangPage() {
   const { items, subtotal, discountAmount, grandTotal, promoCode, updateQty, removeItem, clearCart } = useCart()
@@ -50,7 +51,7 @@ export default function GioHangPage() {
             >
               <Link href={`/san-pham/${product.id}`}>
                 <img
-                  src={product.image}
+                  src={logoUrl(product.image)}
                   alt={product.name}
                   className="w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover flex-shrink-0 hover:opacity-90 transition-opacity"
                 />

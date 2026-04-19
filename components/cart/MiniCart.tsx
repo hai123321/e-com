@@ -6,6 +6,7 @@ import { X, ShoppingCart, Minus, Plus, Trash2 } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { useCart } from '@/hooks/useCart'
 import { useT } from '@/lib/hooks/useT'
+import { logoUrl } from '@/lib/api'
 
 export function MiniCart() {
   const isMiniCartOpen = useStore((s) => s.isMiniCartOpen)
@@ -58,7 +59,7 @@ export function MiniCart() {
           {preview.map(({ product, qty }) => (
             <div key={product.id} className="flex items-center gap-3 px-4 py-3">
               <img
-                src={product.image}
+                src={logoUrl(product.image)}
                 alt={product.name}
                 className="w-12 h-12 rounded-xl object-cover flex-shrink-0"
               />

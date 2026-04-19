@@ -13,6 +13,7 @@ import { Countdown } from '@/components/ui/Countdown'
 import { StarRating } from '@/components/review/StarRating'
 import { formatCurrency, getStockStatus } from '@/lib/utils'
 import { getServiceConfig } from '@/lib/service-config'
+import { logoUrl } from '@/lib/api'
 import { ProductPickerModal } from '@/components/product/ProductPickerModal'
 
 interface Props {
@@ -67,7 +68,7 @@ export function ProductCard({ product }: Props) {
         <div className={`w-full h-full bg-gradient-to-br ${svc.bg} flex flex-col items-center justify-center gap-1 group-hover:scale-105 transition-transform duration-500`}>
           {showImage ? (
             <Image
-              src={product.image!}
+              src={logoUrl(product.image)}
               alt={product.name}
               width={80}
               height={80}

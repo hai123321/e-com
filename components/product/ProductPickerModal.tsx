@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
 import { X, ShoppingCart, Package, TrendingUp, Check } from 'lucide-react'
 import { useStore } from '@/lib/store'
-import { apiUrl } from '@/lib/api'
+import { apiUrl, logoUrl } from '@/lib/api'
 import { formatCurrency, getStockStatus } from '@/lib/utils'
 import { StockBadge } from '@/components/ui/Badge'
 import { getServiceConfig } from '@/lib/service-config'
@@ -119,7 +119,7 @@ export function ProductPickerModal({ groupKey, groupName, onClose }: Props) {
                   <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${svc.bg} flex items-center justify-center shrink-0 overflow-hidden`}>
                     {product.image ? (
                       <Image
-                        src={product.image}
+                        src={logoUrl(product.image)}
                         alt={product.name}
                         width={56}
                         height={56}

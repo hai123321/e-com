@@ -9,6 +9,7 @@ import { StockBadge } from '@/components/ui/Badge'
 import { Countdown } from '@/components/ui/Countdown'
 import { formatCurrency, getStockStatus } from '@/lib/utils'
 import Link from 'next/link'
+import { logoUrl } from '@/lib/api'
 
 interface Props {
   id: string
@@ -78,7 +79,7 @@ export function ProductDetailClient({ id }: Props) {
           {/* Image */}
           <div className="relative h-72 md:h-auto bg-primary-50">
             <Image
-              src={product.image}
+              src={logoUrl(product.image)}
               alt={product.name}
               fill
               className="object-cover"
