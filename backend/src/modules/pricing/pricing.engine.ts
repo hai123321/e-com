@@ -52,35 +52,35 @@ export function applyRules(
     }
   }
 
-  // Sort remaining by scope specificity then priority
-  const scopeOrder = { product: 3, category: 2, global: 1 }
+  // Scope specificity: product > group > category > global
+  // Within the same scope, higher priority number wins.
+  // Strategy: apply only the SINGLE most-specific / highest-priority rule
+  // ("first match wins") — a product that hits a group rule will NOT also
+  // pick up a global rule stacked on top.
+  const scopeOrder: Record<string, number> = { product: 4, group: 3, category: 2, global: 1 }
   const sorted = active
     .filter(r => r.ruleType !== 'manual_override')
     .sort((a, b) => {
-      const scopeDiff = (scopeOrder[b.scopeType as keyof typeof scopeOrder] ?? 0) -
-                        (scopeOrder[a.scopeType as keyof typeof scopeOrder] ?? 0)
+      const scopeDiff = (scopeOrder[b.scopeType] ?? 0) - (scopeOrder[a.scopeType] ?? 0)
       return scopeDiff !== 0 ? scopeDiff : b.priority - a.priority
     })
 
-  let price = basePrice
-  const applied: AppliedRule[] = []
-
   for (const rule of sorted) {
-    const before = price
+    let newPrice = basePrice
 
     if (rule.ruleType === 'multiplier') {
       const p = rule.params as { factor: number }
-      price = Math.round(price * (p.factor ?? 1))
+      newPrice = Math.round(basePrice * (p.factor ?? 1))
     } else if (rule.ruleType === 'fixed_add') {
       const p = rule.params as { amount: number }
-      price = price + (p.amount ?? 0)
+      newPrice = basePrice + (p.amount ?? 0)
     } else if (rule.ruleType === 'stock_based') {
       const p = rule.params as { tiers: { min_stock: number; discount_percent: number }[] }
       const tier = (p.tiers ?? [])
         .sort((a, b) => b.min_stock - a.min_stock)
         .find(t => stock >= t.min_stock)
       if (tier && tier.discount_percent > 0) {
-        price = Math.round(price * (1 - tier.discount_percent / 100))
+        newPrice = Math.round(basePrice * (1 - tier.discount_percent / 100))
       }
     } else if (rule.ruleType === 'time_based') {
       const p = rule.params as { schedule: { days: number[]; hours?: number[]; discount_percent: number }[] }
@@ -90,15 +90,18 @@ export function applyRules(
         s.days.includes(day) && (!s.hours || s.hours.includes(hour))
       )
       if (match && match.discount_percent > 0) {
-        price = Math.round(price * (1 - match.discount_percent / 100))
+        newPrice = Math.round(basePrice * (1 - match.discount_percent / 100))
       }
     }
 
-    const delta = price - before
-    if (delta !== 0) {
-      applied.push({ id: rule.id, name: rule.name, delta })
+    // First rule that produces a price change wins — stop here
+    if (newPrice !== basePrice) {
+      return {
+        finalPrice: Math.max(0, newPrice),
+        appliedRules: [{ id: rule.id, name: rule.name, delta: newPrice - basePrice }],
+      }
     }
   }
 
-  return { finalPrice: Math.max(0, price), appliedRules: applied }
+  return { finalPrice: Math.max(0, basePrice), appliedRules: [] }
 }
