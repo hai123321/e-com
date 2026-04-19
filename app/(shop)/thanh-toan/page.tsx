@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle, CreditCard, Loader2, ShoppingBag, User } from 'lucide-react'
@@ -142,6 +142,11 @@ export default function ThanhToanPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [order, setOrder] = useState<OrderResult | null>(null)
+
+  // Pre-fill phone from user profile when available
+  useEffect(() => {
+    if (user?.phone && !phone) setPhone(user.phone)
+  }, [user?.phone]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const subtotalAmt = items.reduce((s, i) => s + i.product.price * i.qty, 0)
   const total       = Math.max(0, subtotalAmt - (promoDiscount ?? 0))

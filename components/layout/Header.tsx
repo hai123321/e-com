@@ -88,12 +88,11 @@ export function Header() {
 
             {/* User auth */}
             {user ? (
-              <div
-                className="relative"
-                onMouseEnter={() => setUserOpen(true)}
-                onMouseLeave={() => setUserOpen(false)}
-              >
-                <button className="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl px-3 py-2 text-sm font-semibold transition-all">
+              <div className="relative hidden sm:block">
+                <button
+                  onClick={() => setUserOpen((o) => !o)}
+                  className="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+                >
                   {user.avatar ? (
                     <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
                   ) : (
@@ -104,32 +103,37 @@ export function Header() {
                   <span className="hidden sm:inline max-w-[80px] truncate">{user.name}</span>
                 </button>
                 {userOpen && (
-                  <div className="absolute right-0 top-full bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 min-w-[180px]">
-                    <div className="absolute -top-2 left-0 right-0 h-2" />
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-xs font-semibold text-gray-900 truncate">{user.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  <>
+                    {/* Backdrop to close on outside click */}
+                    <div className="fixed inset-0 z-40" onClick={() => setUserOpen(false)} />
+                    <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 min-w-[180px]">
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-xs font-semibold text-gray-900 truncate">{user.name}</p>
+                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      </div>
+                      <Link
+                        href="/tai-khoan"
+                        onClick={() => setUserOpen(false)}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
+                      >
+                        {t.header.myAccount}
+                      </Link>
+                      <Link
+                        href="/tai-khoan?tab=orders"
+                        onClick={() => setUserOpen(false)}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
+                      >
+                        {t.header.orderHistory}
+                      </Link>
+                      <div className="border-t border-gray-100" />
+                      <button
+                        onClick={() => { clearUser(); setUserOpen(false) }}
+                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        {t.header.logout}
+                      </button>
                     </div>
-                    <Link
-                      href="/tai-khoan"
-                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
-                    >
-                      {t.header.myAccount}
-                    </Link>
-                    <Link
-                      href="/tai-khoan?tab=orders"
-                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
-                    >
-                      {t.header.orderHistory}
-                    </Link>
-                    <div className="border-t border-gray-100" />
-                    <button
-                      onClick={() => { clearUser(); setUserOpen(false) }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      {t.header.logout}
-                    </button>
-                  </div>
+                  </>
                 )}
               </div>
             ) : (
@@ -196,6 +200,55 @@ export function Header() {
                   </span>
                 )}
               </Link>
+            </li>
+
+            {/* Mobile auth */}
+            <li className="border-t border-white/10 mt-2 pt-2">
+              {user ? (
+                <>
+                  <div className="flex items-center gap-3 px-2 py-2 mb-1">
+                    {user.avatar ? (
+                      <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-accent-400 flex items-center justify-center text-sm font-bold shrink-0">
+                        {(user.name ?? '').charAt(0).toUpperCase() || '?'}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-semibold truncate">{user.name}</p>
+                      <p className="text-white/50 text-xs truncate">{user.email}</p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/tai-khoan"
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-white/80 hover:text-white text-sm font-medium py-3 px-2 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    {t.header.myAccount}
+                  </Link>
+                  <Link
+                    href="/tai-khoan?tab=orders"
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-white/80 hover:text-white text-sm font-medium py-3 px-2 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    {t.header.orderHistory}
+                  </Link>
+                  <button
+                    onClick={() => { clearUser(); setMenuOpen(false) }}
+                    className="w-full text-left text-red-300 hover:text-red-200 text-sm font-medium py-3 px-2 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    {t.header.logout}
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/dang-nhap"
+                  onClick={() => setMenuOpen(false)}
+                  className="block text-center bg-white/15 hover:bg-white/25 border border-white/30 text-white text-sm font-semibold py-3 px-2 rounded-xl transition-colors"
+                >
+                  {t.header.login}
+                </Link>
+              )}
             </li>
           </ul>
         </div>
