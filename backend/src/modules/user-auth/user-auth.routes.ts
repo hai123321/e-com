@@ -11,6 +11,9 @@ const updateProfileSchema = z.object({
   phone:       z.string().max(20).optional().nullable(),
   address:     z.string().max(512).optional().nullable(),
   facebookUrl: z.string().url().max(512).optional().nullable(),
+  age:         z.number().int().min(10).max(100).optional().nullable(),
+  gender:      z.enum(['Nam', 'Nu', 'Khac']).optional().nullable(),
+  occupation:  z.string().max(100).optional().nullable(),
 })
 
 export async function userAuthRoutes(app: FastifyInstance) {
