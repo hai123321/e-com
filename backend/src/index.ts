@@ -1,4 +1,5 @@
 import Fastify from 'fastify'
+import cookiePlugin from '@fastify/cookie'
 import oauth2Plugin from '@fastify/oauth2'
 import { config } from './config.js'
 import { db, checkDbConnection } from './db/client.js'
@@ -35,6 +36,8 @@ const app = Fastify({
 await app.register(corsPlugin)
 await app.register(jwtPlugin)
 await app.register(errorHandler)
+// Cookie plugin must be registered before @fastify/oauth2 (state is stored in a cookie)
+await app.register(cookiePlugin)
 
 // Google OAuth2 (only register when credentials are configured)
 if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {

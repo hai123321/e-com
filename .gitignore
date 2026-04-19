@@ -18,6 +18,9 @@ backend/node_modules/
 backend/dist/
 backend/.env
 
+# Upload data (persisted on server via volume mounts, not committed)
+data/
+
 # Misc
 .DS_Store
 *.pem
