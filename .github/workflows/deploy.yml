@@ -29,8 +29,11 @@ jobs:
 
       - name: Tạo thư mục upload
         run: |
-          mkdir -p data/banners data/avatars
-          chmod 777 data/banners data/avatars
+          mkdir -p data/banners data/avatars data/logos
+          chmod 777 data/banners data/avatars data/logos
+
+      - name: Tải logo sản phẩm (bỏ qua nếu đã có)
+        run: bash scripts/download-logos.sh data/logos
 
       - name: Build và deploy
         run: docker compose up -d --build

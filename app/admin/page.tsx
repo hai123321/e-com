@@ -3,8 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { adminApi } from '@/lib/admin-api'
-import { GroupImagesTab } from './GroupImagesTab'
-import { CropModal } from '@/components/ui/CropModal'
+import { MediaTab } from './MediaTab'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 interface Order {
@@ -31,12 +30,8 @@ interface Promotion {
   minOrderValue?: number; maxUses?: number; usedCount: number
   isActive: boolean; expiresAt?: string; createdAt: string
 }
-interface Banner {
-  id: number; title: string; subtitle: string; image: string
-  href: string; priority: number; isActive: boolean
-}
 
-const TABS = ['Đơn hàng', 'Sản phẩm', 'Nhóm SP', 'Hướng dẫn', 'Cấu hình giá', 'Khuyến mại', 'Banner'] as const
+const TABS = ['Đơn hàng', 'Sản phẩm', 'Hướng dẫn', 'Cấu hình giá', 'Khuyến mại', 'Media'] as const
 type Tab = typeof TABS[number]
 
 const STATUS_LABELS: Record<string, string> = {
@@ -772,263 +767,6 @@ function PromotionsTab() {
   )
 }
 
-// ─── Banners Tab ─────────────────────────────────────────────────────────────
-// Banner output size: 1280×720 (16:9) — must match BannerSlider aspectRatio
-const BANNER_W = 1280
-const BANNER_H = 720
-const BANNER_RATIO = BANNER_W / BANNER_H   // 16:9 ≈ 1.778
-
-function BannersTab() {
-  const [banners, setBanners]   = useState<Banner[]>([])
-  const [creating, setCreating] = useState(false)
-  const [editing, setEditing]   = useState<Banner | null>(null)
-  const [loading, setLoading]   = useState(true)
-  const [saving, setSaving]     = useState(false)
-
-  // Image upload state
-  const [cropSrc, setCropSrc]         = useState<string | null>(null)
-  const [uploadingImg, setUploadingImg] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
-
-  const empty: Omit<Banner, 'id'> = { title: '', subtitle: '', image: '', href: '/#products', priority: 0, isActive: true }
-  const [form, setForm] = useState<Omit<Banner, 'id'>>(empty)
-
-  // Stable banner id for upload filename (new banners use a temp key)
-  const bannerIdForUpload = editing?.id ?? `new-${Date.now()}`
-
-  useEffect(() => {
-    adminApi.getBanners().then(r => { setBanners(r.data ?? []); setLoading(false) })
-  }, [])
-
-  const openForm = (banner?: Banner) => {
-    setForm(banner ?? empty)
-    if (banner) setEditing(banner)
-    else setCreating(true)
-  }
-
-  const closeForm = () => { setEditing(null); setCreating(false); setCropSrc(null) }
-
-  const save = async () => {
-    setSaving(true)
-    try {
-      if (editing) {
-        const r = await adminApi.updateBanner(editing.id, form)
-        setBanners(prev => prev.map(b => b.id === editing.id ? r.data : b))
-      } else {
-        const r = await adminApi.createBanner(form)
-        setBanners(prev => [r.data, ...prev])
-      }
-      closeForm()
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const del = async (id: number) => {
-    if (!confirm('Xóa banner này?')) return
-    await adminApi.deleteBanner(id)
-    setBanners(prev => prev.filter(b => b.id !== id))
-  }
-
-  const f = (key: keyof typeof form) => (v: string) =>
-    setForm(prev => ({ ...prev, [key]: key === 'priority' ? parseInt(v) || 0 : v }))
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => setCropSrc(ev.target?.result as string)
-    reader.readAsDataURL(file)
-    e.target.value = ''
-  }
-
-  const handleCropConfirm = async (dataUrl: string) => {
-    setUploadingImg(true)
-    setCropSrc(null)
-    try {
-      const token = localStorage.getItem('admin_token') ?? ''
-      const res   = await fetch('/api/upload-banner', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ bannerId: bannerIdForUpload, imageData: dataUrl }),
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error ?? 'Upload thất bại')
-      setForm(prev => ({ ...prev, image: json.data.path }))
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Lỗi upload ảnh')
-    } finally {
-      setUploadingImg(false)
-    }
-  }
-
-  const bannerFormJsx = (
-    <div className="space-y-5">
-      {/* ── Banner image upload ── */}
-      <div>
-        <p className="text-gray-400 text-xs font-medium mb-2 uppercase tracking-wider">
-          Ảnh banner <span className="text-gray-600 normal-case">({BANNER_W}×{BANNER_H} px · tỉ lệ 16:9)</span>
-        </p>
-
-        {/* Preview area — 16:9 aspect ratio */}
-        <div className="relative w-full rounded-xl overflow-hidden bg-gray-800 border-2 border-dashed border-gray-700 group"
-          style={{ paddingTop: `${(1 / BANNER_RATIO) * 100}%` }}>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            {form.image ? (
-              <>
-                <Image
-                  src={form.image}
-                  alt="banner preview"
-                  fill
-                  unoptimized
-                  className="object-cover"
-                />
-                {/* Overlay on hover */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="bg-white text-gray-900 text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors"
-                  >
-                    Thay ảnh
-                  </button>
-                </div>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                disabled={uploadingImg}
-                className="flex flex-col items-center gap-2 text-gray-500 hover:text-gray-300 transition-colors"
-              >
-                {uploadingImg ? (
-                  <div className="w-8 h-8 border-4 border-gray-600 border-t-primary-500 rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span className="text-sm font-medium">Click để chọn ảnh banner</span>
-                    <span className="text-xs text-gray-600">JPG, PNG, WebP · Tối đa 10MB</span>
-                    <span className="text-xs text-gray-700">Khuyến nghị: 1200×400 px trở lên</span>
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-        </div>
-
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-
-        {form.image && (
-          <div className="flex items-center justify-between mt-1.5">
-            <span className="text-xs text-gray-600 font-mono truncate max-w-xs">{form.image}</span>
-            <button
-              type="button"
-              onClick={() => setForm(p => ({ ...p, image: '' }))}
-              className="text-xs text-red-500 hover:text-red-400 ml-2 shrink-0"
-            >
-              Xóa ảnh
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* ── Text fields ── */}
-      <div className="grid grid-cols-2 gap-4">
-        <Input label="Tiêu đề" value={form.title} onChange={f('title')} required />
-        <Input label="Phụ đề" value={form.subtitle} onChange={f('subtitle')} placeholder="Mô tả ngắn" />
-        <Input label="Liên kết (href)" value={form.href} onChange={f('href')} placeholder="/san-pham/netflix" />
-        <Input label="Độ ưu tiên (số lớn hiển thị trước)" value={form.priority} onChange={f('priority')} type="number" />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <input type="checkbox" id="bannerIsActive" checked={form.isActive}
-          onChange={e => setForm(p => ({ ...p, isActive: e.target.checked }))}
-          className="rounded" />
-        <label htmlFor="bannerIsActive" className="text-gray-400 text-sm">Đang hiển thị</label>
-      </div>
-
-      <div className="flex gap-3 pt-2">
-        <Btn onClick={save} disabled={saving}>{saving ? 'Đang lưu...' : 'Lưu'}</Btn>
-        <Btn variant="ghost" onClick={closeForm}>Hủy</Btn>
-      </div>
-
-      {/* Crop modal */}
-      {cropSrc && (
-        <CropModal
-          src={cropSrc}
-          title="Cắt ảnh banner (3:1)"
-          aspectRatio={BANNER_RATIO}
-          outputWidth={BANNER_W}
-          outputHeight={BANNER_H}
-          onConfirm={handleCropConfirm}
-          onClose={() => setCropSrc(null)}
-        />
-      )}
-    </div>
-  )
-
-  if (loading) return <p className="text-gray-500 text-sm">Đang tải...</p>
-
-  return (
-    <>
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-gray-500 text-xs">
-          {banners.length} banner · Ảnh lưu tại <code className="text-gray-400">/banners/&#123;id&#125;.jpg</code> · {BANNER_W}×{BANNER_H}
-        </p>
-        <Btn onClick={() => openForm()}>+ Thêm banner</Btn>
-      </div>
-
-      {/* Banner grid preview */}
-      <div className="space-y-3 mb-6">
-        {banners.length === 0 && (
-          <p className="text-gray-600 text-sm text-center py-8">Chưa có banner nào</p>
-        )}
-        {banners.map(b => (
-          <div key={b.id} className="flex items-center gap-4 bg-gray-800/50 border border-gray-700 rounded-xl p-3">
-            {/* Thumbnail */}
-            <div className="relative shrink-0 w-40 rounded-lg overflow-hidden bg-gray-900 border border-gray-700" style={{ aspectRatio: `${BANNER_RATIO}` }}>
-              {b.image ? (
-                <Image src={b.image} alt={b.title} fill unoptimized className="object-cover" />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-gray-700 text-xs">No image</div>
-              )}
-            </div>
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-semibold text-sm truncate">{b.title || '—'}</p>
-              <p className="text-gray-500 text-xs truncate mt-0.5">{b.subtitle || '—'}</p>
-              <p className="text-gray-600 text-xs font-mono truncate mt-0.5">{b.href}</p>
-            </div>
-            {/* Meta */}
-            <div className="flex flex-col items-end gap-2 shrink-0">
-              <span className={`text-xs px-2 py-1 rounded-lg border ${b.isActive ? 'bg-green-900/40 text-green-400 border-green-800' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
-                {b.isActive ? 'Hiển thị' : 'Ẩn'}
-              </span>
-              <span className="text-gray-600 text-xs">Ưu tiên: {b.priority}</span>
-              <div className="flex gap-2 mt-1">
-                <Btn size="sm" variant="ghost" onClick={() => openForm(b)}>Sửa</Btn>
-                <Btn size="sm" variant="danger" onClick={() => del(b.id)}>Xóa</Btn>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {(creating || editing) && (
-        <Modal
-          title={editing ? `Sửa: ${editing.title}` : 'Thêm banner mới'}
-          onClose={closeForm}
-        >
-          {bannerFormJsx}
-        </Modal>
-      )}
-    </>
-  )
-}
-
 // ─── Main Admin Page ─────────────────────────────────────────────────────────
 export default function AdminPage() {
   const router = useRouter()
@@ -1054,11 +792,10 @@ export default function AdminPage() {
   const TAB_COMPONENTS: Record<Tab, React.ReactNode> = {
     'Đơn hàng':    <OrdersTab />,
     'Sản phẩm':    <ProductsTab />,
-    'Nhóm SP':     <GroupImagesTab />,
     'Hướng dẫn':   <GuidesTab />,
     'Cấu hình giá': <PricingRulesTab />,
     'Khuyến mại':  <PromotionsTab />,
-    'Banner':      <BannersTab />,
+    'Media':       <MediaTab />,
   }
 
   return (

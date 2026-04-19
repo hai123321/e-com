@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Download product-group logos from Clearbit CDN (256×256 JPEG)
-# Run from repo root:  bash scripts/download-logos.sh
+# Download product-group logos from Clearbit CDN (256×256 JPEG).
+# Usage:  bash scripts/download-logos.sh [target-dir]
+# Default target-dir: public/logos
 set -euo pipefail
 
-DEST="public/logos"
+DEST="${1:-public/logos}"
 mkdir -p "$DEST"
 
 declare -A LOGOS=(
