@@ -28,6 +28,9 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+# logos_baked: read-only seed source, never volume-mounted.
+# deploy.yml syncs new files từ đây → public/logos/ (volume mount).
+COPY --from=builder --chown=nextjs:nodejs /app/public/logos ./public/logos_baked
 
 USER nextjs
 

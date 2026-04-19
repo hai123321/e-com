@@ -53,6 +53,21 @@ jobs:
             sleep 3
           done
 
+      - name: Sync logos mới từ image vào data/logos (giữ file admin đã upload)
+        run: |
+          docker compose exec -T frontend sh -c '
+            added=0
+            for f in /app/public/logos_baked/*.jpg; do
+              name="${f##*/}"
+              if [ ! -f "/app/public/logos/$name" ]; then
+                cp "$f" "/app/public/logos/$name"
+                added=$((added+1))
+              fi
+            done
+            total=$(ls /app/public/logos/*.jpg 2>/dev/null | wc -l | tr -d " ")
+            echo "✅ logos synced: +${added} new, ${total} total"
+          '
+
       - name: Migrate + Seed database
         run: docker compose exec -T -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} api npm run seed
 
