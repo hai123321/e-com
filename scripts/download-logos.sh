@@ -2,7 +2,7 @@
 # Download product-group logos from Clearbit CDN (256×256 JPEG).
 # Usage:  bash scripts/download-logos.sh [target-dir]
 # Default target-dir: public/logos
-set -euo pipefail
+set -uo pipefail
 
 DEST="${1:-public/logos}"
 mkdir -p "$DEST"
@@ -111,20 +111,22 @@ for key in "${!LOGOS[@]}"; do
   out="$DEST/${key}.jpg"
   if [[ -f "$out" ]]; then
     echo "  skip  $key (already exists)"
-    ((ok++)); continue
+    ok=$((ok+1)); continue
   fi
   if curl -sfL --max-time 10 \
        "https://logo.clearbit.com/${domain}?size=256" \
        -o "$out"; then
     echo "  ✓  $key"
-    ((ok++))
+    ok=$((ok+1))
   else
     echo "  ✗  $key (${domain})"
     rm -f "$out"
-    ((fail++))
+    fail=$((fail+1))
   fi
 done
 
 echo ""
 echo "Done: ${ok} ok, ${fail} failed"
 echo "Logos saved to ${DEST}/"
+# Exit 0 even if some logos failed — clearbit CDN fallback handles missing files
+exit 0
