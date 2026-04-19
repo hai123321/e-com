@@ -35,15 +35,16 @@ const TABS = ['Đơn hàng', 'Sản phẩm', 'Hướng dẫn', 'Cấu hình giá
 type Tab = typeof TABS[number]
 
 const STATUS_LABELS: Record<string, string> = {
-  pending: 'Chờ xử lý', processing: 'Đang xử lý', completed: 'Hoàn thành',
-  cancelled: 'Đã hủy', refunded: 'Hoàn tiền'
+  pending:   'Chờ xử lý',
+  confirmed: 'Đã xác nhận',
+  delivered: 'Hoàn thành',
+  cancelled: 'Đã hủy',
 }
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-900/40 text-yellow-400 border-yellow-800',
-  processing: 'bg-blue-900/40 text-blue-400 border-blue-800',
-  completed: 'bg-green-900/40 text-green-400 border-green-800',
+  pending:   'bg-yellow-900/40 text-yellow-400 border-yellow-800',
+  confirmed: 'bg-blue-900/40 text-blue-400 border-blue-800',
+  delivered: 'bg-green-900/40 text-green-400 border-green-800',
   cancelled: 'bg-red-900/40 text-red-400 border-red-800',
-  refunded: 'bg-gray-700 text-gray-400 border-gray-600',
 }
 
 // ─── Shared UI ──────────────────────────────────────────────────────────────
