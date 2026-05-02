@@ -11,6 +11,7 @@ import { formatCurrency, getStockStatus } from '@/lib/utils'
 import { getServiceConfig } from '@/lib/service-config'
 import { apiUrl, logoUrl } from '@/lib/api'
 import { GROUP_META } from './group-meta'
+import { BuyNowModal } from '@/components/shop/BuyNowModal'
 
 function extractDurationDays(name: string, description: string): number {
   const text = name + ' ' + description
@@ -36,6 +37,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Product | null>(null)
   const [heroImgErr, setHeroImgErr] = useState(false)
+  const [buyNowProduct, setBuyNowProduct] = useState<Product | null>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
 
   const meta = GROUP_META[slug] ?? { name: slug, tagline: '' }
@@ -109,6 +111,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
   const inCart = selected ? items.find((i) => i.product.id === selected.id) : null
 
   return (
+    <>
     <main className="min-h-screen bg-primary-50">
       <style>{`
         .pricing-card {
@@ -186,6 +189,15 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                       ? `Trong giỏ (${inCart.qty}) — Thêm nữa`
                       : 'Thêm vào giỏ hàng'}
                 </button>
+
+                {selected && selectedStatus !== 'out' && (
+                  <button
+                    onClick={() => setBuyNowProduct(selected)}
+                    className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl px-6 py-3 mt-2 transition-all hover:shadow-lg hover:shadow-amber-200 text-sm"
+                  >
+                    <Zap className="w-4 h-4" /> Mua ngay
+                  </button>
+                )}
 
                 <Link
                   href="/"
@@ -300,29 +312,34 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                           )}
                         </div>
 
-                        {/* Buy button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (!isOut) addItem(p)
-                          }}
-                          disabled={isOut}
-                          className={`w-full flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all ${
-                            isOut
-                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                              : isSelected
-                                ? 'bg-primary-600 text-white hover:bg-primary-700 shadow'
-                                : 'bg-primary-50 text-primary-700 hover:bg-primary-100 border border-primary-200'
-                          }`}
-                        >
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                          {isOut
-                            ? 'Hết hàng'
-                            : items.find((i) => i.product.id === p.id)
-                              ? 'Thêm nữa'
-                              : 'Thêm vào giỏ'
-                          }
-                        </button>
+                        {/* Buy buttons */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (!isOut) addItem(p)
+                            }}
+                            disabled={isOut}
+                            className={`flex-1 flex items-center justify-center gap-1 rounded-xl py-2.5 text-xs font-bold transition-all ${
+                              isOut
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : isSelected
+                                  ? 'bg-primary-600 text-white hover:bg-primary-700 shadow'
+                                  : 'bg-primary-50 text-primary-700 hover:bg-primary-100 border border-primary-200'
+                            }`}
+                          >
+                            <ShoppingCart className="w-3 h-3" />
+                            {isOut ? 'Hết hàng' : items.find((i) => i.product.id === p.id) ? 'Thêm nữa' : 'Thêm giỏ'}
+                          </button>
+                          {!isOut && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setBuyNowProduct(p) }}
+                              className="flex items-center justify-center gap-1 rounded-xl py-2.5 px-3 text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 transition-all shadow"
+                            >
+                              <Zap className="w-3 h-3" /> Mua ngay
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -333,5 +350,10 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
         </div>
       </div>
     </main>
+
+    {buyNowProduct && (
+      <BuyNowModal product={buyNowProduct} onClose={() => setBuyNowProduct(null)} />
+    )}
+  </>
   )
 }

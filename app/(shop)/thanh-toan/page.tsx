@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle, CreditCard, Loader2, ShoppingBag, User } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { formatCurrency } from '@/lib/utils'
 import { getServiceConfig } from '@/lib/service-config'
-import { vietQrUrl } from '@/lib/payment'
+import { vietQrUrl, createSepayOrderPayment, pollTransactionStatus } from '@/lib/payment'
 import { apiUrl, logoUrl } from '@/lib/api'
 import { PromoCodeInput } from '@/components/cart/PromoCodeInput'
 
@@ -83,9 +83,53 @@ function OrderSummary() {
   )
 }
 
-// ── Success / QR screen ───────────────────────────────────────────────────────
-function SuccessScreen({ order }: { order: OrderResult }) {
+// ── Success / Payment screen ──────────────────────────────────────────────────
+function SuccessScreen({ order, token }: { order: OrderResult; token?: string }) {
   const qrUrl = vietQrUrl(order.total, `order-${String(order.id).padStart(6, '0')}`)
+  const [sepayUrl, setSepayUrl] = useState<string | null>(null)
+  const [sepayLoading, setSepayLoading] = useState(false)
+  const [sepayError, setSepayError] = useState('')
+  const [paid, setPaid] = useState(false)
+  const stopPollRef = useRef<(() => void) | null>(null)
+
+  // Try to get Sepay URL for the order
+  useEffect(() => {
+    let cancelled = false
+    setSepayLoading(true)
+    createSepayOrderPayment(order.id, token)
+      .then(({ paymentUrl, transactionId }) => {
+        if (cancelled) return
+        setSepayUrl(paymentUrl)
+        // Start polling
+        stopPollRef.current = pollTransactionStatus(transactionId, () => setPaid(true), token)
+      })
+      .catch(() => { if (!cancelled) setSepayUrl(null) })
+      .finally(() => { if (!cancelled) setSepayLoading(false) })
+    return () => {
+      cancelled = true
+      stopPollRef.current?.()
+    }
+  }, [order.id, token]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => () => { stopPollRef.current?.() }, [])
+
+  const orderCode = `order-${String(order.id).padStart(6, '0')}`
+
+  if (paid) {
+    return (
+      <main className="section-container py-12 max-w-lg mx-auto">
+        <div className="card p-8 space-y-6 text-center">
+          <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
+          <h2 className="text-2xl font-extrabold text-gray-900">Thanh toán thành công!</h2>
+          <p className="text-gray-500 text-sm">Đơn hàng <code className="font-bold">{orderCode}</code> đã được xác nhận. Kiểm tra email / Zalo để nhận tài khoản.</p>
+          <Link href="/" className="block text-center bg-primary-700 hover:bg-primary-800 text-white font-bold py-3 rounded-xl text-sm transition-colors">
+            Về trang chủ
+          </Link>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className="section-container py-12 max-w-lg mx-auto">
       <div className="card p-8 space-y-6">
@@ -94,20 +138,44 @@ function SuccessScreen({ order }: { order: OrderResult }) {
           <div>
             <p className="font-semibold text-green-800">Đặt hàng thành công!</p>
             <p className="text-green-700 text-sm mt-0.5">
-              Mã đơn: <span className="font-bold font-mono">order-{String(order.id).padStart(6, '0')}</span>
+              Mã đơn: <span className="font-bold font-mono">{orderCode}</span>
             </p>
           </div>
         </div>
 
+        {/* Sepay option */}
+        {(sepayLoading || sepayUrl) && (
+          <div className="border border-primary-200 rounded-2xl p-5 space-y-3">
+            <p className="font-semibold text-gray-800 text-sm">Thanh toán nhanh qua Sepay</p>
+            <p className="text-xs text-gray-500">Hệ thống tự động xác nhận sau khi thanh toán.</p>
+            {sepayLoading ? (
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <Loader2 className="w-4 h-4 animate-spin" /> Đang tạo link thanh toán...
+              </div>
+            ) : (
+              <a
+                href={sepayUrl!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full bg-primary-700 hover:bg-primary-800 text-white font-bold py-3 rounded-xl text-sm transition-colors"
+              >
+                <CreditCard className="w-4 h-4" /> Thanh toán qua Sepay
+              </a>
+            )}
+            {sepayError && <p className="text-xs text-red-500">{sepayError}</p>}
+          </div>
+        )}
+
+        {/* VietQR fallback */}
         <div className="text-center space-y-3">
-          <p className="font-semibold text-gray-800">Quét QR để thanh toán</p>
+          <p className="font-semibold text-gray-800 text-sm">
+            {sepayUrl ? 'Hoặc' : ''} Quét QR chuyển khoản thủ công
+          </p>
           <p className="text-sm text-gray-500">
             Chuyển khoản <span className="font-bold text-primary-700">{formatCurrency(order.total)}</span> với nội dung:
           </p>
           <div className="bg-primary-50 border border-primary-200 rounded-xl px-4 py-2 inline-block">
-            <code className="font-bold text-primary-800 tracking-wider">
-              order-{String(order.id).padStart(6, '0')}
-            </code>
+            <code className="font-bold text-primary-800 tracking-wider">{orderCode}</code>
           </div>
           <div className="flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -122,7 +190,7 @@ function SuccessScreen({ order }: { order: OrderResult }) {
           <p>• Hỗ trợ: <a href="https://zalo.me/0383574189" target="_blank" rel="noopener noreferrer" className="text-primary-700 font-semibold">Zalo 038.357.4189</a></p>
         </div>
 
-        <Link href="/" className="block text-center bg-primary-700 hover:bg-primary-800 text-white font-bold py-3 rounded-xl text-sm transition-colors">
+        <Link href="/" className="block text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl text-sm transition-colors">
           Về trang chủ
         </Link>
       </div>
@@ -132,7 +200,7 @@ function SuccessScreen({ order }: { order: OrderResult }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function ThanhToanPage() {
-  const { items, clearCart, user, promoDiscount, promoCode: appliedPromoCode, sessionHydrated } = useStore()
+  const { items, clearCart, user, userToken, promoDiscount, promoCode: appliedPromoCode, sessionHydrated } = useStore()
 
   // Form state — used for both logged-in (phone/note only) and guest (full form)
   const [name, setName]   = useState('')
@@ -173,7 +241,7 @@ export default function ThanhToanPage() {
     )
   }
 
-  if (order) return <SuccessScreen order={order} />
+  if (order) return <SuccessScreen order={order} token={userToken ?? undefined} />
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
