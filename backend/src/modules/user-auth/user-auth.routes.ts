@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify'
 import { registerSchema, loginSchema } from './user-auth.schema.js'
 import { registerUser, loginUser, getMe, findOrCreateGoogleUser, updateProfile } from './user-auth.service.js'
 import { findOrdersByEmail } from '../orders/orders.repository.js'
+import { getWalletBalance, listUserTransactions, decrementWalletBalance } from '../payment/payment.repository.js'
 import { config } from '../../config.js'
 
 const updateProfileSchema = z.object({
@@ -59,6 +60,28 @@ export async function userAuthRoutes(app: FastifyInstance) {
     const payload = req.user as { id: number; email: string; role: string }
     const orders = await findOrdersByEmail(payload.email)
     return reply.send({ success: true, data: orders })
+  })
+
+  // GET /auth/user/wallet — return balance + recent transactions (user auth)
+  app.get('/auth/user/wallet', {
+    preHandler: [app.authenticateUser],
+  }, async (req, reply) => {
+    const payload = req.user as { id: number }
+    const [balance, transactions] = await Promise.all([
+      getWalletBalance(payload.id),
+      listUserTransactions(payload.id),
+    ])
+    return reply.send({ success: true, data: { balance, transactions } })
+  })
+
+  // POST /auth/user/wallet/spend — deduct credit at checkout (internal use, user auth)
+  app.post('/auth/user/wallet/spend', {
+    preHandler: [app.authenticateUser],
+  }, async (req, reply) => {
+    const payload = req.user as { id: number }
+    const { amount } = z.object({ amount: z.number().int().positive() }).parse(req.body)
+    const newBalance = await decrementWalletBalance(payload.id, amount)
+    return reply.send({ success: true, data: { balance: newBalance } })
   })
 
   // GET /auth/google/callback — exchange code → profile → JWT → redirect to frontend

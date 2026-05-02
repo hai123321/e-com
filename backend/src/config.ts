@@ -14,6 +14,9 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().default(''),
   GOOGLE_CALLBACK_URL:  z.string().default(''),
   FRONTEND_URL:         z.string().default('http://localhost:3000'),
+  SEPAY_MERCHANT_ID:    z.string().default(''),
+  SEPAY_SECRET_KEY:     z.string().default(''),
+  SEPAY_API_URL:        z.string().default(''),
 })
 
 const parsed = envSchema.safeParse(process.env)

@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { User, Package, Save, ChevronDown, ChevronUp, LogOut, Wallet, Camera, Phone, MapPin, Facebook, Star, Plus } from 'lucide-react'
+import { User, Package, Save, ChevronDown, ChevronUp, LogOut, Wallet, Camera, Phone, MapPin, Facebook, Star, Plus, Loader2, CreditCard, History } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { updateProfile, fetchMyOrders, type UserOrder } from '@/lib/auth'
-import { vietQrUrl } from '@/lib/payment'
+import { vietQrUrl, createSepayTopupPayment } from '@/lib/payment'
+import { apiUrl } from '@/lib/api'
 import { CropModal } from '@/components/ui/CropModal'
 import { SubscriptionSummary } from '@/components/subscription/SubscriptionSummary'
 import { SubscriptionCard } from '@/components/subscription/SubscriptionCard'
@@ -49,6 +50,10 @@ function TaiKhoanContent() {
     return 'profile'
   })
   const [topupAmount, setTopupAmount] = useState(0)
+  const [sepayTopupLoading, setSepayTopupLoading] = useState(false)
+  const [sepayTopupError, setSepayTopupError] = useState('')
+  const [walletBalance, setWalletBalance] = useState<number | null>(null)
+  const [topupHistory, setTopupHistory] = useState<{ id: string; amount: number; status: string; createdAt: string }[]>([])
 
   // Subscriptions state
   const [subscriptions, setSubscriptions]   = useState<Subscription[]>([])
@@ -127,6 +132,36 @@ function TaiKhoanContent() {
       })
       .finally(() => setLoadingSubs(false))
   }, [tab, userToken])
+
+  // Load wallet info when topup tab is active
+  useEffect(() => {
+    if (tab !== 'topup' || !userToken) return
+    fetch(apiUrl('/auth/user/wallet'), {
+      headers: { Authorization: `Bearer ${userToken}` },
+    })
+      .then(r => r.json())
+      .then(json => {
+        if (json.data) {
+          setWalletBalance(json.data.balance ?? null)
+          setTopupHistory(json.data.transactions ?? [])
+        }
+      })
+      .catch(() => {})
+  }, [tab, userToken])
+
+  const handleSepayTopup = async () => {
+    if (!userToken || !topupAmount) return
+    setSepayTopupLoading(true)
+    setSepayTopupError('')
+    try {
+      const { paymentUrl } = await createSepayTopupPayment(topupAmount, userToken)
+      window.location.href = paymentUrl
+    } catch (err) {
+      setSepayTopupError(err instanceof Error ? err.message : 'Không thể tạo thanh toán Sepay')
+    } finally {
+      setSepayTopupLoading(false)
+    }
+  }
 
   const refreshSubscriptions = async () => {
     if (!userToken) return
@@ -572,14 +607,28 @@ function TaiKhoanContent() {
 
         {/* Top-up Tab */}
         {tab === 'topup' && (
-          <div className="max-w-sm">
-            <div className="card p-8 text-center">
-              <h2 className="font-bold text-lg text-gray-900 mb-1">Nạp tiền vào tài khoản</h2>
-              <p className="text-sm text-gray-500 mb-6">
-                Chuyển khoản theo thông tin bên dưới. Số dư sẽ được cập nhật sau khi xác nhận.
-              </p>
+          <div className="max-w-md space-y-5">
+            {/* Wallet balance */}
+            {walletBalance !== null && (
+              <div className="card p-5 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary-100 flex items-center justify-center">
+                  <Wallet className="w-6 h-6 text-primary-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Số dư hiện tại</p>
+                  <p className="text-2xl font-extrabold text-primary-700">
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(walletBalance)}
+                  </p>
+                </div>
+              </div>
+            )}
 
-              <div className="mb-5 text-left">
+            <div className="card p-6">
+              <h2 className="font-bold text-lg text-gray-900 mb-1">Nạp tiền vào tài khoản</h2>
+              <p className="text-sm text-gray-500 mb-5">Chọn số tiền và phương thức thanh toán.</p>
+
+              {/* Amount picker */}
+              <div className="mb-5">
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Số tiền nạp (VNĐ)</label>
                 <input
                   type="number"
@@ -607,33 +656,84 @@ function TaiKhoanContent() {
                 </div>
               </div>
 
-              <div className="flex justify-center mb-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={vietQrUrl(topupAmount, `topup ${user?.email ?? ''}`)}
-                  alt="QR nạp tiền"
-                  width={260}
-                  height={300}
-                  className="rounded-2xl border border-gray-200 shadow"
-                />
+              {/* Sepay option */}
+              <div className="border border-primary-200 rounded-xl p-4 mb-4 space-y-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <CreditCard className="w-4 h-4 text-primary-600" />
+                  <p className="text-sm font-semibold text-gray-800">Nạp qua Sepay</p>
+                  <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full">Tự động</span>
+                </div>
+                <p className="text-xs text-gray-500">Số dư cập nhật ngay sau khi thanh toán thành công.</p>
+                {sepayTopupError && <p className="text-xs text-red-500">{sepayTopupError}</p>}
+                <button
+                  onClick={handleSepayTopup}
+                  disabled={!topupAmount || sepayTopupLoading}
+                  className="w-full flex items-center justify-center gap-2 bg-primary-700 hover:bg-primary-800 disabled:opacity-60 text-white font-bold py-3 rounded-xl text-sm transition-colors"
+                >
+                  {sepayTopupLoading
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý...</>
+                    : <><CreditCard className="w-4 h-4" /> Thanh toán qua Sepay</>}
+                </button>
               </div>
 
-              <div className="bg-primary-50 border border-primary-200 rounded-xl px-4 py-3 mb-4">
-                <p className="text-xs text-gray-500 mb-1">Nội dung chuyển khoản</p>
-                <code className="font-bold text-primary-800 text-sm">
-                  topup {user?.email ?? ''}
-                </code>
-              </div>
-
-              <div className="text-left space-y-1.5 text-sm text-gray-500">
-                <p>• Chuyển khoản đúng nội dung để được xác nhận tự động</p>
-                <p>• Số dư cập nhật trong vòng 5–15 phút</p>
-                <p>• Liên hệ hỗ trợ:{' '}
-                  <a href="https://zalo.me/0383574189" target="_blank" rel="noopener noreferrer"
-                    className="text-primary-700 font-semibold">Zalo 038.357.4189</a>
-                </p>
+              {/* VietQR option */}
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-3">Hoặc chuyển khoản VietQR</p>
+                <div className="flex justify-center mb-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={vietQrUrl(topupAmount, `topup ${user?.email ?? ''}`)}
+                    alt="QR nạp tiền"
+                    width={220}
+                    height={260}
+                    className="rounded-2xl border border-gray-200 shadow"
+                  />
+                </div>
+                <div className="bg-primary-50 border border-primary-200 rounded-xl px-4 py-3 mb-4 text-center">
+                  <p className="text-xs text-gray-500 mb-1">Nội dung chuyển khoản</p>
+                  <code className="font-bold text-primary-800 text-sm">topup {user?.email ?? ''}</code>
+                </div>
+                <div className="space-y-1.5 text-sm text-gray-500">
+                  <p>• Chuyển khoản đúng nội dung để được xác nhận tự động</p>
+                  <p>• Số dư cập nhật trong vòng 5–15 phút</p>
+                  <p>• Liên hệ:{' '}
+                    <a href="https://zalo.me/0383574189" target="_blank" rel="noopener noreferrer"
+                      className="text-primary-700 font-semibold">Zalo 038.357.4189</a>
+                  </p>
+                </div>
               </div>
             </div>
+
+            {/* Transaction history */}
+            {topupHistory.length > 0 && (
+              <div className="card p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <History className="w-4 h-4 text-gray-500" />
+                  <h3 className="font-semibold text-gray-800 text-sm">Lịch sử nạp tiền</h3>
+                </div>
+                <div className="space-y-2">
+                  {topupHistory.map(tx => (
+                    <div key={tx.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">
+                          +{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tx.amount)}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {new Date(tx.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
+                        </p>
+                      </div>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                        tx.status === 'paid' ? 'bg-green-100 text-green-700'
+                          : tx.status === 'failed' ? 'bg-red-100 text-red-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {tx.status === 'paid' ? 'Thành công' : tx.status === 'failed' ? 'Thất bại' : 'Đang xử lý'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
         {/* Subscriptions Tab */}
