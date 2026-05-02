@@ -16,6 +16,7 @@ import { promotionRoutes } from './modules/promotions/promotions.routes.js'
 import { bannerRoutes } from './modules/banners/banners.routes.js'
 import { referralRoutes } from './modules/referral/referral.routes.js'
 import { subscriptionRoutes } from './modules/subscriptions/subscriptions.routes.js'
+import { adminUsersRoutes } from './modules/user-auth/admin-users.routes.js'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -84,6 +85,7 @@ await app.register(promotionRoutes, { prefix: '/api/v1' })
 await app.register(bannerRoutes,    { prefix: '/api/v1' })
 await app.register(referralRoutes,      { prefix: '/api/v1' })
 await app.register(subscriptionRoutes,  { prefix: '/api/v1' })
+await app.register(adminUsersRoutes,    { prefix: '/api/v1' })
 
 // Run pending migrations before starting
 try {
