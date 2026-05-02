@@ -27,8 +27,8 @@ export const adminApi = {
 
   // Orders
   getOrders: () => adminFetch('/admin/orders'),
-  updateOrderStatus: (id: number, status: string) =>
-    adminFetch(`/admin/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  updateOrderStatus: (id: number, status: string, extra?: { accountInfo?: string; instructions?: string }) =>
+    adminFetch(`/admin/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status, ...extra }) }),
 
   // Products
   getProducts: () => adminFetch('/products?limit=500'),

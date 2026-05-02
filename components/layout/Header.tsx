@@ -57,7 +57,10 @@ export function Header() {
     setUnreadCount(0)
   }
 
+  const [expandedNotifId, setExpandedNotifId] = useState<number | null>(null)
+
   const handleNotifClick = async (notif: UserNotification) => {
+    setExpandedNotifId((prev) => (prev === notif.id ? null : notif.id))
     if (!userToken || notif.isRead) return
     await markNotificationRead(userToken, notif.id)
     setNotifications((prev) =>
@@ -230,7 +233,7 @@ export function Header() {
                 {notifOpen && (
                   <>
                     <div className="fixed inset-0 z-40 md:hidden" onClick={() => setNotifOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 w-80 max-h-[420px] flex flex-col overflow-hidden">
+                    <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 w-96 max-h-[520px] flex flex-col overflow-hidden">
                       {/* Header */}
                       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
                         <span className="text-sm font-semibold text-gray-900">Thông báo</span>
@@ -252,30 +255,80 @@ export function Header() {
                             <span className="text-sm">Không có thông báo</span>
                           </div>
                         ) : (
-                          notifications.map((notif) => (
-                            <button
-                              key={notif.id}
-                              onClick={() => handleNotifClick(notif)}
-                              className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors flex gap-3 items-start ${
-                                !notif.isRead ? 'bg-primary-50/60' : ''
-                              }`}
-                            >
-                              <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${!notif.isRead ? 'bg-primary-500' : 'bg-transparent'}`} />
-                              <div className="flex-1 min-w-0">
-                                <p className={`text-sm leading-snug ${!notif.isRead ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
-                                  {notif.title}
-                                </p>
-                                {notif.body && (
-                                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{notif.body}</p>
+                          notifications.map((notif) => {
+                            const isExpanded = expandedNotifId === notif.id
+                            const accountInfo = notif.meta?.accountInfo as string | null | undefined
+                            const instructions = notif.meta?.instructions as string | null | undefined
+                            const hasDetails = !!(accountInfo || instructions)
+                            return (
+                              <div
+                                key={notif.id}
+                                className={`border-b border-gray-50 transition-colors ${!notif.isRead ? 'bg-primary-50/60' : ''}`}
+                              >
+                                {/* Header row — always visible */}
+                                <button
+                                  onClick={() => handleNotifClick(notif)}
+                                  className="w-full text-left px-4 py-3 hover:bg-gray-50/80 transition-colors flex gap-3 items-start"
+                                >
+                                  <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${!notif.isRead ? 'bg-primary-500' : 'bg-gray-200'}`} />
+                                  <div className="flex-1 min-w-0">
+                                    <p className={`text-sm leading-snug ${!notif.isRead ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                                      {notif.title}
+                                    </p>
+                                    {!isExpanded && notif.body && (
+                                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 whitespace-pre-line">
+                                        {notif.body.split('\n')[0]}
+                                      </p>
+                                    )}
+                                    <div className="flex items-center justify-between mt-1">
+                                      <p className="text-xs text-gray-400">
+                                        {new Date(notif.createdAt).toLocaleString('vi-VN', {
+                                          day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+                                        })}
+                                      </p>
+                                      {hasDetails && (
+                                        <span className="text-xs text-primary-600 font-medium">
+                                          {isExpanded ? 'Thu gọn ▲' : 'Xem chi tiết ▼'}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </button>
+
+                                {/* Expanded detail panel */}
+                                {isExpanded && (
+                                  <div className="px-4 pb-4 space-y-3">
+                                    {accountInfo && (
+                                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                                        <p className="text-xs font-semibold text-blue-700 mb-1.5 flex items-center gap-1">
+                                          📋 Thông tin tài khoản
+                                        </p>
+                                        <pre className="text-xs text-blue-900 whitespace-pre-wrap font-mono leading-relaxed break-all">
+                                          {accountInfo}
+                                        </pre>
+                                        <button
+                                          onClick={() => navigator.clipboard?.writeText(accountInfo)}
+                                          className="mt-2 text-[11px] text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                                        >
+                                          📋 Sao chép
+                                        </button>
+                                      </div>
+                                    )}
+                                    {instructions && (
+                                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                                        <p className="text-xs font-semibold text-amber-700 mb-1.5 flex items-center gap-1">
+                                          📖 Hướng dẫn sử dụng
+                                        </p>
+                                        <p className="text-xs text-amber-900 whitespace-pre-wrap leading-relaxed">
+                                          {instructions}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
                                 )}
-                                <p className="text-xs text-gray-400 mt-1">
-                                  {new Date(notif.createdAt).toLocaleString('vi-VN', {
-                                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
-                                  })}
-                                </p>
                               </div>
-                            </button>
-                          ))
+                            )
+                          })
                         )}
                       </div>
                     </div>

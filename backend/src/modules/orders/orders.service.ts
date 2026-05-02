@@ -39,12 +39,20 @@ export async function updateOrderStatus(id: number, input: UpdateStatusInput) {
   }
 
   if (input.status === 'delivered' && order.userId) {
+    const parts: string[] = [`Đơn hàng của bạn trị giá ${order.total.toLocaleString('vi-VN')}₫ đã được xử lý thành công!`]
+    if (input.accountInfo)  parts.push(`📋 Thông tin tài khoản:\n${input.accountInfo}`)
+    if (input.instructions) parts.push(`📖 Hướng dẫn sử dụng:\n${input.instructions}`)
+
     createNotification({
       userId: order.userId,
       type: 'order_delivered',
-      title: `Đơn hàng #${order.id} đã được giao`,
-      body: `Đơn hàng của bạn trị giá ${order.total.toLocaleString('vi-VN')}₫ đã được giao thành công. Cảm ơn bạn đã mua hàng!`,
-      meta: { orderId: order.id },
+      title: `Đơn hàng #${order.id} đã hoàn thành`,
+      body: parts.join('\n\n'),
+      meta: {
+        orderId: order.id,
+        accountInfo: input.accountInfo ?? null,
+        instructions: input.instructions ?? null,
+      },
     }).catch(() => { /* non-critical */ })
   }
 

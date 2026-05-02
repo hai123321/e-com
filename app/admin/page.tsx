@@ -105,6 +105,9 @@ function OrdersTab() {
   const [orders, setOrders] = useState<Order[]>([])
   const [selected, setSelected] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
+  const [deliveryModal, setDeliveryModal] = useState<{ orderId: number } | null>(null)
+  const [deliveryForm, setDeliveryForm] = useState({ accountInfo: '', instructions: '' })
+  const [deliverySaving, setDeliverySaving] = useState(false)
 
   const load = useCallback(async () => {
     try { const r = await adminApi.getOrders(); setOrders(r.data ?? []) }
@@ -113,10 +116,34 @@ function OrdersTab() {
 
   useEffect(() => { load() }, [load])
 
-  const updateStatus = async (id: number, status: string) => {
-    await adminApi.updateOrderStatus(id, status)
+  const applyStatus = (id: number, status: string) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o))
     if (selected?.id === id) setSelected(prev => prev ? { ...prev, status } : null)
+  }
+
+  const updateStatus = async (id: number, status: string) => {
+    if (status === 'delivered') {
+      setDeliveryForm({ accountInfo: '', instructions: '' })
+      setDeliveryModal({ orderId: id })
+      return
+    }
+    await adminApi.updateOrderStatus(id, status)
+    applyStatus(id, status)
+  }
+
+  const confirmDelivery = async () => {
+    if (!deliveryModal) return
+    setDeliverySaving(true)
+    try {
+      await adminApi.updateOrderStatus(deliveryModal.orderId, 'delivered', {
+        accountInfo: deliveryForm.accountInfo || undefined,
+        instructions: deliveryForm.instructions || undefined,
+      })
+      applyStatus(deliveryModal.orderId, 'delivered')
+      setDeliveryModal(null)
+    } finally {
+      setDeliverySaving(false)
+    }
   }
 
   if (loading) return <p className="text-gray-500 text-sm">Đang tải...</p>
@@ -179,6 +206,61 @@ function OrdersTab() {
                   {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </select>
               </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Delivery details modal */}
+      {deliveryModal && (
+        <Modal title="Hoàn thành đơn hàng" onClose={() => setDeliveryModal(null)}>
+          <div className="space-y-4">
+            <p className="text-gray-400 text-sm">
+              Điền thông tin tài khoản / hướng dẫn để gửi kèm thông báo cho khách hàng.
+            </p>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-400">
+                📋 Thông tin tài khoản
+                <span className="text-gray-600 font-normal ml-1">(email, mật khẩu, link…)</span>
+              </label>
+              <textarea
+                rows={4}
+                placeholder={"Email: abc@example.com\nMật khẩu: Abc@12345\nLink đăng nhập: https://..."}
+                value={deliveryForm.accountInfo}
+                onChange={e => setDeliveryForm(f => ({ ...f, accountInfo: e.target.value }))}
+                className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm placeholder-gray-600 focus:outline-none focus:border-primary-500 resize-none font-mono"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-400">
+                📖 Hướng dẫn sử dụng
+                <span className="text-gray-600 font-normal ml-1">(tuỳ chọn)</span>
+              </label>
+              <textarea
+                rows={3}
+                placeholder={"1. Truy cập link đăng nhập\n2. Nhập email và mật khẩu\n3. Đổi mật khẩu sau khi vào"}
+                value={deliveryForm.instructions}
+                onChange={e => setDeliveryForm(f => ({ ...f, instructions: e.target.value }))}
+                className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm placeholder-gray-600 focus:outline-none focus:border-primary-500 resize-none"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setDeliveryModal(null)}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white rounded-xl py-2.5 text-sm font-medium transition-colors"
+              >
+                Huỷ
+              </button>
+              <button
+                onClick={confirmDelivery}
+                disabled={deliverySaving}
+                className="flex-1 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white rounded-xl py-2.5 text-sm font-semibold transition-colors"
+              >
+                {deliverySaving ? 'Đang lưu...' : '✓ Xác nhận hoàn thành'}
+              </button>
             </div>
           </div>
         </Modal>
