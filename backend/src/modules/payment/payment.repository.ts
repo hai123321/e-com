@@ -22,6 +22,18 @@ export async function findTransactionBySepayOrderId(sepayOrderId: string) {
   return tx ?? null
 }
 
+export async function findPendingTransactionByOrderId(orderId: number) {
+  const [tx] = await db
+    .select()
+    .from(paymentTransactions)
+    .where(and(
+      eq(paymentTransactions.orderId, orderId),
+      eq(paymentTransactions.status, 'pending'),
+    ))
+    .orderBy(desc(paymentTransactions.createdAt))
+  return tx ?? null
+}
+
 export async function updateTransaction(
   id: number,
   data: Partial<Pick<NewPaymentTransaction, 'status' | 'sepayTxId' | 'ipnPayload'>>,
