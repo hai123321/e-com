@@ -16,29 +16,32 @@ import type { IpnPayload } from './payment.schema.js'
 const BadRequest = createError('FST_ERR_BAD_REQUEST', '%s', 400)
 const NotFound   = createError('FST_ERR_NOT_FOUND',   '%s', 404)
 
-function buildSepayOrderId(prefix: string, refId: number): string {
-  return `${prefix}${refId}_${Date.now()}`
+/** Generate an MS-format payment code, e.g. "MS3F9K2A" */
+function generateMsCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let code = 'MS'
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)]
+  }
+  return code
 }
 
 async function callSepayCreatePayment(params: {
   amount: number
   description: string
-  sepayOrderId: string
-}): Promise<{ paymentUrl: string; sepayCode?: string }> {
+  msCode: string        // pre-generated MS code used as orderId and QR addInfo
+}): Promise<{ paymentUrl: string; sepayCode: string }> {
   if (!config.SEPAY_API_URL || !config.SEPAY_MERCHANT_ID || !config.SEPAY_SECRET_KEY) {
-    // Fallback: return VietQR deep link — no SePay code available
-    const bank = 'MB'
-    const accountNo = config.SEPAY_MERCHANT_ID || '0000000000'
-    const addInfo = encodeURIComponent(params.description)
-    const paymentUrl = `https://img.vietqr.io/image/${bank}-${accountNo}-compact.png?amount=${params.amount}&addInfo=${addInfo}`
-    return { paymentUrl }
+    // Fallback: VietQR with TPBank — use our own MS code as addInfo
+    const paymentUrl = `https://img.vietqr.io/image/TPB-00450820302-compact2.png?amount=${params.amount}&addInfo=${params.msCode}`
+    return { paymentUrl, sepayCode: params.msCode }
   }
 
   const body = {
     merchantId:  config.SEPAY_MERCHANT_ID,
     amount:      params.amount,
     description: params.description,
-    orderId:     params.sepayOrderId,
+    orderId:     params.msCode,
     returnUrl:   `${config.FRONTEND_URL}/payment/result`,
     cancelUrl:   `${config.FRONTEND_URL}/payment/cancel`,
   }
@@ -62,14 +65,14 @@ async function callSepayCreatePayment(params: {
     throw new BadRequest(`Sepay API error: ${text}`)
   }
 
-  // SePay returns the generated payment code (e.g. "MSA1A1A1") in code / paymentCode field
+  // SePay may return its own payment code — prefer that, otherwise keep our MS code
   const data = await res.json() as {
     paymentUrl?: string; payment_url?: string
     code?: string; paymentCode?: string; transaction_code?: string
   }
   const paymentUrl = data.paymentUrl ?? data.payment_url ?? ''
   if (!paymentUrl) throw new BadRequest('Sepay did not return a payment URL')
-  const sepayCode = data.code ?? data.paymentCode ?? data.transaction_code
+  const sepayCode = data.code ?? data.paymentCode ?? data.transaction_code ?? params.msCode
   return { paymentUrl, sepayCode }
 }
 
@@ -78,38 +81,28 @@ export async function createOrderPayment(orderId: number, amount: number, userId
   if (!order) throw new NotFound('Order not found')
   if (order.status !== 'pending') throw new BadRequest('Order đã được xử lý')
 
-  const internalOrderId = buildSepayOrderId('ORD', orderId)
-  const description     = `Thanh toan don hang order-${String(orderId).padStart(6, '0')}`
+  const msCode      = generateMsCode()
+  const description = `Thanh toan don hang ${msCode}`
 
-  const { paymentUrl, sepayCode } = await callSepayCreatePayment({
-    amount,
-    description,
-    sepayOrderId: internalOrderId,
-  })
+  const { paymentUrl, sepayCode } = await callSepayCreatePayment({ amount, description, msCode })
 
-  // Prefer the SePay-generated payment code (e.g. "MSA1A1A1") so IPN lookup works;
-  // fall back to our own internal ID when SePay doesn't return one (VietQR mode).
   const tx = await createTransaction({
     orderId,
     userId: userId ?? null,
     type:   'order',
     amount,
     status: 'pending',
-    sepayOrderId: sepayCode ?? internalOrderId,
+    sepayOrderId: sepayCode,   // always MS-format now
   })
 
   return { transaction: tx, paymentUrl }
 }
 
 export async function createTopupPayment(userId: number, amount: number) {
-  const internalOrderId = buildSepayOrderId('TOP', userId)
-  const description     = `Nap tien vi MiuShop user-${userId}`
+  const msCode      = generateMsCode()
+  const description = `Nap tien vi MiuShop ${msCode}`
 
-  const { paymentUrl, sepayCode } = await callSepayCreatePayment({
-    amount,
-    description,
-    sepayOrderId: internalOrderId,
-  })
+  const { paymentUrl, sepayCode } = await callSepayCreatePayment({ amount, description, msCode })
 
   const tx = await createTransaction({
     orderId: null,
@@ -117,7 +110,7 @@ export async function createTopupPayment(userId: number, amount: number) {
     type:    'topup',
     amount,
     status:  'pending',
-    sepayOrderId: sepayCode ?? internalOrderId,
+    sepayOrderId: sepayCode,   // always MS-format now
   })
 
   return { transaction: tx, paymentUrl }
