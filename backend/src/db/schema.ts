@@ -1,8 +1,11 @@
 import {
   pgTable, serial, varchar, text, integer, boolean,
-  timestamp, check, jsonb, unique,
+  timestamp, check, jsonb, unique, pgEnum,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
+
+export const paymentTypeEnum   = pgEnum('payment_type',   ['order', 'topup'])
+export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'paid', 'failed'])
 
 export const products = pgTable('products', {
   id:          serial('id').primaryKey(),
@@ -93,8 +96,9 @@ export const users = pgTable('users', {
   passwordHash: varchar('password_hash', { length: 255 }),
   googleId:     varchar('google_id', { length: 255 }).unique(),
   isActive:     boolean('is_active').notNull().default(true),
-  referralCode: varchar('referral_code', { length: 20 }).unique(),
-  referredById: integer('referred_by_id'),
+  referralCode:  varchar('referral_code', { length: 20 }).unique(),
+  referredById:  integer('referred_by_id'),
+  walletBalance: integer('wallet_balance').notNull().default(0),
   createdAt:    timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -187,3 +191,20 @@ export const userSubscriptions = pgTable('user_subscriptions', {
 })
 export type UserSubscription    = typeof userSubscriptions.$inferSelect
 export type NewUserSubscription = typeof userSubscriptions.$inferInsert
+
+// ── Payment Transactions ────────────────────────────────────────────────────
+export const paymentTransactions = pgTable('payment_transactions', {
+  id:           serial('id').primaryKey(),
+  orderId:      integer('order_id').references(() => orders.id, { onDelete: 'set null' }),
+  userId:       integer('user_id').references(() => users.id, { onDelete: 'set null' }),
+  type:         paymentTypeEnum('type').notNull().default('order'),
+  amount:       integer('amount').notNull(),
+  status:       paymentStatusEnum('status').notNull().default('pending'),
+  sepayTxId:    varchar('sepay_tx_id', { length: 255 }),
+  sepayOrderId: varchar('sepay_order_id', { length: 255 }),
+  ipnPayload:   jsonb('ipn_payload'),
+  createdAt:    timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+export type PaymentTransaction    = typeof paymentTransactions.$inferSelect
+export type NewPaymentTransaction = typeof paymentTransactions.$inferInsert
