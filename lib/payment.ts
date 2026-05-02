@@ -41,6 +41,7 @@ export async function createSepayOrderPayment(
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
+    body: JSON.stringify({}),
   })
   const json = await res.json()
   if (!res.ok) throw new Error(json.error ?? 'Không thể tạo thanh toán Sepay')
