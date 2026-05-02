@@ -87,26 +87,19 @@ function OrderSummary() {
 function SuccessScreen({ order, token }: { order: OrderResult; token?: string }) {
   const fallbackCode = `order-${String(order.id).padStart(6, '0')}`
   const [qrCode, setQrCode] = useState<string>(fallbackCode)
-  const [sepayUrl, setSepayUrl] = useState<string | null>(null)
-  const [sepayLoading, setSepayLoading] = useState(false)
-  const [sepayError, setSepayError] = useState('')
   const [paid, setPaid] = useState(false)
   const stopPollRef = useRef<(() => void) | null>(null)
 
-  // Try to get Sepay URL for the order
+  // Fetch MS code and start polling
   useEffect(() => {
     let cancelled = false
-    setSepayLoading(true)
     createSepayOrderPayment(order.id, token)
-      .then(({ paymentUrl, transactionId, sepayCode }) => {
+      .then(({ transactionId, sepayCode }) => {
         if (cancelled) return
-        setSepayUrl(paymentUrl)
-        setQrCode(sepayCode)          // use MS-code as QR addInfo
-        // Start polling
+        setQrCode(sepayCode)
         stopPollRef.current = pollTransactionStatus(String(transactionId), () => setPaid(true), token)
       })
-      .catch(() => { if (!cancelled) setSepayUrl(null) })
-      .finally(() => { if (!cancelled) setSepayLoading(false) })
+      .catch(() => { /* keep fallback code */ })
     return () => {
       cancelled = true
       stopPollRef.current?.()
@@ -146,33 +139,10 @@ function SuccessScreen({ order, token }: { order: OrderResult; token?: string })
           </div>
         </div>
 
-        {/* Sepay option */}
-        {(sepayLoading || sepayUrl) && (
-          <div className="border border-primary-200 rounded-2xl p-5 space-y-3">
-            <p className="font-semibold text-gray-800 text-sm">Thanh toán nhanh qua Sepay</p>
-            <p className="text-xs text-gray-500">Hệ thống tự động xác nhận sau khi thanh toán.</p>
-            {sepayLoading ? (
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <Loader2 className="w-4 h-4 animate-spin" /> Đang tạo link thanh toán...
-              </div>
-            ) : (
-              <a
-                href={sepayUrl!}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full bg-primary-700 hover:bg-primary-800 text-white font-bold py-3 rounded-xl text-sm transition-colors"
-              >
-                <CreditCard className="w-4 h-4" /> Thanh toán qua Sepay
-              </a>
-            )}
-            {sepayError && <p className="text-xs text-red-500">{sepayError}</p>}
-          </div>
-        )}
-
-        {/* VietQR fallback */}
+        {/* VietQR */}
         <div className="text-center space-y-3">
           <p className="font-semibold text-gray-800 text-sm">
-            {sepayUrl ? 'Hoặc' : ''} Quét QR chuyển khoản thủ công
+            Quét QR chuyển khoản
           </p>
           <p className="text-sm text-gray-500">
             Chuyển khoản <span className="font-bold text-primary-700">{formatCurrency(order.total)}</span> với nội dung:
