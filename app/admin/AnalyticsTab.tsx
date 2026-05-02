@@ -8,7 +8,10 @@ interface RevenueDay   { day: string; revenue: number; orders: number }
 interface ProductSold  { name: string; soldCount: number; price: number }
 interface ProductRev   { name: string; revenue: number; units: number }
 interface TopBuyer     { name: string; email: string; orders: number; spend: number }
-interface Summary      { total_revenue: number; total_orders: number; avg_order_value: number; delivered_orders: number }
+interface Summary {
+  total_revenue: number; avg_order_value: number
+  delivered_orders: number; pending_orders: number; confirmed_orders: number; cancelled_orders: number
+}
 
 interface Analytics {
   revenueByDay:         RevenueDay[]
@@ -210,24 +213,36 @@ export function AnalyticsTab() {
           {/* Summary cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
-              label="Doanh thu"
+              label="Doanh thu hoàn thành"
               value={formatCurrency(data.summary.total_revenue ?? 0)}
               sub={`${days} ngày qua`}
             />
             <StatCard
-              label="Đơn hàng"
-              value={String(data.summary.total_orders ?? 0)}
-              sub={`${data.summary.delivered_orders ?? 0} hoàn thành`}
-            />
-            <StatCard
-              label="Giá trị TB / đơn"
-              value={formatCurrency(data.summary.avg_order_value ?? 0)}
+              label="Đơn hoàn thành"
+              value={String(data.summary.delivered_orders ?? 0)}
+              sub={`Giá trị TB: ${formatCurrency(data.summary.avg_order_value ?? 0)}`}
             />
             <StatCard
               label="Tổng SP bán ra"
               value={String(data.topProductsBySold.reduce((s, p) => s + p.soldCount, 0))}
               sub="từ trước đến nay"
             />
+            <div className="bg-gray-800/60 border border-gray-700 rounded-2xl p-5 space-y-2">
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">Trạng thái đơn ({days}d)</p>
+              <div className="space-y-1.5">
+                {[
+                  { label: 'Chờ xử lý',  count: data.summary.pending_orders   ?? 0, color: 'text-yellow-400' },
+                  { label: 'Đã xác nhận', count: data.summary.confirmed_orders ?? 0, color: 'text-blue-400'   },
+                  { label: 'Hoàn thành',  count: data.summary.delivered_orders ?? 0, color: 'text-green-400'  },
+                  { label: 'Đã huỷ',      count: data.summary.cancelled_orders ?? 0, color: 'text-red-400'    },
+                ].map(({ label, count, color }) => (
+                  <div key={label} className="flex items-center justify-between text-xs">
+                    <span className="text-gray-500">{label}</span>
+                    <span className={`font-bold ${color}`}>{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Revenue chart */}

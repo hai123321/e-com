@@ -298,7 +298,7 @@ export async function getAnalytics(days = 30) {
         LIMIT 10
       `),
 
-      // Top 10 buyers by total spend (all non-cancelled orders)
+      // Top 10 buyers by total spend (delivered orders only)
       db.execute(sql`
         SELECT
           o.customer_name                        AS name,
@@ -306,7 +306,7 @@ export async function getAnalytics(days = 30) {
           COUNT(*)::int                          AS orders,
           COALESCE(SUM(o.total), 0)::int         AS spend
         FROM orders o
-        WHERE o.status != 'cancelled'
+        WHERE o.status = 'delivered'
         GROUP BY o.customer_name, o.customer_email
         ORDER BY spend DESC
         LIMIT 10
@@ -316,21 +316,24 @@ export async function getAnalytics(days = 30) {
       db.execute(sql`
         SELECT
           COALESCE(SUM(CASE WHEN status = 'delivered' THEN total ELSE 0 END), 0)::int AS total_revenue,
-          COUNT(*)::int                                                                  AS total_orders,
           COALESCE(AVG(CASE WHEN status = 'delivered' THEN total END), 0)::int          AS avg_order_value,
-          COUNT(CASE WHEN status = 'delivered' THEN 1 END)::int                         AS delivered_orders
+          COUNT(CASE WHEN status = 'delivered' THEN 1 END)::int                         AS delivered_orders,
+          COUNT(CASE WHEN status = 'pending'   THEN 1 END)::int                         AS pending_orders,
+          COUNT(CASE WHEN status = 'confirmed' THEN 1 END)::int                         AS confirmed_orders,
+          COUNT(CASE WHEN status = 'cancelled' THEN 1 END)::int                         AS cancelled_orders
         FROM orders
         WHERE created_at >= ${since}
       `),
     ])
 
   return {
-    revenueByDay:        revenueByDay.rows        as { day: string; revenue: number; orders: number }[],
-    topProductsBySold:   topProductsBySold.rows   as { name: string; soldCount: number; price: number }[],
-    topProductsByRevenue: topProductsByRevenue.rows as { name: string; revenue: number; units: number }[],
-    topBuyers:           topBuyers.rows           as { name: string; email: string; orders: number; spend: number }[],
-    summary:             (summary.rows[0] ?? {})  as {
-      total_revenue: number; total_orders: number; avg_order_value: number; delivered_orders: number
+    revenueByDay:         revenueByDay.rows         as { day: string; revenue: number; orders: number }[],
+    topProductsBySold:    topProductsBySold.rows     as { name: string; soldCount: number; price: number }[],
+    topProductsByRevenue: topProductsByRevenue.rows  as { name: string; revenue: number; units: number }[],
+    topBuyers:            topBuyers.rows             as { name: string; email: string; orders: number; spend: number }[],
+    summary:              (summary.rows[0] ?? {})    as {
+      total_revenue: number; avg_order_value: number
+      delivered_orders: number; pending_orders: number; confirmed_orders: number; cancelled_orders: number
     },
   }
 }

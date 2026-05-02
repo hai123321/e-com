@@ -105,6 +105,7 @@ function OrdersTab() {
   const [orders, setOrders] = useState<Order[]>([])
   const [selected, setSelected] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [deliveryModal, setDeliveryModal] = useState<{ orderId: number } | null>(null)
   const [deliveryForm, setDeliveryForm] = useState({ accountInfo: '', instructions: '' })
   const [deliverySaving, setDeliverySaving] = useState(false)
@@ -148,8 +149,42 @@ function OrdersTab() {
 
   if (loading) return <p className="text-gray-500 text-sm">Đang tải...</p>
 
+  const STATUS_FILTER_OPTIONS = [
+    { value: 'all',       label: 'Tất cả' },
+    { value: 'pending',   label: '⏳ Chờ xử lý' },
+    { value: 'confirmed', label: '🔵 Đã xác nhận' },
+    { value: 'delivered', label: '✅ Hoàn thành' },
+    { value: 'cancelled', label: '❌ Đã huỷ' },
+  ]
+
+  const filteredOrders = statusFilter === 'all'
+    ? orders
+    : orders.filter(o => o.status === statusFilter)
+
   return (
     <>
+      {/* Status filter */}
+      <div className="flex items-center gap-2 flex-wrap mb-2">
+        {STATUS_FILTER_OPTIONS.map(opt => (
+          <button
+            key={opt.value}
+            onClick={() => setStatusFilter(opt.value)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+              statusFilter === opt.value
+                ? 'bg-primary-600 border-primary-500 text-white'
+                : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white hover:border-gray-500'
+            }`}
+          >
+            {opt.label}
+            <span className="ml-1.5 opacity-60">
+              {opt.value === 'all'
+                ? orders.length
+                : orders.filter(o => o.status === opt.value).length}
+            </span>
+          </button>
+        ))}
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -160,10 +195,10 @@ function OrdersTab() {
             </tr>
           </thead>
           <tbody>
-            {orders.length === 0 && (
-              <tr><td colSpan={6} className="text-center text-gray-600 py-8 text-sm">Chưa có đơn hàng nào</td></tr>
+            {filteredOrders.length === 0 && (
+              <tr><td colSpan={6} className="text-center text-gray-600 py-8 text-sm">Không có đơn hàng nào</td></tr>
             )}
-            {orders.map(o => (
+            {filteredOrders.map(o => (
               <tr key={o.id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
                 <td className="py-3 px-3 text-gray-400 font-mono">#{o.id}</td>
                 <td className="py-3 px-3">
