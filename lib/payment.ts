@@ -2,8 +2,8 @@ import { apiUrl } from './api'
 
 // ── Bank Transfer Config ────────────────────────────────────────────────────
 export const BANK = {
-  id: 'TCB',
-  account: 'MS00T01275350543975',
+  id: 'TPB',
+  account: '00450820302',
   name: 'TRIEU NAM HAI',
 }
 
@@ -11,9 +11,8 @@ export function vietQrUrl(amount: number, addInfo: string): string {
   const params = new URLSearchParams({
     amount: String(amount),
     addInfo,
-    accountName: BANK.name,
   })
-  return `https://img.vietqr.io/image/${BANK.id}-${BANK.account}-compact2.jpg?${params.toString()}`
+  return `https://img.vietqr.io/image/${BANK.id}-${BANK.account}-compact2.png?${params.toString()}`
 }
 
 // ── Sepay ────────────────────────────────────────────────────────────────────
@@ -27,7 +26,9 @@ export const SEPAY_ENABLED = Boolean(
 
 export interface SepayPaymentResult {
   paymentUrl: string
-  transactionId: string
+  transactionId: number
+  /** SePay-generated payment code, e.g. "MS1A2B3C" — use as VietQR addInfo */
+  sepayCode: string
 }
 
 export async function createSepayOrderPayment(
@@ -43,7 +44,12 @@ export async function createSepayOrderPayment(
   })
   const json = await res.json()
   if (!res.ok) throw new Error(json.error ?? 'Không thể tạo thanh toán Sepay')
-  return { paymentUrl: json.data.paymentUrl, transactionId: json.data.transactionId }
+  const tx = json.data.transaction
+  return {
+    paymentUrl: json.data.paymentUrl,
+    transactionId: tx.id,
+    sepayCode: tx.sepayOrderId ?? `order-${String(orderId).padStart(6, '0')}`,
+  }
 }
 
 export async function createSepayTopupPayment(
@@ -57,7 +63,12 @@ export async function createSepayTopupPayment(
   })
   const json = await res.json()
   if (!res.ok) throw new Error(json.error ?? 'Không thể tạo thanh toán Sepay')
-  return { paymentUrl: json.data.paymentUrl, transactionId: json.data.transactionId }
+  const tx = json.data.transaction
+  return {
+    paymentUrl: json.data.paymentUrl,
+    transactionId: tx.id,
+    sepayCode: tx.sepayOrderId ?? '',
+  }
 }
 
 export type TransactionStatus = 'pending' | 'paid' | 'failed'

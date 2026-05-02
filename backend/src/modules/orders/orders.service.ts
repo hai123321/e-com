@@ -1,5 +1,6 @@
 import * as repo from './orders.repository.js'
 import { sendOrderConfirmationEmail } from '../../shared/email.js'
+import { createNotification } from '../notifications/notifications.repository.js'
 import type { CreateOrderInput, OrderQuery, UpdateStatusInput } from './orders.schema.js'
 
 export async function createOrder(input: CreateOrderInput) {
@@ -35,6 +36,16 @@ export async function updateOrderStatus(id: number, input: UpdateStatusInput) {
         total: order.total,
       }).catch(() => { /* non-critical — log in production */ })
     }
+  }
+
+  if (input.status === 'delivered' && order.userId) {
+    createNotification({
+      userId: order.userId,
+      type: 'order_delivered',
+      title: `Đơn hàng #${order.id} đã được giao`,
+      body: `Đơn hàng của bạn trị giá ${order.total.toLocaleString('vi-VN')}₫ đã được giao thành công. Cảm ơn bạn đã mua hàng!`,
+      meta: { orderId: order.id },
+    }).catch(() => { /* non-critical */ })
   }
 
   return order

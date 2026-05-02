@@ -192,6 +192,20 @@ export const userSubscriptions = pgTable('user_subscriptions', {
 export type UserSubscription    = typeof userSubscriptions.$inferSelect
 export type NewUserSubscription = typeof userSubscriptions.$inferInsert
 
+// ── User Notifications ─────────────────────────────────────────────────────
+export const userNotifications = pgTable('user_notifications', {
+  id:        serial('id').primaryKey(),
+  userId:    integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type:      varchar('type', { length: 50 }).notNull().default('order_delivered'),
+  title:     varchar('title', { length: 255 }).notNull(),
+  body:      text('body').notNull().default(''),
+  isRead:    boolean('is_read').notNull().default(false),
+  meta:      jsonb('meta').default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+export type UserNotification    = typeof userNotifications.$inferSelect
+export type NewUserNotification = typeof userNotifications.$inferInsert
+
 // ── Payment Transactions ────────────────────────────────────────────────────
 export const paymentTransactions = pgTable('payment_transactions', {
   id:           serial('id').primaryKey(),

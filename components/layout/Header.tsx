@@ -1,13 +1,19 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, Store, Menu, X, Globe } from 'lucide-react'
+import { ShoppingCart, Store, Menu, X, Globe, Bell } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { useCart } from '@/hooks/useCart'
 import { MiniCart } from '@/components/cart/MiniCart'
 import { useT } from '@/lib/hooks/useT'
 import type { Locale } from '@/lib/i18n'
+import {
+  fetchNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  type UserNotification,
+} from '@/lib/notifications'
 
 const LOCALES: { value: Locale; flag: string; label: string }[] = [
   { value: 'vi', flag: '🇻🇳', label: 'VI' },
@@ -19,11 +25,46 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
-  const { locale, setLocale, user, clearUser, openMiniCart, closeMiniCart, isMiniCartOpen } = useStore()
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [notifications, setNotifications] = useState<UserNotification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const { locale, setLocale, user, userToken, clearUser, openMiniCart, closeMiniCart, isMiniCartOpen } = useStore()
   const { itemCount } = useCart()
   const t = useT()
   const userDropdownRef = useRef<HTMLDivElement>(null)
   const langDropdownRef = useRef<HTMLDivElement>(null)
+  const notifDropdownRef = useRef<HTMLDivElement>(null)
+
+  const loadNotifications = useCallback(async () => {
+    if (!userToken) return
+    const data = await fetchNotifications(userToken)
+    setNotifications(data.items)
+    setUnreadCount(data.unread)
+  }, [userToken])
+
+  // Load on mount + poll every 30s
+  useEffect(() => {
+    if (!user) return
+    loadNotifications()
+    const interval = setInterval(loadNotifications, 30_000)
+    return () => clearInterval(interval)
+  }, [user, loadNotifications])
+
+  const handleMarkAllRead = async () => {
+    if (!userToken) return
+    await markAllNotificationsRead(userToken)
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+    setUnreadCount(0)
+  }
+
+  const handleNotifClick = async (notif: UserNotification) => {
+    if (!userToken || notif.isRead) return
+    await markNotificationRead(userToken, notif.id)
+    setNotifications((prev) =>
+      prev.map((n) => n.id === notif.id ? { ...n, isRead: true } : n)
+    )
+    setUnreadCount((c) => Math.max(0, c - 1))
+  }
 
   const navLinks = [
     { href: '/', label: t.nav.home },
@@ -42,6 +83,9 @@ export function Header() {
       }
       if (langDropdownRef.current && !langDropdownRef.current.contains(e.target as Node)) {
         setLangOpen(false)
+      }
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(e.target as Node)) {
+        setNotifOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -165,6 +209,79 @@ export function Header() {
                 <span className="hidden sm:inline">{t.header.login}</span>
                 <span className="sm:hidden text-base leading-none">👤</span>
               </Link>
+            )}
+
+            {/* Notification bell — only for logged-in users */}
+            {user && (
+              <div className="relative" ref={notifDropdownRef}>
+                <button
+                  onClick={() => setNotifOpen((o) => !o)}
+                  className="relative flex items-center justify-center bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-xl p-2 transition-all"
+                  aria-label="Thông báo"
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {notifOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40 md:hidden" onClick={() => setNotifOpen(false)} />
+                    <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 w-80 max-h-[420px] flex flex-col overflow-hidden">
+                      {/* Header */}
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
+                        <span className="text-sm font-semibold text-gray-900">Thông báo</span>
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={handleMarkAllRead}
+                            className="text-xs text-primary-600 hover:text-primary-800 font-medium transition-colors"
+                          >
+                            Đọc tất cả
+                          </button>
+                        )}
+                      </div>
+
+                      {/* List */}
+                      <div className="overflow-y-auto flex-1">
+                        {notifications.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-10 text-gray-400 gap-2">
+                            <Bell className="w-8 h-8 opacity-30" />
+                            <span className="text-sm">Không có thông báo</span>
+                          </div>
+                        ) : (
+                          notifications.map((notif) => (
+                            <button
+                              key={notif.id}
+                              onClick={() => handleNotifClick(notif)}
+                              className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors flex gap-3 items-start ${
+                                !notif.isRead ? 'bg-primary-50/60' : ''
+                              }`}
+                            >
+                              <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${!notif.isRead ? 'bg-primary-500' : 'bg-transparent'}`} />
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm leading-snug ${!notif.isRead ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                                  {notif.title}
+                                </p>
+                                {notif.body && (
+                                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{notif.body}</p>
+                                )}
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {new Date(notif.createdAt).toLocaleString('vi-VN', {
+                                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+                                  })}
+                                </p>
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
 
             {/* Cart with mini-cart */}

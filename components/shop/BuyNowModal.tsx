@@ -53,7 +53,7 @@ export function BuyNowModal({ product, onClose }: Props) {
       .then(({ paymentUrl, transactionId }) => {
         if (cancelled) return
         setSepayUrl(paymentUrl)
-        pollTransactionStatus(transactionId, () => setPaid(true), userToken ?? undefined)
+        pollTransactionStatus(String(transactionId), () => setPaid(true), userToken ?? undefined)
       })
       .catch(() => { if (!cancelled) setSepayUrl(null) })
       .finally(() => { if (!cancelled) setSepayLoading(false) })

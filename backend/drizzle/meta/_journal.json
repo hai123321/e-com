@@ -148,6 +148,13 @@
       "when": 1776620000000,
       "tag": "0020_sepay_payments",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1777720000000,
+      "tag": "0021_user_notifications",
+      "breakpoints": true
     }
   ]
 }

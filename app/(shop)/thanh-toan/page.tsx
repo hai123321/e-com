@@ -85,7 +85,8 @@ function OrderSummary() {
 
 // ── Success / Payment screen ──────────────────────────────────────────────────
 function SuccessScreen({ order, token }: { order: OrderResult; token?: string }) {
-  const qrUrl = vietQrUrl(order.total, `order-${String(order.id).padStart(6, '0')}`)
+  const fallbackCode = `order-${String(order.id).padStart(6, '0')}`
+  const [qrCode, setQrCode] = useState<string>(fallbackCode)
   const [sepayUrl, setSepayUrl] = useState<string | null>(null)
   const [sepayLoading, setSepayLoading] = useState(false)
   const [sepayError, setSepayError] = useState('')
@@ -97,11 +98,12 @@ function SuccessScreen({ order, token }: { order: OrderResult; token?: string })
     let cancelled = false
     setSepayLoading(true)
     createSepayOrderPayment(order.id, token)
-      .then(({ paymentUrl, transactionId }) => {
+      .then(({ paymentUrl, transactionId, sepayCode }) => {
         if (cancelled) return
         setSepayUrl(paymentUrl)
+        setQrCode(sepayCode)          // use MS-code as QR addInfo
         // Start polling
-        stopPollRef.current = pollTransactionStatus(transactionId, () => setPaid(true), token)
+        stopPollRef.current = pollTransactionStatus(String(transactionId), () => setPaid(true), token)
       })
       .catch(() => { if (!cancelled) setSepayUrl(null) })
       .finally(() => { if (!cancelled) setSepayLoading(false) })
@@ -113,7 +115,8 @@ function SuccessScreen({ order, token }: { order: OrderResult; token?: string })
 
   useEffect(() => () => { stopPollRef.current?.() }, [])
 
-  const orderCode = `order-${String(order.id).padStart(6, '0')}`
+  const qrUrl = vietQrUrl(order.total, qrCode)
+  const orderCode = fallbackCode
 
   if (paid) {
     return (
@@ -175,7 +178,7 @@ function SuccessScreen({ order, token }: { order: OrderResult; token?: string })
             Chuyển khoản <span className="font-bold text-primary-700">{formatCurrency(order.total)}</span> với nội dung:
           </p>
           <div className="bg-primary-50 border border-primary-200 rounded-xl px-4 py-2 inline-block">
-            <code className="font-bold text-primary-800 tracking-wider">{orderCode}</code>
+            <code className="font-bold text-primary-800 tracking-wider">{qrCode}</code>
           </div>
           <div className="flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
