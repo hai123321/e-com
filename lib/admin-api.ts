@@ -103,4 +103,7 @@ export const adminApi = {
   getExpiringSubscriptions: (withinDays = 7) =>
     adminFetch(`/admin/users/expiring-subscriptions?withinDays=${withinDays}`),
   getUserStats: (id: number) => adminFetch(`/admin/users/${id}/stats`),
+
+  // Analytics
+  getAnalytics: (days = 30) => adminFetch(`/admin/analytics?days=${days}`),
 }

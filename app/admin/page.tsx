@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { adminApi } from '@/lib/admin-api'
 import { MediaTab } from './MediaTab'
 import { UsersTab } from './UsersTab'
+import { AnalyticsTab } from './AnalyticsTab'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 interface Order {
@@ -32,7 +33,7 @@ interface Promotion {
   isActive: boolean; expiresAt?: string; createdAt: string
 }
 
-const TABS = ['Đơn hàng', 'Sản phẩm', 'Thành viên', 'Hướng dẫn', 'Cấu hình giá', 'Khuyến mại', 'Media'] as const
+const TABS = ['Dashboard', 'Đơn hàng', 'Sản phẩm', 'Thành viên', 'Hướng dẫn', 'Cấu hình giá', 'Khuyến mại', 'Media'] as const
 type Tab = typeof TABS[number]
 
 const STATUS_LABELS: Record<string, string> = {
@@ -979,7 +980,7 @@ function ExpiringSubscriptionsWidget() {
 // ─── Main Admin Page ─────────────────────────────────────────────────────────
 export default function AdminPage() {
   const router = useRouter()
-  const [tab, setTab] = useState<Tab>('Đơn hàng')
+  const [tab, setTab] = useState<Tab>('Dashboard')
   const [authed, setAuthed] = useState(false)
 
   useEffect(() => {
@@ -999,6 +1000,7 @@ export default function AdminPage() {
   if (!authed) return null
 
   const TAB_COMPONENTS: Record<Tab, React.ReactNode> = {
+    'Dashboard':   <AnalyticsTab />,
     'Đơn hàng':    <OrdersTab />,
     'Sản phẩm':    <ProductsTab />,
     'Thành viên':  <UsersTab />,

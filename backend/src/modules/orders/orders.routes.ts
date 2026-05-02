@@ -54,4 +54,14 @@ export async function orderRoutes(app: FastifyInstance) {
     const stats = await service.getDashboardStats()
     return reply.send({ success: true, data: stats })
   })
+
+  // Admin: analytics charts
+  app.get('/admin/analytics', {
+    preHandler: [app.authenticate],
+  }, async (req, reply) => {
+    const { days = '30' } = req.query as { days?: string }
+    const d = Math.min(Math.max(parseInt(days) || 30, 7), 365)
+    const data = await service.getAnalytics(d)
+    return reply.send({ success: true, data })
+  })
 }

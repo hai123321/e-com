@@ -43,3 +43,7 @@ export async function updateOrderStatus(id: number, input: UpdateStatusInput) {
 export async function getDashboardStats() {
   return repo.getDashboardStats()
 }
+
+export async function getAnalytics(days: number) {
+  return repo.getAnalytics(days)
+}

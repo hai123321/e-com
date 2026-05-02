@@ -255,3 +255,82 @@ export async function getDashboardStats() {
     totalProducts: Number(totalProducts),
   }
 }
+
+export async function getAnalytics(days = 30) {
+  const since = new Date()
+  since.setDate(since.getDate() - days)
+
+  const [revenueByDay, topProductsBySold, topProductsByRevenue, topBuyers, summary] =
+    await Promise.all([
+      // Daily revenue (delivered orders only)
+      db.execute(sql`
+        SELECT
+          TO_CHAR(created_at AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') AS day,
+          COALESCE(SUM(total), 0)::int                                        AS revenue,
+          COUNT(*)::int                                                        AS orders
+        FROM orders
+        WHERE status = 'delivered'
+          AND created_at >= ${since}
+        GROUP BY day
+        ORDER BY day
+      `),
+
+      // Top 10 products by sold count
+      db.execute(sql`
+        SELECT name, sold_count AS "soldCount", price
+        FROM products
+        WHERE sold_count > 0
+        ORDER BY sold_count DESC
+        LIMIT 10
+      `),
+
+      // Top 10 products by total revenue (from delivered orders)
+      db.execute(sql`
+        SELECT
+          oi.product_name                                  AS name,
+          COALESCE(SUM(oi.product_price * oi.quantity), 0)::int AS revenue,
+          SUM(oi.quantity)::int                            AS units
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE o.status = 'delivered'
+        GROUP BY oi.product_name
+        ORDER BY revenue DESC
+        LIMIT 10
+      `),
+
+      // Top 10 buyers by total spend (all non-cancelled orders)
+      db.execute(sql`
+        SELECT
+          o.customer_name                        AS name,
+          o.customer_email                       AS email,
+          COUNT(*)::int                          AS orders,
+          COALESCE(SUM(o.total), 0)::int         AS spend
+        FROM orders o
+        WHERE o.status != 'cancelled'
+        GROUP BY o.customer_name, o.customer_email
+        ORDER BY spend DESC
+        LIMIT 10
+      `),
+
+      // Summary for selected period
+      db.execute(sql`
+        SELECT
+          COALESCE(SUM(CASE WHEN status = 'delivered' THEN total ELSE 0 END), 0)::int AS total_revenue,
+          COUNT(*)::int                                                                  AS total_orders,
+          COALESCE(AVG(CASE WHEN status = 'delivered' THEN total END), 0)::int          AS avg_order_value,
+          COUNT(CASE WHEN status = 'delivered' THEN 1 END)::int                         AS delivered_orders
+        FROM orders
+        WHERE created_at >= ${since}
+      `),
+    ])
+
+  return {
+    revenueByDay:        revenueByDay.rows        as { day: string; revenue: number; orders: number }[],
+    topProductsBySold:   topProductsBySold.rows   as { name: string; soldCount: number; price: number }[],
+    topProductsByRevenue: topProductsByRevenue.rows as { name: string; revenue: number; units: number }[],
+    topBuyers:           topBuyers.rows           as { name: string; email: string; orders: number; spend: number }[],
+    summary:             (summary.rows[0] ?? {})  as {
+      total_revenue: number; total_orders: number; avg_order_value: number; delivered_orders: number
+    },
+  }
+}
