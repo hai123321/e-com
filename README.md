@@ -185,6 +185,19 @@ Push lên `main` → GitHub Actions tự động:
 | `CORS_ORIGIN` | | Mặc định: `https://miushop.io.vn` |
 | `NEXT_PUBLIC_API_URL` | | Mặc định: `https://miushop.io.vn` |
 | `API_INTERNAL_URL` | | Mặc định: `http://api:3001` (Docker internal) |
+| `SEPAY_MERCHANT_ID` | | Mã merchant Sepay (để trống → fallback VietQR) |
+| `SEPAY_SECRET_KEY` | | Secret key ký HMAC-SHA256 cho IPN webhook |
+| `SEPAY_API_URL` | | Endpoint Sepay API, mặc định `https://my.sepay.vn/userapi` |
+
+#### Lấy biến môi trường Sepay
+
+1. Đăng ký tài khoản tại [https://sepay.vn](https://sepay.vn) → vào **Cổng thanh toán → Tích hợp**
+2. **`SEPAY_MERCHANT_ID`**: Lấy tại trang **Thông tin merchant** (cột *Mã merchant*)
+3. **`SEPAY_SECRET_KEY`**: Lấy tại trang **Cài đặt API** → nhấn **Tạo Secret Key** (chỉ hiển thị 1 lần, lưu ngay)
+4. **`SEPAY_API_URL`**: Dùng giá trị mặc định `https://my.sepay.vn/userapi` (hoặc xem trong Sepay docs nếu có thay đổi)
+5. Cấu hình **IPN (Webhook) URL** trong Sepay dashboard thành `https://api.miushop.io.vn/api/v1/webhooks/sepay`
+
+> **Lưu ý:** Nếu không cấu hình 3 biến trên, hệ thống tự động fallback sang **VietQR** để khách hàng vẫn thanh toán được.
 
 ### GitHub Secrets cần cấu hình
 
@@ -197,6 +210,9 @@ JWT_SECRET
 ADMIN_PASSWORD
 CORS_ORIGIN
 NEXT_PUBLIC_API_URL
+SEPAY_MERCHANT_ID
+SEPAY_SECRET_KEY
+SEPAY_API_URL
 ```
 
 ## Cấu hình DNS (Cloudflare)
@@ -220,6 +236,13 @@ NEXT_PUBLIC_API_URL
 | POST | `/api/v1/auth/login` | | Đăng nhập admin → JWT |
 | GET | `/api/v1/admin/orders` | JWT | Danh sách đơn hàng |
 | GET | `/api/v1/admin/stats` | JWT | Dashboard stats |
+| POST | `/api/v1/payment/order/:orderId` | User JWT | Tạo link thanh toán Sepay cho đơn hàng |
+| POST | `/api/v1/payment/topup` | User JWT | Nạp tiền ví qua Sepay |
+| POST | `/api/v1/webhooks/sepay` | HMAC-SHA256 | IPN callback từ Sepay |
+| GET | `/api/v1/payment/transaction/:id` | User JWT | Kiểm tra trạng thái giao dịch |
+| GET | `/api/v1/admin/payment/transactions` | JWT | Danh sách tất cả giao dịch (admin) |
+| GET | `/api/v1/auth/user/wallet` | User JWT | Số dư ví + lịch sử giao dịch |
+| POST | `/api/v1/auth/user/wallet/spend` | User JWT | Trừ credit khi thanh toán |
 
 ## Quản lý sản phẩm
 

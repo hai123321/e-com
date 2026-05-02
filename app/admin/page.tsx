@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { adminApi } from '@/lib/admin-api'
 import { MediaTab } from './MediaTab'
+import { UsersTab } from './UsersTab'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 interface Order {
@@ -14,7 +15,7 @@ interface Order {
 interface Product {
   id: number; name: string; price: number; stock: number; category: string
   description: string; image: string; groupKey: string; isActive: boolean
-  featuredPriority: number; durationMonths: number
+  featuredPriority: number; durationMonths: number; soldCount?: number
 }
 interface Guide {
   id: number; sortOrder: number; type: string
@@ -31,7 +32,7 @@ interface Promotion {
   isActive: boolean; expiresAt?: string; createdAt: string
 }
 
-const TABS = ['Đơn hàng', 'Sản phẩm', 'Hướng dẫn', 'Cấu hình giá', 'Khuyến mại', 'Media'] as const
+const TABS = ['Đơn hàng', 'Sản phẩm', 'Thành viên', 'Hướng dẫn', 'Cấu hình giá', 'Khuyến mại', 'Media'] as const
 type Tab = typeof TABS[number]
 
 const STATUS_LABELS: Record<string, string> = {
@@ -192,6 +193,7 @@ function ProductsTab() {
   const [editing, setEditing] = useState<Product | null>(null)
   const [creating, setCreating] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [showBestSellers, setShowBestSellers] = useState(false)
   const emptyForm = { name: '', price: 0, stock: 0, category: 'AI', description: '', image: '', groupKey: '', isActive: true, featuredPriority: 0, durationMonths: 1 }
   const [form, setForm] = useState<Omit<Product, 'id'>>(emptyForm)
 
@@ -262,10 +264,66 @@ function ProductsTab() {
     </div>
   )
 
+  const bestSellers = [...products]
+    .filter(p => (p.soldCount ?? 0) > 0)
+    .sort((a, b) => (b.soldCount ?? 0) - (a.soldCount ?? 0))
+    .slice(0, 10)
+
   if (loading) return <p className="text-gray-500 text-sm">Đang tải...</p>
 
   return (
     <>
+      {/* Best Sellers toggle section */}
+      <div className="mb-6">
+        <button
+          onClick={() => setShowBestSellers(s => !s)}
+          className="flex items-center gap-2 text-sm font-medium text-yellow-400 hover:text-yellow-300 transition-colors"
+        >
+          <span>🏆 Bán chạy nhất</span>
+          <span className="text-gray-600 text-xs">{showBestSellers ? '▲ Ẩn' : '▼ Xem'}</span>
+        </button>
+        {showBestSellers && (
+          <div className="mt-3 bg-gray-800/40 border border-gray-800 rounded-2xl p-4">
+            {bestSellers.length === 0 ? (
+              <p className="text-gray-600 text-sm text-center py-4">Chưa có dữ liệu bán hàng</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-700">
+                      {['Hạng', 'Sản phẩm', 'Đã bán', 'Doanh thu'].map(h => (
+                        <th key={h} className="text-left text-gray-500 font-medium py-2 px-3 text-xs">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bestSellers.map((p, i) => (
+                      <tr key={p.id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                        <td className="py-2 px-3">
+                          <span className={`text-sm font-bold ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-yellow-700' : 'text-gray-600'}`}>
+                            #{i + 1}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3">
+                          <div className="flex items-center gap-2">
+                            {p.image && (
+                              <Image src={p.image} alt={p.name} width={24} height={24} className="rounded object-cover shrink-0" />
+                            )}
+                            <span className="text-white text-xs font-medium">{p.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-3 text-blue-400 font-semibold text-xs">{(p.soldCount ?? 0).toLocaleString('vi-VN')}</td>
+                        <td className="py-2 px-3 text-green-400 text-xs">{((p.soldCount ?? 0) * p.price).toLocaleString('vi-VN')}đ</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center justify-between mb-4">
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm sản phẩm..."
           className="bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-primary-500" />
@@ -816,6 +874,108 @@ function PromotionsTab() {
   )
 }
 
+// ─── Expiring Subscriptions Widget ──────────────────────────────────────────
+interface ExpiringSub {
+  userId: number
+  name: string
+  email: string
+  phone?: string | null
+  serviceName: string
+  expiresAt: string
+}
+
+function ExpiringSubscriptionsWidget() {
+  const [subs, setSubs] = useState<ExpiringSub[]>([])
+  const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState<string | null>(null)
+  const [collapsed, setCollapsed] = useState(false)
+
+  useEffect(() => {
+    adminApi.getExpiringSubscriptions(7)
+      .then(r => setSubs((r.data ?? r).slice(0, 10)))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const copy = (phone: string) => {
+    navigator.clipboard.writeText(phone)
+    setCopied(phone)
+    setTimeout(() => setCopied(null), 2000)
+  }
+
+  const daysLeft = (expiresAt: string) => {
+    const diff = new Date(expiresAt).getTime() - Date.now()
+    return Math.max(0, Math.ceil(diff / 86400000))
+  }
+
+  if (loading) return null
+
+  return (
+    <div className="mb-6 bg-amber-950/30 border border-amber-900/50 rounded-2xl overflow-hidden">
+      <button
+        onClick={() => setCollapsed(c => !c)}
+        className="w-full flex items-center justify-between px-5 py-3 hover:bg-amber-900/20 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-amber-400 text-sm font-semibold">⏰ Sắp hết hạn (7 ngày)</span>
+          {subs.length > 0 && (
+            <span className="bg-amber-500/20 text-amber-400 border border-amber-700 text-xs px-2 py-0.5 rounded-full font-medium">
+              {subs.length}
+            </span>
+          )}
+        </div>
+        <span className="text-gray-600 text-xs">{collapsed ? '▼ Mở' : '▲ Thu'}</span>
+      </button>
+      {!collapsed && (
+        <div className="px-5 pb-4">
+          {subs.length === 0 ? (
+            <p className="text-gray-600 text-sm text-center py-4">Không có subscription nào sắp hết hạn</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-amber-900/30">
+                    {['Tên', 'Email', 'Dịch vụ', 'Hết hạn', ''].map(h => (
+                      <th key={h} className="text-left text-amber-700 font-medium py-2 px-2 text-xs">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {subs.map((s, i) => {
+                    const days = daysLeft(s.expiresAt)
+                    return (
+                      <tr key={i} className="border-b border-amber-900/20 hover:bg-amber-900/10">
+                        <td className="py-2 px-2 text-white text-xs font-medium">{s.name}</td>
+                        <td className="py-2 px-2 text-gray-400 text-xs">{s.email}</td>
+                        <td className="py-2 px-2 text-amber-300 text-xs">{s.serviceName}</td>
+                        <td className="py-2 px-2">
+                          <span className={`text-xs font-medium ${days <= 1 ? 'text-red-400' : days <= 3 ? 'text-orange-400' : 'text-yellow-400'}`}>
+                            {new Date(s.expiresAt).toLocaleDateString('vi-VN')}
+                            <span className="ml-1 text-gray-600">({days}d)</span>
+                          </span>
+                        </td>
+                        <td className="py-2 px-2">
+                          {s.phone && (
+                            <button
+                              onClick={() => copy(s.phone!)}
+                              className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 rounded-lg px-2 py-1 transition-colors"
+                            >
+                              {copied === s.phone ? '✓ Copied' : `📋 ${s.phone}`}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Admin Page ─────────────────────────────────────────────────────────
 export default function AdminPage() {
   const router = useRouter()
@@ -841,6 +1001,7 @@ export default function AdminPage() {
   const TAB_COMPONENTS: Record<Tab, React.ReactNode> = {
     'Đơn hàng':    <OrdersTab />,
     'Sản phẩm':    <ProductsTab />,
+    'Thành viên':  <UsersTab />,
     'Hướng dẫn':   <GuidesTab />,
     'Cấu hình giá': <PricingRulesTab />,
     'Khuyến mại':  <PromotionsTab />,
@@ -886,6 +1047,7 @@ export default function AdminPage() {
 
       {/* Content */}
       <main className="p-6 max-w-7xl mx-auto">
+        <ExpiringSubscriptionsWidget />
         {TAB_COMPONENTS[tab]}
       </main>
     </div>

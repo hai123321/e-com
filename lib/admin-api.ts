@@ -85,4 +85,22 @@ export const adminApi = {
     adminFetch(`/admin/banners/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteBanner: (id: number) =>
     adminFetch(`/admin/banners/${id}`, { method: 'DELETE' }),
+
+  // Users
+  getUsers: (params?: { page?: number; limit?: number; search?: string; isActive?: boolean }) => {
+    const q = new URLSearchParams()
+    if (params?.page != null) q.set('page', String(params.page))
+    if (params?.limit != null) q.set('limit', String(params.limit))
+    if (params?.search) q.set('search', params.search)
+    if (params?.isActive !== undefined) q.set('isActive', String(params.isActive))
+    return adminFetch(`/admin/users?${q}`)
+  },
+  getUserDetail: (id: number) => adminFetch(`/admin/users/${id}`),
+  updateUserStatus: (id: number, isActive: boolean) =>
+    adminFetch(`/admin/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ isActive }) }),
+  resetUserPassword: (id: number) =>
+    adminFetch(`/admin/users/${id}/reset-password`, { method: 'POST' }),
+  getExpiringSubscriptions: (withinDays = 7) =>
+    adminFetch(`/admin/users/expiring-subscriptions?withinDays=${withinDays}`),
+  getUserStats: (id: number) => adminFetch(`/admin/users/${id}/stats`),
 }
